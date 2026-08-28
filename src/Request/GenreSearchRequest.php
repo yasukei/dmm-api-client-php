@@ -11,6 +11,9 @@ use DmmApiClient\Exception\InvalidArgumentException;
  */
 final readonly class GenreSearchRequest implements Request
 {
+    /** API のエンドポイントパス。 */
+    public const string ENDPOINT = '/GenreSearch';
+
     /** 取得件数の最小値。 */
     public const int HITS_MIN = 1;
 
@@ -53,7 +56,7 @@ final readonly class GenreSearchRequest implements Request
 
     public function endpoint(): string
     {
-        return '/GenreSearch';
+        return self::ENDPOINT;
     }
 
     /**

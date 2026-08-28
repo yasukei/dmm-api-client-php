@@ -11,6 +11,9 @@ use DmmApiClient\Exception\InvalidArgumentException;
  */
 final readonly class MakerSearchRequest implements Request
 {
+    /** API のエンドポイントパス。 */
+    public const string ENDPOINT = '/MakerSearch';
+
     /** 取得件数の最小値。 */
     public const int HITS_MIN = 1;
 
@@ -53,7 +56,7 @@ final readonly class MakerSearchRequest implements Request
 
     public function endpoint(): string
     {
-        return '/MakerSearch';
+        return self::ENDPOINT;
     }
 
     /**

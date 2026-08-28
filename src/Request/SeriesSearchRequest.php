@@ -11,6 +11,9 @@ use DmmApiClient\Exception\InvalidArgumentException;
  */
 final readonly class SeriesSearchRequest implements Request
 {
+    /** API のエンドポイントパス。 */
+    public const string ENDPOINT = '/SeriesSearch';
+
     /** 取得件数の最小値。 */
     public const int HITS_MIN = 1;
 
@@ -53,7 +56,7 @@ final readonly class SeriesSearchRequest implements Request
 
     public function endpoint(): string
     {
-        return '/SeriesSearch';
+        return self::ENDPOINT;
     }
 
     /**

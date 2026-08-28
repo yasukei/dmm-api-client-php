@@ -48,3 +48,16 @@ function credentials(): Credentials
 {
     return new Credentials('MY_API_ID', 'myaffiliateid-999');
 }
+
+/**
+ * 空白区切りのコマンドライン引数を配列にする。
+ *
+ * データセットの各行を string で表現できるようにするためのもの。
+ * 値に空白を含む引数は扱えない。
+ *
+ * @return list<string>
+ */
+function splitArguments(string $arguments): array
+{
+    return $arguments === '' ? [] : explode(' ', $arguments);
+}

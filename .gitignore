@@ -3,3 +3,5 @@
 /.php-cs-fixer.cache
 /.phpunit.result.cache
 /.rector-cache/
+/.env
+/.env.local

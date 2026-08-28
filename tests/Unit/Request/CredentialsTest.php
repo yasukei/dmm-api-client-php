@@ -27,3 +27,16 @@ test('api_id が空なら拒否する', function (): void {
     expect(fn (): Credentials => new Credentials('', 'myaffiliateid-999'))
         ->toThrow(InvalidArgumentException::class, 'api_id must not be empty.');
 });
+
+scenario('unchecked は形式を検証しない', function (string $apiId, string $affiliateId): void {
+    $credentials = Credentials::unchecked($apiId, $affiliateId);
+
+    expect($credentials->apiId)->toBe($apiId)
+        ->and($credentials->affiliateId)->toBe($affiliateId)
+        ->and($credentials->toQueryParameters())
+        ->toBe(['api_id' => $apiId, 'affiliate_id' => $affiliateId]);
+})->with([
+    ['MY_API_ID', 'myaffiliateid-001'],
+    ['MY_API_ID', 'myaffiliateid'],
+    ['', ''],
+]);

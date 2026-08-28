@@ -11,9 +11,12 @@ namespace DmmApiClient\Request;
  */
 final class FloorListRequest implements Request
 {
+    /** API のエンドポイントパス。 */
+    public const string ENDPOINT = '/FloorList';
+
     public function endpoint(): string
     {
-        return '/FloorList';
+        return self::ENDPOINT;
     }
 
     /**

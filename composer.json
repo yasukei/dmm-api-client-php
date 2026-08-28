@@ -24,6 +24,9 @@
         "phpstan/phpstan": "^2.2",
         "rector/rector": "^2.0"
     },
+    "bin": [
+        "bin/dmm"
+    ],
     "autoload": {
         "psr-4": {
             "DmmApiClient\\": "src/"

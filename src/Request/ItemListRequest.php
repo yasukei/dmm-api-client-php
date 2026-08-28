@@ -13,6 +13,9 @@ use DmmApiClient\SiteCode;
  */
 final readonly class ItemListRequest implements Request
 {
+    /** API のエンドポイントパス。 */
+    public const string ENDPOINT = '/ItemList';
+
     /** 取得件数の最小値。 */
     public const int HITS_MIN = 1;
 
@@ -70,7 +73,7 @@ final readonly class ItemListRequest implements Request
 
     public function endpoint(): string
     {
-        return '/ItemList';
+        return self::ENDPOINT;
     }
 
     /**

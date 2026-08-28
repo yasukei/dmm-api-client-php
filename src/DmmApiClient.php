@@ -155,13 +155,15 @@ final readonly class DmmApiClient
     }
 
     /**
-     * @template T of object
+     * API を呼び出し、レスポンスボディを受け取ったままの文字列で返す。
      *
-     * @param class-string<T> $responseClass
+     * DTO への変換と検証は行わない。レスポンスをそのまま保存したい場合や、
+     * API が実際に返している JSON を確認したい場合に使う。
      *
-     * @return T
+     * @throws TransportException HTTP 通信に失敗した場合
+     * @throws ApiErrorException  API がエラーを返した場合
      */
-    private function send(Request $request, string $responseClass): object
+    public function fetchRaw(Request $request): string
     {
         $httpRequest = $this->requestFactory
             ->createRequest('GET', $this->buildUri($request))
@@ -179,6 +181,20 @@ final readonly class DmmApiClient
         if ($statusCode < 200 || $statusCode >= 300) {
             throw $this->createApiError($statusCode, $body);
         }
+
+        return $body;
+    }
+
+    /**
+     * @template T of object
+     *
+     * @param class-string<T> $responseClass
+     *
+     * @return T
+     */
+    private function send(Request $request, string $responseClass): object
+    {
+        $body = $this->fetchRaw($request);
 
         return $this->responseMapper->map($responseClass, $this->decode($request->endpoint(), $body));
     }

@@ -1,0 +1,30 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+$autoloads = [];
+
+// Composer が生成する vendor/bin のプロキシから起動された場合はここに入る。
+if (isset($GLOBALS['_composer_autoload_path']) && is_string($GLOBALS['_composer_autoload_path'])) {
+    $autoloads[] = $GLOBALS['_composer_autoload_path'];
+}
+
+$autoloads[] = __DIR__ . '/../../../autoload.php';  // 依存として組み込まれた場合
+$autoloads[] = __DIR__ . '/../vendor/autoload.php'; // このリポジトリを直接使う場合
+
+foreach ($autoloads as $autoload) {
+    if (is_file($autoload)) {
+        require $autoload;
+
+        break;
+    }
+}
+
+if (! class_exists(DmmApiClient\Console\Application::class)) {
+    fwrite(STDERR, 'Could not locate the Composer autoloader. Run "composer install" first.' . PHP_EOL);
+
+    exit(1);
+}
+
+exit((new DmmApiClient\Console\Application())->run($argv));

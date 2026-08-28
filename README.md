@@ -180,6 +180,94 @@ The DTOs mirror what the API actually returns rather than what the values mean:
 Site codes are mapped to a `SiteCode` enum. An unknown site code is a validation failure — that is
 deliberate, so a new DMM site is noticed rather than silently ignored.
 
+## Command line
+
+The package ships a `dmm` command for inspecting what the API actually returns. It prints the
+response to stdout, so it composes with `jq`, `>`, and the rest of your shell.
+
+```bash
+vendor/bin/dmm                    # list the commands
+vendor/bin/dmm floor-list         # call /FloorList and print the response
+vendor/bin/dmm item-list --help   # options for one command
+```
+
+There is one subcommand per endpoint: `item-list`, `floor-list`, `actress-search`, `genre-search`,
+`maker-search`, `series-search`, and `author-search`. Request parameters are options, named after
+the query keys with `_` written as `-`.
+
+```bash
+dmm item-list --site=FANZA --floor=videoa --sort=date --hits=5
+dmm item-list --site=FANZA --article=genre --article-id=6533 --article=actress --article-id=1078970
+dmm actress-search --keyword=あさみ --gte-bust=85 --sort=-bust
+dmm genre-search --floor-id=43 --initial=あ
+```
+
+`--article` and `--article-id` may be repeated, as long as both are given the same number of times.
+Dates accept `2016-04-01`, `2016-04-01T12:34:56`, or `2016-04-01 12:34:56`. Options that map to an
+enum list their accepted values in `--help`, and reject anything else before a request is sent.
+
+Working inside this repository, the binary is at `./bin/dmm`.
+
+### Credentials
+
+Credentials are read from the `DMM_API_ID` and `DMM_AFFILIATE_ID` environment variables, or from a
+`.env` file in the current directory. Copy `.env.example` to `.env` to get started — `.env` is
+already in `.gitignore`.
+
+```bash
+DMM_API_ID=your_api_id
+DMM_AFFILIATE_ID=youraffiliateid-999
+```
+
+An environment variable wins over the same key in `.env`. Point `--env-file` at another path to read
+a different file.
+
+Credentials cannot be passed as command-line options. Arguments are visible to other users through
+`ps` and are recorded in shell history, which makes them a poor place for a secret.
+
+The `.env` reader is deliberately minimal: `KEY=value`, `#` comments, an optional `export ` prefix,
+and single or double quotes around a value. No variable interpolation, no multi-line values.
+
+### Common options
+
+| Option | Effect |
+| --- | --- |
+| `--dry-run` | Print the request URI and exit without sending it |
+| `--raw` | Print the response body unmodified instead of pretty-printing it |
+| `--no-validate-request` | Send the parameters as typed, skipping the client-side checks |
+| `--no-validate-response` | Skip the DTO validation pass |
+| `--env-file=PATH` | Read this file instead of `./.env` |
+
+By default the response is validated against the DTOs after it is printed. A mismatch is reported on
+stderr with the offending JSON path and exits non-zero, while the body still goes to stdout — so a
+change on DMM's side is visible rather than silent.
+
+`--no-validate-request` bypasses the request objects entirely and forwards each option value
+verbatim — including the affiliate ID suffix rule — which is how you find out what the API really
+does with a value the library would have rejected. Required options stop being required, enums stop
+being checked, and repeated options are sent as a list.
+
+```console
+$ dmm item-list --site=BOGUS --sort=nonexistent --hits=9999 --no-validate-request --dry-run
+https://api.dmm.com/affiliate/v3/ItemList?api_id=…&site=BOGUS&sort=nonexistent&hits=9999&output=json
+```
+
+The same escape hatch is available from PHP through `RawRequest` and `Credentials::unchecked()`:
+
+```php
+$body = (new DmmApiClient(Credentials::unchecked('YOUR_API_ID', 'anything')))
+    ->fetchRaw(new RawRequest(ItemListRequest::ENDPOINT, ['site' => 'FANZA', 'hits' => '9999']));
+```
+
+```console
+$ dmm floor-list > floors.json
+Response did not match DmmApiClient\Response\FloorList\FloorListResponse:
+  result.site.0.code: Value 'NEWSITE' does not match any of 'DMM.com', 'FANZA'.
+```
+
+Exit codes are `0` on success, `1` when the call or the validation failed, and `2` when the command
+line itself was wrong.
+
 ## Advanced usage
 
 ### Supplying your own HTTP client
