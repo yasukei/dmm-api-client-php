@@ -141,3 +141,21 @@ test('女優検索の offset に上限はない', function (): void {
     expect(runCommand('actress-search', ['--offset=1000000', '--dry-run'])['code'])
         ->toBe(Application::EXIT_SUCCESS);
 });
+
+scenario('--initial は 1 文字でも 2 文字以上でもそのまま送る', function (string $command, string $arguments, string $initial): void {
+    $result = runCommand($command, [...splitArguments($arguments), '--initial=' . $initial, '--dry-run']);
+
+    expect($result['code'])->toBe(Application::EXIT_SUCCESS);
+
+    parse_str((string) parse_url(trim($result['stdout']), PHP_URL_QUERY), $query);
+
+    expect($query)->toHaveKey('initial', $initial);
+})->with([
+    'actress-search 1 文字' => ['actress-search', '', 'あ'],
+    'actress-search 2 文字' => ['actress-search', '', 'あさ'],
+    'genre-search 1 文字' => ['genre-search', '--floor-id=43', 'あ'],
+    'genre-search 2 文字' => ['genre-search', '--floor-id=43', 'あさ'],
+    'maker-search 2 文字' => ['maker-search', '--floor-id=43', 'あさ'],
+    'series-search 2 文字' => ['series-search', '--floor-id=43', 'あさ'],
+    'author-search 2 文字' => ['author-search', '--floor-id=80', 'あさ'],
+]);

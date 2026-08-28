@@ -25,7 +25,7 @@ final readonly class ActressSearchRequest implements Request
     public const int OFFSET_MIN = 1;
 
     /**
-     * @param string|null            $initial     女優名かなの頭文字（五十音 1 文字。例: あ）
+     * @param string|null            $initial     女優名かなの前方一致（2 文字以上も指定できる。例: あ、あさ）
      * @param string|null            $actressId   女優 ID を指定して 1 件だけ取得する場合の ID
      * @param string|null            $keyword     女優名の検索キーワード
      * @param int|null               $gteBust     バストがこの値以上の女優に絞り込む（cm）

@@ -25,7 +25,7 @@ final readonly class GenreSearchRequest implements Request
 
     /**
      * @param string      $floorId フロア ID。ジャンルが属するフロアを指定する（例: "43"）
-     * @param string|null $initial ジャンル名かなの頭文字（五十音 1 文字。例: あ）
+     * @param string|null $initial ジャンル名かなの前方一致（2 文字以上も指定できる。例: あ、あさ）
      * @param int|null    $hits    取得件数（1〜500。未指定時は API 既定の 100）
      * @param int|null    $offset  検索開始位置（1 以上、1 始まり。未指定時は API 既定の 1）
      *

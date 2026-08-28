@@ -22,7 +22,7 @@ abstract class FloorScopedSearchCommand extends ApiCommand
     {
         return [
             new OptionDefinition('floor-id', sprintf('%sが属するフロアの ID（必須。例: 43）', $this->subject()), 'ID'),
-            new OptionDefinition('initial', sprintf('%s名かなの頭文字（五十音 1 文字）', $this->subject()), 'KANA'),
+            new OptionDefinition('initial', sprintf('%s名かなの前方一致（2 文字以上も指定できる。例: あ、あさ）', $this->subject()), 'KANA'),
             new OptionDefinition('hits', '取得件数（1〜500）', 'N'),
             new OptionDefinition('offset', '検索開始位置（1 以上）', 'N'),
         ];

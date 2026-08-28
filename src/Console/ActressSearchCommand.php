@@ -27,7 +27,7 @@ final class ActressSearchCommand extends ApiCommand
     protected function requestOptions(): array
     {
         return [
-            new OptionDefinition('initial', '女優名かなの頭文字（五十音 1 文字）', 'KANA'),
+            new OptionDefinition('initial', '女優名かなの前方一致（2 文字以上も指定できる。例: あ、あさ）', 'KANA'),
             new OptionDefinition('actress-id', '女優 ID を指定して 1 件だけ取得する', 'ID'),
             new OptionDefinition('keyword', '女優名の検索キーワード', 'WORD'),
             new OptionDefinition('gte-bust', 'バストがこの値以上（cm）', 'N'),

@@ -54,6 +54,17 @@ test('指定した項目をすべてクエリに載せる', function (): void {
     ]);
 });
 
+scenario('initial は 1 文字でも 2 文字以上でも、指定した値をそのまま載せる', function (string $initial): void {
+    // API は 2 文字以上の前方一致も受け付けるため、文字数で弾かない。
+    expect((new ActressSearchRequest(initial: $initial))->toQueryParameters())
+        ->toBe(['initial' => $initial]);
+})->with([
+    '1 文字' => ['あ'],
+    '2 文字' => ['あさ'],
+    '3 文字' => ['あさみ'],
+    '英字' => ['a'],
+]);
+
 test('生年月日は時刻を落として日付だけ載せる', function (): void {
     $request = new ActressSearchRequest(gteBirthday: new DateTimeImmutable('1990-01-01 13:45:59'));
 

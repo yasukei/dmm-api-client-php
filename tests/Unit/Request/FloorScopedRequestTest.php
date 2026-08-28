@@ -65,6 +65,20 @@ scenario('指定した項目をすべてクエリに載せる', function (Reques
     ]);
 })->with(floorScopedRequests(initial: 'あ', hits: 500, offset: 101));
 
+scenario('initial は 1 文字でも 2 文字以上でも、指定した値をそのまま載せる', function (Request $request, string $initial): void {
+    // API は 2 文字以上の前方一致も受け付けるため、文字数で弾かない。
+    expect($request->toQueryParameters())->toHaveKey('initial', $initial);
+})->with([
+    'GenreSearch 1 文字' => [new GenreSearchRequest('43', 'あ'), 'あ'],
+    'GenreSearch 2 文字' => [new GenreSearchRequest('43', 'あさ'), 'あさ'],
+    'MakerSearch 1 文字' => [new MakerSearchRequest('43', 'あ'), 'あ'],
+    'MakerSearch 2 文字' => [new MakerSearchRequest('43', 'あさ'), 'あさ'],
+    'SeriesSearch 1 文字' => [new SeriesSearchRequest('43', 'あ'), 'あ'],
+    'SeriesSearch 2 文字' => [new SeriesSearchRequest('43', 'あさ'), 'あさ'],
+    'AuthorSearch 1 文字' => [new AuthorSearchRequest('80', 'あ'), 'あ'],
+    'AuthorSearch 2 文字' => [new AuthorSearchRequest('80', 'あさ'), 'あさ'],
+]);
+
 scenario('hits の上限 500 を受け付ける', function (Request $request): void {
     expect($request->toQueryParameters())->toHaveKey('hits', '500');
 })->with(floorScopedRequests(hits: 500));
