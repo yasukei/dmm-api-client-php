@@ -6,6 +6,7 @@ namespace DmmApiClient\Console;
 
 use BackedEnum;
 use DateTimeImmutable;
+use DmmApiClient\CredentialMasker;
 use DmmApiClient\DmmApiClient;
 use DmmApiClient\Exception\ApiErrorException;
 use DmmApiClient\Exception\ResponseValidationException;
@@ -51,6 +52,7 @@ abstract class ApiCommand implements Command
             new OptionDefinition('raw', 'レスポンスを整形せず、受け取ったまま出力する'),
             new OptionDefinition('no-validate-request', 'パラメータを検証せず、指定した値をそのまま送る'),
             new OptionDefinition('no-validate-response', 'レスポンスの DTO 検証を行わない'),
+            new OptionDefinition('no-mask', '認証情報を伏せ字にせず、そのまま出力する'),
             new OptionDefinition('help', 'このコマンドの使い方を表示する'),
         ];
     }
@@ -102,12 +104,19 @@ abstract class ApiCommand implements Command
     final public function execute(Input $input, Environment $environment, Output $output): int
     {
         $unchecked = $input->flag('no-validate-request');
+        $credentials = $this->resolveCredentials($environment, $unchecked);
 
-        $client = new DmmApiClient($this->resolveCredentials($environment, $unchecked), $this->httpClient);
+        // 認証情報はエコーバックにも affiliateURL にも埋め込まれて返ってくる。
+        // 出力を保存したときに漏れないよう、既定で伏せ字にする。
+        $masker = $input->flag('no-mask')
+            ? CredentialMasker::disabled()
+            : CredentialMasker::forCredentials($credentials);
+
+        $client = new DmmApiClient($credentials, $this->httpClient);
         $request = $unchecked ? $this->createUncheckedRequest($input) : $this->createRequest($input);
 
         if ($input->flag('dry-run')) {
-            $output->line($client->buildUri($request));
+            $output->line($masker->mask($client->buildUri($request)));
 
             return Application::EXIT_SUCCESS;
         }
@@ -116,22 +125,23 @@ abstract class ApiCommand implements Command
             $body = $client->fetchRaw($request);
         } catch (ApiErrorException $exception) {
             // エラーの中身こそ見たいので、ボディは通常どおり標準出力へ流す。
-            $output->write($this->format($exception->responseBody, $input, $output));
-            $output->error($exception->getMessage());
+            $output->write($masker->mask($this->format($exception->responseBody, $input, $output)));
+            $output->error($masker->mask($exception->getMessage()));
 
             return Application::EXIT_FAILURE;
         } catch (TransportException $exception) {
-            $output->error($exception->getMessage());
+            $output->error($masker->mask($exception->getMessage()));
 
             return Application::EXIT_FAILURE;
         }
 
-        $output->write($this->format($body, $input, $output));
+        $output->write($masker->mask($this->format($body, $input, $output)));
 
         if ($input->flag('no-validate-response')) {
             return Application::EXIT_SUCCESS;
         }
 
+        // 検証は、伏せ字にする前の実際のレスポンスに対して行う。
         return $this->validate($body, $output);
     }
 

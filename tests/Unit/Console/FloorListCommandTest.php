@@ -63,9 +63,10 @@ test('レスポンスを整形して標準出力へ書き出す', function (): v
 });
 
 test('--raw は受け取ったままのボディを出す', function (): void {
+    // 既定では認証情報が伏せ字になるため、バイト単位の一致を見るには --no-mask が要る。
     $result = runFloorList(
         StubHttpClient::respondingWithFixture('floor-list'),
-        ['--raw'],
+        ['--raw', '--no-mask'],
     );
 
     expect($result['code'])->toBe(Application::EXIT_SUCCESS)
@@ -74,7 +75,7 @@ test('--raw は受け取ったままのボディを出す', function (): void {
 
 test('--dry-run は送信せずに URI だけを出す', function (): void {
     $http = StubHttpClient::respondingWithFixture('floor-list');
-    $result = runFloorList($http, ['--dry-run']);
+    $result = runFloorList($http, ['--dry-run', '--no-mask']);
 
     expect($result['code'])->toBe(Application::EXIT_SUCCESS)
         ->and($http->requests)->toBe([])
@@ -163,7 +164,7 @@ test('認証情報を .env から読み込む', function (): void {
 
     $result = runFloorList(
         StubHttpClient::respondingWithFixture('floor-list'),
-        ['--env-file=' . $path, '--dry-run'],
+        ['--env-file=' . $path, '--dry-run', '--no-mask'],
     );
 
     expect($result['code'])->toBe(Application::EXIT_SUCCESS)
@@ -182,7 +183,7 @@ test('環境変数が .env より優先される', function (): void {
 
     $result = runFloorList(
         StubHttpClient::respondingWithFixture('floor-list'),
-        ['--env-file=' . $path, '--dry-run'],
+        ['--env-file=' . $path, '--dry-run', '--no-mask'],
     );
 
     expect($result['stdout'])->toContain('api_id=MY_API_ID');
@@ -192,7 +193,7 @@ test('--no-validate-request でもリクエストの組み立て方は変わら�
     // /FloorList は固有のパラメータを持たないため、検証を飛ばしても送信内容は同じになる。
     $result = runFloorList(
         StubHttpClient::respondingWithFixture('floor-list'),
-        ['--no-validate-request', '--dry-run'],
+        ['--no-validate-request', '--dry-run', '--no-mask'],
     );
 
     expect($result['code'])->toBe(Application::EXIT_SUCCESS)

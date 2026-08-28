@@ -236,7 +236,34 @@ and single or double quotes around a value. No variable interpolation, no multi-
 | `--raw` | Print the response body unmodified instead of pretty-printing it |
 | `--no-validate-request` | Send the parameters as typed, skipping the client-side checks |
 | `--no-validate-response` | Skip the DTO validation pass |
+| `--no-mask` | Print the real credentials instead of masking them |
 | `--env-file=PATH` | Read this file instead of `./.env` |
+
+### Masked credentials
+
+Your API ID and affiliate ID come back in the response — in the echoed request parameters, and
+inside every `affiliateURL`, `list_url`, and `listURL` as `af_id=…`. Saving a response to a file
+would otherwise put them in your repository, so the command replaces them with `***` by default.
+
+```console
+$ dmm item-list --site=FANZA | grep affiliate
+    "affiliate_id": "***",
+    "affiliateURL": "https://al.dmm.co.jp/?lurl=…&af_id=***",
+```
+
+`--no-mask` prints the real values, which you need when checking that an affiliate link was built
+correctly or when copying the URI from `--dry-run` into curl. Masking only substitutes the
+credential strings, so the JSON structure is untouched and a masked response still maps onto the
+DTOs — which is what makes it usable as test data.
+
+The same masking is available from PHP through `CredentialMasker`, for anyone logging responses:
+
+```php
+$safe = CredentialMasker::forCredentials($credentials)->mask($body);
+```
+
+Note that the substitution is a plain substring replacement, so a very short credential can match
+unrelated text. Over-masking is the safe direction, so this is left as is.
 
 By default the response is validated against the DTOs after it is printed. A mismatch is reported on
 stderr with the offending JSON path and exits non-zero, while the body still goes to stdout — so a

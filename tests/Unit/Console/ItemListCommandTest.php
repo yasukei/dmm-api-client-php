@@ -198,7 +198,7 @@ test('--no-validate-request ならアフィリエイト ID の形式も検証し
     expect($rejected['code'])->toBe(Application::EXIT_USAGE)
         ->and($rejected['stderr'])->toContain('affiliate_id must end with 990-999');
 
-    $accepted = runItemList(['--site=FANZA', '--no-validate-request', '--dry-run']);
+    $accepted = runItemList(['--site=FANZA', '--no-validate-request', '--dry-run', '--no-mask']);
 
     expect($accepted['code'])->toBe(Application::EXIT_SUCCESS)
         ->and($accepted['stdout'])->toContain('affiliate_id=myaffiliateid-123');
