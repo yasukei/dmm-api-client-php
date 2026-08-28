@@ -1,5 +1,6 @@
 # dmm-api-client-php
 
+[![CI](https://github.com/yasukei/dmm-api-client-php/actions/workflows/ci.yml/badge.svg)](https://github.com/yasukei/dmm-api-client-php/actions/workflows/ci.yml)
 [![Latest Version](https://img.shields.io/packagist/v/yasukei/dmm-api-client-php.svg)](https://packagist.org/packages/yasukei/dmm-api-client-php)
 [![License](https://img.shields.io/github/license/yasukei/dmm-api-client-php.svg)](LICENSE)
 [![PHP Version Require](https://img.shields.io/packagist/dependency-v/yasukei/dmm-api-client-php/php)](composer.json)

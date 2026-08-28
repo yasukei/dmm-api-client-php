@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: "Test (PHP ${{ matrix.php-version }}, ${{ matrix.dependency-version }})"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version: ['8.3', '8.4', '8.5']
+        dependency-version: [prefer-lowest, prefer-stable]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          coverage: none
+
+      - name: Install dependencies
+        run: composer update --${{ matrix.dependency-version }} --no-interaction --no-progress
+
+      - name: Run tests
+        run: composer test
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress
+
+      - name: PHPStan
+        run: composer stan
+
+      - name: PHP-CS-Fixer
+        run: composer cs-check
+
+      - name: Rector
+        run: composer rector-dry
