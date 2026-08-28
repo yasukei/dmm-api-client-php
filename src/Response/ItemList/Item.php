@@ -10,7 +10,7 @@ use DateTimeImmutable;
 /**
  * 商品情報 1 件。
  */
-final class Item
+final readonly class Item
 {
     /**
      * @param string                 $serviceCode    サービスコード（例: digital）
@@ -36,37 +36,37 @@ final class Item
      */
     public function __construct(
         #[MapFromKey('service_code')]
-        public readonly string $serviceCode,
+        public string $serviceCode,
         #[MapFromKey('service_name')]
-        public readonly string $serviceName,
+        public string $serviceName,
         #[MapFromKey('floor_code')]
-        public readonly string $floorCode,
+        public string $floorCode,
         #[MapFromKey('floor_name')]
-        public readonly string $floorName,
+        public string $floorName,
         #[MapFromKey('category_name')]
-        public readonly string $categoryName,
+        public string $categoryName,
         #[MapFromKey('content_id')]
-        public readonly string $contentId,
-        public readonly string $title,
+        public string $contentId,
+        public string $title,
         #[MapFromKey('URL')]
-        public readonly string $url,
+        public string $url,
         #[MapFromKey('affiliateURL')]
-        public readonly string $affiliateUrl,
+        public string $affiliateUrl,
         #[MapFromKey('product_id')]
-        public readonly ?string $productId = null,
-        public readonly ?string $volume = null,
-        public readonly ?int $number = null,
-        public readonly ?Review $review = null,
+        public ?string $productId = null,
+        public ?string $volume = null,
+        public ?int $number = null,
+        public ?Review $review = null,
         #[MapFromKey('imageURL')]
-        public readonly ?ItemImageUrl $imageUrl = null,
-        public readonly ?Tachiyomi $tachiyomi = null,
+        public ?ItemImageUrl $imageUrl = null,
+        public ?Tachiyomi $tachiyomi = null,
         #[MapFromKey('sampleImageURL')]
-        public readonly ?SampleImageUrl $sampleImageUrl = null,
+        public ?SampleImageUrl $sampleImageUrl = null,
         #[MapFromKey('sampleMovieURL')]
-        public readonly ?SampleMovieUrl $sampleMovieUrl = null,
-        public readonly ?ItemPrices $prices = null,
-        public readonly ?DateTimeImmutable $date = null,
-        public readonly ?ItemInfo $iteminfo = null,
+        public ?SampleMovieUrl $sampleMovieUrl = null,
+        public ?ItemPrices $prices = null,
+        public ?DateTimeImmutable $date = null,
+        public ?ItemInfo $iteminfo = null,
     ) {
     }
 }

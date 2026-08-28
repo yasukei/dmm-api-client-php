@@ -7,7 +7,7 @@ namespace DmmApiClient\Response\FloorList;
 /**
  * サービス情報と、それに属するフロアの一覧。
  */
-final class Service
+final readonly class Service
 {
     /**
      * @param string      $name  サービス名（例: 動画）
@@ -15,9 +15,9 @@ final class Service
      * @param list<Floor> $floor このサービスに属するフロアの一覧
      */
     public function __construct(
-        public readonly string $name,
-        public readonly string $code,
-        public readonly array $floor,
+        public string $name,
+        public string $code,
+        public array $floor,
     ) {
     }
 }

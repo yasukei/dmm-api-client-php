@@ -10,7 +10,7 @@ use DmmApiClient\SiteCode;
 /**
  * ジャンル検索 API のレスポンスの `result` 部。
  */
-final class GenreSearchResult
+final readonly class GenreSearchResult
 {
     /**
      * @param int         $status        ステータスコード
@@ -27,28 +27,28 @@ final class GenreSearchResult
      * @param list<Genre> $genre         検索結果のジャンル一覧
      */
     public function __construct(
-        public readonly int $status,
+        public int $status,
         #[MapFromKey('result_count')]
-        public readonly int $resultCount,
+        public int $resultCount,
         #[MapFromKey('total_count')]
-        public readonly int $totalCount,
+        public int $totalCount,
         #[MapFromKey('first_position')]
-        public readonly int $firstPosition,
+        public int $firstPosition,
         #[MapFromKey('site_name')]
-        public readonly string $siteName,
+        public string $siteName,
         #[MapFromKey('site_code')]
-        public readonly SiteCode $siteCode,
+        public SiteCode $siteCode,
         #[MapFromKey('service_name')]
-        public readonly string $serviceName,
+        public string $serviceName,
         #[MapFromKey('service_code')]
-        public readonly string $serviceCode,
+        public string $serviceCode,
         #[MapFromKey('floor_id')]
-        public readonly string $floorId,
+        public string $floorId,
         #[MapFromKey('floor_name')]
-        public readonly string $floorName,
+        public string $floorName,
         #[MapFromKey('floor_code')]
-        public readonly string $floorCode,
-        public readonly array $genre = [],
+        public string $floorCode,
+        public array $genre = [],
     ) {
     }
 }

@@ -11,13 +11,13 @@ namespace DmmApiClient\Response\Common;
  *  - 連想配列形式:       {"api_id": "xxx", "output": "json"}
  *  - name/value 配列形式: [{"name": "api_id", "value": "xxx"}]
  */
-final class RequestEcho
+final readonly class RequestEcho
 {
     /**
      * @param array<string, string>|non-empty-list<RequestParameter> $parameters API に送信したリクエストパラメータ
      */
     public function __construct(
-        public readonly array $parameters = [],
+        public array $parameters = [],
     ) {
     }
 }

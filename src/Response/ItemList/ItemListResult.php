@@ -9,7 +9,7 @@ use CuyZ\Valinor\Mapper\Configurator\MapFromKey;
 /**
  * 商品情報 API のレスポンスの `result` 部。
  */
-final class ItemListResult
+final readonly class ItemListResult
 {
     /**
      * @param int        $status        ステータスコード
@@ -19,14 +19,14 @@ final class ItemListResult
      * @param list<Item> $items         検索結果の商品一覧
      */
     public function __construct(
-        public readonly int $status,
+        public int $status,
         #[MapFromKey('result_count')]
-        public readonly int $resultCount,
+        public int $resultCount,
         #[MapFromKey('total_count')]
-        public readonly int $totalCount,
+        public int $totalCount,
         #[MapFromKey('first_position')]
-        public readonly int $firstPosition,
-        public readonly array $items = [],
+        public int $firstPosition,
+        public array $items = [],
     ) {
     }
 }

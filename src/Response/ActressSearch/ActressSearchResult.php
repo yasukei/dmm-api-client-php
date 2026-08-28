@@ -9,7 +9,7 @@ use CuyZ\Valinor\Mapper\Configurator\MapFromKey;
 /**
  * 女優検索 API のレスポンスの `result` 部。
  */
-final class ActressSearchResult
+final readonly class ActressSearchResult
 {
     /**
      * @param int           $status        ステータスコード
@@ -19,14 +19,14 @@ final class ActressSearchResult
      * @param list<Actress> $actress       検索結果の女優一覧
      */
     public function __construct(
-        public readonly int $status,
+        public int $status,
         #[MapFromKey('result_count')]
-        public readonly int $resultCount,
+        public int $resultCount,
         #[MapFromKey('total_count')]
-        public readonly int $totalCount,
+        public int $totalCount,
         #[MapFromKey('first_position')]
-        public readonly int $firstPosition,
-        public readonly array $actress = [],
+        public int $firstPosition,
+        public array $actress = [],
     ) {
     }
 }

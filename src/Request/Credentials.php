@@ -9,7 +9,7 @@ use DmmApiClient\Exception\InvalidArgumentException;
 /**
  * DMM ウェブサービスの認証情報。
  */
-final class Credentials
+final readonly class Credentials
 {
     /**
      * @param string $apiId       DMM ウェブサービスで発行された API ID
@@ -18,8 +18,8 @@ final class Credentials
      * @throws InvalidArgumentException 値が空、またはアフィリエイト ID の形式が不正な場合
      */
     public function __construct(
-        public readonly string $apiId,
-        public readonly string $affiliateId,
+        public string $apiId,
+        public string $affiliateId,
     ) {
         if ($apiId === '') {
             throw new InvalidArgumentException('api_id must not be empty.');

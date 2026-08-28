@@ -9,7 +9,7 @@ namespace DmmApiClient\Response\ItemList;
  *
  * いずれもレスポンスに含まれない場合があり、その場合は空配列となる。
  */
-final class ItemInfo
+final readonly class ItemInfo
 {
     /**
      * @param list<ItemInfoElement> $genre    ジャンル
@@ -25,17 +25,17 @@ final class ItemInfo
      * @param list<ItemInfoElement> $size     サイズ
      */
     public function __construct(
-        public readonly array $genre = [],
-        public readonly array $series = [],
-        public readonly array $maker = [],
-        public readonly array $actor = [],
-        public readonly array $actress = [],
-        public readonly array $director = [],
-        public readonly array $author = [],
-        public readonly array $label = [],
-        public readonly array $type = [],
-        public readonly array $color = [],
-        public readonly array $size = [],
+        public array $genre = [],
+        public array $series = [],
+        public array $maker = [],
+        public array $actor = [],
+        public array $actress = [],
+        public array $director = [],
+        public array $author = [],
+        public array $label = [],
+        public array $type = [],
+        public array $color = [],
+        public array $size = [],
     ) {
     }
 }

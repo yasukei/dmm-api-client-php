@@ -7,7 +7,7 @@ namespace DmmApiClient\Response\Error;
 /**
  * エラーレスポンスの `result` 部。
  */
-final class ErrorResult
+final readonly class ErrorResult
 {
     /**
      * @param int                   $status  HTTP 相当のエラーステータスコード（例: 400）
@@ -15,9 +15,9 @@ final class ErrorResult
      * @param array<string, string> $errors  フィールド単位のエラー詳細（例: ["affiliate_id" => "Invalid Request Error"]）
      */
     public function __construct(
-        public readonly int $status,
-        public readonly string $message,
-        public readonly array $errors = [],
+        public int $status,
+        public string $message,
+        public array $errors = [],
     ) {
     }
 }

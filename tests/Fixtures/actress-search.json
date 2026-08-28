@@ -1,0 +1,39 @@
+{
+  "request": { "parameters": { "api_id": "MY_API_ID", "affiliate_id": "myaffiliateid-999", "output": "json" } },
+  "result": {
+    "status": 200,
+    "result_count": 2,
+    "total_count": 3421,
+    "first_position": 1,
+    "actress": [
+      {
+        "id": "1078970",
+        "name": "サンプル女優",
+        "ruby": "さんぷるじょゆう",
+        "bust": "90",
+        "cup": "G",
+        "waist": "58",
+        "hip": "88",
+        "height": "160",
+        "birthday": "1995-04-01",
+        "blood_type": "A",
+        "hobby": "読書",
+        "prefectures": "東京都",
+        "imageURL": {
+          "small": "https://pics.dmm.co.jp/mono/actjpgs/thumbnail/sample.jpg",
+          "large": "https://pics.dmm.co.jp/mono/actjpgs/sample.jpg"
+        },
+        "listURL": {
+          "digital": "https://al.dmm.co.jp/?lurl=digital&af_id=myaffiliateid-999",
+          "monthly": "https://al.dmm.co.jp/?lurl=monthly&af_id=myaffiliateid-999",
+          "mono": "https://al.dmm.co.jp/?lurl=mono&af_id=myaffiliateid-999"
+        }
+      },
+      {
+        "id": "9999999",
+        "name": "プロフィール未登録",
+        "ruby": "ぷろふぃーるみとうろく"
+      }
+    ]
+  }
+}

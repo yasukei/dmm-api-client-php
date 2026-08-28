@@ -1,0 +1,37 @@
+{
+  "request": { "parameters": { "api_id": "MY_API_ID", "affiliate_id": "myaffiliateid-999", "output": "json" } },
+  "result": {
+    "site": [
+      {
+        "name": "DMM.com（一般）",
+        "code": "DMM.com",
+        "service": [
+          {
+            "name": "動画",
+            "code": "digital",
+            "floor": [
+              { "id": "40", "name": "一般動画", "code": "videoc" },
+              { "id": "41", "name": "アニメ動画", "code": "anime" }
+            ]
+          },
+          {
+            "name": "通販",
+            "code": "mono",
+            "floor": [{ "id": "15", "name": "DVD", "code": "dvd" }]
+          }
+        ]
+      },
+      {
+        "name": "FANZA（アダルト）",
+        "code": "FANZA",
+        "service": [
+          {
+            "name": "動画",
+            "code": "digital",
+            "floor": [{ "id": "43", "name": "ビデオ", "code": "videoa" }]
+          }
+        ]
+      }
+    ]
+  }
+}

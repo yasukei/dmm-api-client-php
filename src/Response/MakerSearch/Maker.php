@@ -9,7 +9,7 @@ use CuyZ\Valinor\Mapper\Configurator\MapFromKey;
 /**
  * メーカー情報 1 件。
  */
-final class Maker
+final readonly class Maker
 {
     /**
      * @param string $makerId メーカー ID（例: "306073"）
@@ -19,11 +19,11 @@ final class Maker
      */
     public function __construct(
         #[MapFromKey('maker_id')]
-        public readonly string $makerId,
-        public readonly string $name,
-        public readonly string $ruby,
+        public string $makerId,
+        public string $name,
+        public string $ruby,
         #[MapFromKey('list_url')]
-        public readonly string $listUrl,
+        public string $listUrl,
     ) {
     }
 }

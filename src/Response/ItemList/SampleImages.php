@@ -7,13 +7,13 @@ namespace DmmApiClient\Response\ItemList;
 /**
  * サンプル画像 URL の一覧。
  */
-final class SampleImages
+final readonly class SampleImages
 {
     /**
      * @param list<string> $image サンプル画像の URL
      */
     public function __construct(
-        public readonly array $image = [],
+        public array $image = [],
     ) {
     }
 }

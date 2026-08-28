@@ -9,15 +9,15 @@ use DmmApiClient\Response\Common\RequestEcho;
 /**
  * ジャンル検索 API (`/GenreSearch`) のレスポンス。
  */
-final class GenreSearchResponse
+final readonly class GenreSearchResponse
 {
     /**
      * @param GenreSearchResult $result  検索結果
      * @param RequestEcho|null  $request 送信したリクエストパラメータのエコーバック
      */
     public function __construct(
-        public readonly GenreSearchResult $result,
-        public readonly ?RequestEcho $request = null,
+        public GenreSearchResult $result,
+        public ?RequestEcho $request = null,
     ) {
     }
 }

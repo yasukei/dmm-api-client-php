@@ -1,0 +1,9 @@
+{
+  "result": {
+    "status": 400,
+    "message": "BAD REQUEST",
+    "errors": {
+      "affiliate_id": "Invalid Request Error"
+    }
+  }
+}

@@ -22,9 +22,9 @@ use DmmApiClient\Response\SeriesSearch\SeriesSearchResponse;
  *
  * 入力にはデコード済みの配列（`json_decode($json, true)` の結果）を渡す。
  */
-final class ResponseMapper
+final readonly class ResponseMapper
 {
-    private readonly TreeMapper $mapper;
+    private TreeMapper $mapper;
 
     public function __construct(?TreeMapper $mapper = null)
     {
@@ -96,7 +96,7 @@ final class ResponseMapper
      *
      * @throws ResponseValidationException
      */
-    private function map(string $class, mixed $payload): object
+    public function map(string $class, mixed $payload): object
     {
         try {
             return $this->mapper->map($class, $payload);

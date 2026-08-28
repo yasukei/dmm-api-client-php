@@ -10,7 +10,7 @@ use DmmApiClient\SiteCode;
 /**
  * メーカー検索 API のレスポンスの `result` 部。
  */
-final class MakerSearchResult
+final readonly class MakerSearchResult
 {
     /**
      * @param int         $status        ステータスコード
@@ -27,28 +27,28 @@ final class MakerSearchResult
      * @param list<Maker> $maker         検索結果のメーカー一覧
      */
     public function __construct(
-        public readonly int $status,
+        public int $status,
         #[MapFromKey('result_count')]
-        public readonly int $resultCount,
+        public int $resultCount,
         #[MapFromKey('total_count')]
-        public readonly int $totalCount,
+        public int $totalCount,
         #[MapFromKey('first_position')]
-        public readonly int $firstPosition,
+        public int $firstPosition,
         #[MapFromKey('site_name')]
-        public readonly string $siteName,
+        public string $siteName,
         #[MapFromKey('site_code')]
-        public readonly SiteCode $siteCode,
+        public SiteCode $siteCode,
         #[MapFromKey('service_name')]
-        public readonly string $serviceName,
+        public string $serviceName,
         #[MapFromKey('service_code')]
-        public readonly string $serviceCode,
+        public string $serviceCode,
         #[MapFromKey('floor_id')]
-        public readonly string $floorId,
+        public string $floorId,
         #[MapFromKey('floor_name')]
-        public readonly string $floorName,
+        public string $floorName,
         #[MapFromKey('floor_code')]
-        public readonly string $floorCode,
-        public readonly array $maker = [],
+        public string $floorCode,
+        public array $maker = [],
     ) {
     }
 }

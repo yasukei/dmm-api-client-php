@@ -10,7 +10,7 @@ use DmmApiClient\Exception\InvalidArgumentException;
 /**
  * 女優検索 API (`/ActressSearch`) のリクエスト。
  */
-final class ActressSearchRequest implements Request
+final readonly class ActressSearchRequest implements Request
 {
     /** 取得件数の最小値。 */
     public const int HITS_MIN = 1;
@@ -42,22 +42,22 @@ final class ActressSearchRequest implements Request
      * @throws InvalidArgumentException $hits / $offset が範囲外の場合
      */
     public function __construct(
-        public readonly ?string $initial = null,
-        public readonly ?string $actressId = null,
-        public readonly ?string $keyword = null,
-        public readonly ?int $gteBust = null,
-        public readonly ?int $lteBust = null,
-        public readonly ?int $gteWaist = null,
-        public readonly ?int $lteWaist = null,
-        public readonly ?int $gteHip = null,
-        public readonly ?int $lteHip = null,
-        public readonly ?int $gteHeight = null,
-        public readonly ?int $lteHeight = null,
-        public readonly ?DateTimeImmutable $gteBirthday = null,
-        public readonly ?DateTimeImmutable $lteBirthday = null,
-        public readonly ?ActressSearchSort $sort = null,
-        public readonly ?int $hits = null,
-        public readonly ?int $offset = null,
+        public ?string $initial = null,
+        public ?string $actressId = null,
+        public ?string $keyword = null,
+        public ?int $gteBust = null,
+        public ?int $lteBust = null,
+        public ?int $gteWaist = null,
+        public ?int $lteWaist = null,
+        public ?int $gteHip = null,
+        public ?int $lteHip = null,
+        public ?int $gteHeight = null,
+        public ?int $lteHeight = null,
+        public ?DateTimeImmutable $gteBirthday = null,
+        public ?DateTimeImmutable $lteBirthday = null,
+        public ?ActressSearchSort $sort = null,
+        public ?int $hits = null,
+        public ?int $offset = null,
     ) {
         if ($hits !== null && ($hits < self::HITS_MIN || $hits > self::HITS_MAX)) {
             throw new InvalidArgumentException(

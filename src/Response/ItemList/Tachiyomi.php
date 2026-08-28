@@ -9,7 +9,7 @@ use CuyZ\Valinor\Mapper\Configurator\MapFromKey;
 /**
  * 立ち読みページへのリンク。
  */
-final class Tachiyomi
+final readonly class Tachiyomi
 {
     /**
      * @param string $url          立ち読みページの URL
@@ -17,9 +17,9 @@ final class Tachiyomi
      */
     public function __construct(
         #[MapFromKey('URL')]
-        public readonly string $url,
+        public string $url,
         #[MapFromKey('affiliateURL')]
-        public readonly string $affiliateUrl,
+        public string $affiliateUrl,
     ) {
     }
 }

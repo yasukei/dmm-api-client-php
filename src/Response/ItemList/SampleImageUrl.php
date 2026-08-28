@@ -9,7 +9,7 @@ use CuyZ\Valinor\Mapper\Configurator\MapFromKey;
 /**
  * サイズ別のサンプル画像。
  */
-final class SampleImageUrl
+final readonly class SampleImageUrl
 {
     /**
      * @param SampleImages      $sampleS 小サイズのサンプル画像
@@ -17,9 +17,9 @@ final class SampleImageUrl
      */
     public function __construct(
         #[MapFromKey('sample_s')]
-        public readonly SampleImages $sampleS,
+        public SampleImages $sampleS,
         #[MapFromKey('sample_l')]
-        public readonly ?SampleImages $sampleL = null,
+        public ?SampleImages $sampleL = null,
     ) {
     }
 }

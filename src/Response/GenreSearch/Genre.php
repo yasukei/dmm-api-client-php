@@ -9,7 +9,7 @@ use CuyZ\Valinor\Mapper\Configurator\MapFromKey;
 /**
  * ジャンル情報 1 件。
  */
-final class Genre
+final readonly class Genre
 {
     /**
      * @param string $genreId ジャンル ID（例: "43"）
@@ -19,11 +19,11 @@ final class Genre
      */
     public function __construct(
         #[MapFromKey('genre_id')]
-        public readonly string $genreId,
-        public readonly string $name,
-        public readonly string $ruby,
+        public string $genreId,
+        public string $name,
+        public string $ruby,
         #[MapFromKey('list_url')]
-        public readonly string $listUrl,
+        public string $listUrl,
     ) {
     }
 }

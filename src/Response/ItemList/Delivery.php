@@ -9,7 +9,7 @@ use CuyZ\Valinor\Mapper\Configurator\MapFromKey;
 /**
  * 配信タイプごとの価格。
  */
-final class Delivery
+final readonly class Delivery
 {
     /**
      * @param string $type      配信タイプ（例: basket、download、stream、4k）
@@ -17,10 +17,10 @@ final class Delivery
      * @param string $listPrice 定価（例: "3000"）
      */
     public function __construct(
-        public readonly string $type,
-        public readonly string $price,
+        public string $type,
+        public string $price,
         #[MapFromKey('list_price')]
-        public readonly string $listPrice,
+        public string $listPrice,
     ) {
     }
 }

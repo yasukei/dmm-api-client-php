@@ -9,15 +9,15 @@ use DmmApiClient\Response\Common\RequestEcho;
 /**
  * 作者検索 API (`/AuthorSearch`) のレスポンス。
  */
-final class AuthorSearchResponse
+final readonly class AuthorSearchResponse
 {
     /**
      * @param AuthorSearchResult $result  検索結果
      * @param RequestEcho|null   $request 送信したリクエストパラメータのエコーバック
      */
     public function __construct(
-        public readonly AuthorSearchResult $result,
-        public readonly ?RequestEcho $request = null,
+        public AuthorSearchResult $result,
+        public ?RequestEcho $request = null,
     ) {
     }
 }

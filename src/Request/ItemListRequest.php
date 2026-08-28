@@ -11,7 +11,7 @@ use DmmApiClient\SiteCode;
 /**
  * 商品情報 API (`/ItemList`) のリクエスト。
  */
-final class ItemListRequest implements Request
+final readonly class ItemListRequest implements Request
 {
     /** 取得件数の最小値。 */
     public const int HITS_MIN = 1;
@@ -42,18 +42,18 @@ final class ItemListRequest implements Request
      * @throws InvalidArgumentException $hits / $offset が範囲外の場合
      */
     public function __construct(
-        public readonly SiteCode $site,
-        public readonly ?string $service = null,
-        public readonly ?string $floor = null,
-        public readonly ?string $keyword = null,
-        public readonly ?string $cid = null,
-        public readonly array $articles = [],
-        public readonly ?DateTimeImmutable $gteDate = null,
-        public readonly ?DateTimeImmutable $lteDate = null,
-        public readonly ?MonoStock $monoStock = null,
-        public readonly ?ItemListSort $sort = null,
-        public readonly ?int $hits = null,
-        public readonly ?int $offset = null,
+        public SiteCode $site,
+        public ?string $service = null,
+        public ?string $floor = null,
+        public ?string $keyword = null,
+        public ?string $cid = null,
+        public array $articles = [],
+        public ?DateTimeImmutable $gteDate = null,
+        public ?DateTimeImmutable $lteDate = null,
+        public ?MonoStock $monoStock = null,
+        public ?ItemListSort $sort = null,
+        public ?int $hits = null,
+        public ?int $offset = null,
     ) {
         if ($hits !== null && ($hits < self::HITS_MIN || $hits > self::HITS_MAX)) {
             throw new InvalidArgumentException(

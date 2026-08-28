@@ -9,7 +9,7 @@ use CuyZ\Valinor\Mapper\Configurator\MapFromKey;
 /**
  * 作者情報 1 件。
  */
-final class Author
+final readonly class Author
 {
     /**
      * @param string      $authorId    作者 ID（例: "21414"）
@@ -20,13 +20,13 @@ final class Author
      */
     public function __construct(
         #[MapFromKey('author_id')]
-        public readonly string $authorId,
-        public readonly string $name,
-        public readonly string $ruby,
+        public string $authorId,
+        public string $name,
+        public string $ruby,
         #[MapFromKey('another_name')]
-        public readonly ?string $anotherName = null,
+        public ?string $anotherName = null,
         #[MapFromKey('list_url')]
-        public readonly ?string $listUrl = null,
+        public ?string $listUrl = null,
     ) {
     }
 }

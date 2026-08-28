@@ -10,17 +10,17 @@ use DateTimeImmutable;
 /**
  * 女優情報 1 件。
  */
-final class Actress
+final readonly class Actress
 {
     /**
      * @param string                 $id          女優 ID（例: "12345"）
      * @param string                 $name        女優名
      * @param string                 $ruby        女優名かな
-     * @param int|null               $bust        バスト（cm）
+     * @param string|null            $bust        バスト（cm）
      * @param string|null            $cup         カップ数（例: G）
-     * @param int|null               $waist       ウエスト（cm）
-     * @param int|null               $hip         ヒップ（cm）
-     * @param int|null               $height      身長（cm）
+     * @param string|null            $waist       ウエスト（cm）
+     * @param string|null            $hip         ヒップ（cm）
+     * @param string|null            $height      身長（cm）
      * @param DateTimeImmutable|null $birthday    生年月日
      * @param string|null            $bloodType   血液型（例: A）
      * @param string|null            $hobby       趣味
@@ -29,23 +29,23 @@ final class Actress
      * @param ActressListUrl|null    $listUrl     出演作品一覧へのリンク
      */
     public function __construct(
-        public readonly string $id,
-        public readonly string $name,
-        public readonly string $ruby,
-        public readonly ?int $bust = null,
-        public readonly ?string $cup = null,
-        public readonly ?int $waist = null,
-        public readonly ?int $hip = null,
-        public readonly ?int $height = null,
-        public readonly ?DateTimeImmutable $birthday = null,
+        public string $id,
+        public string $name,
+        public string $ruby,
+        public ?string $bust = null,
+        public ?string $cup = null,
+        public ?string $waist = null,
+        public ?string $hip = null,
+        public ?string $height = null,
+        public ?DateTimeImmutable $birthday = null,
         #[MapFromKey('blood_type')]
-        public readonly ?string $bloodType = null,
-        public readonly ?string $hobby = null,
-        public readonly ?string $prefectures = null,
+        public ?string $bloodType = null,
+        public ?string $hobby = null,
+        public ?string $prefectures = null,
         #[MapFromKey('imageURL')]
-        public readonly ?ActressImageUrl $imageUrl = null,
+        public ?ActressImageUrl $imageUrl = null,
         #[MapFromKey('listURL')]
-        public readonly ?ActressListUrl $listUrl = null,
+        public ?ActressListUrl $listUrl = null,
     ) {
     }
 }

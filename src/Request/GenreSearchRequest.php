@@ -9,7 +9,7 @@ use DmmApiClient\Exception\InvalidArgumentException;
 /**
  * ジャンル検索 API (`/GenreSearch`) のリクエスト。
  */
-final class GenreSearchRequest implements Request
+final readonly class GenreSearchRequest implements Request
 {
     /** 取得件数の最小値。 */
     public const int HITS_MIN = 1;
@@ -29,10 +29,10 @@ final class GenreSearchRequest implements Request
      * @throws InvalidArgumentException $floorId が空、または $hits / $offset が範囲外の場合
      */
     public function __construct(
-        public readonly string $floorId,
-        public readonly ?string $initial = null,
-        public readonly ?int $hits = null,
-        public readonly ?int $offset = null,
+        public string $floorId,
+        public ?string $initial = null,
+        public ?int $hits = null,
+        public ?int $offset = null,
     ) {
         if ($floorId === '') {
             throw new InvalidArgumentException('floor_id must not be empty.');

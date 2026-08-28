@@ -1,0 +1,30 @@
+{
+  "request": { "parameters": { "api_id": "MY_API_ID", "affiliate_id": "myaffiliateid-999", "floor_id": "43", "output": "json" } },
+  "result": {
+    "status": 200,
+    "result_count": 2,
+    "total_count": 87,
+    "first_position": 1,
+    "site_name": "FANZA（アダルト）",
+    "site_code": "FANZA",
+    "service_name": "動画",
+    "service_code": "digital",
+    "floor_id": "43",
+    "floor_name": "ビデオ",
+    "floor_code": "videoa",
+    "maker": [
+      {
+        "maker_id": "45276",
+        "name": "サンプルメーカー",
+        "ruby": "さんぷるめーかー",
+        "list_url": "https://al.dmm.co.jp/?lurl=maker1&af_id=myaffiliateid-999"
+      },
+      {
+        "maker_id": "4025",
+        "name": "単体作品",
+        "ruby": "たんたいさくひん",
+        "list_url": "https://al.dmm.co.jp/?lurl=maker2&af_id=myaffiliateid-999"
+      }
+    ]
+  }
+}

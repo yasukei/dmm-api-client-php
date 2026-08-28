@@ -1,0 +1,94 @@
+{
+  "request": {
+    "parameters": {
+      "api_id": "MY_API_ID",
+      "affiliate_id": "myaffiliateid-999",
+      "site": "FANZA",
+      "service": "digital",
+      "floor": "videoa",
+      "hits": "2",
+      "output": "json"
+    }
+  },
+  "result": {
+    "status": 200,
+    "result_count": 2,
+    "total_count": 12450,
+    "first_position": 1,
+    "items": [
+      {
+        "service_code": "digital",
+        "service_name": "動画",
+        "floor_code": "videoa",
+        "floor_name": "ビデオ",
+        "category_name": "ビデオ (動画)",
+        "content_id": "mizd00320",
+        "product_id": "mizd00320",
+        "title": "サンプル動画作品",
+        "volume": "120",
+        "review": { "count": 12, "average": "4.20" },
+        "URL": "https://video.dmm.co.jp/av/content/?id=mizd00320",
+        "affiliateURL": "https://al.dmm.co.jp/?lurl=https%3A%2F%2Fvideo.dmm.co.jp%2Fav%2Fcontent%2F%3Fid%3Dmizd00320&af_id=myaffiliateid-999",
+        "imageURL": {
+          "list": "https://pics.dmm.co.jp/digital/video/mizd00320/mizd00320pt.jpg",
+          "small": "https://pics.dmm.co.jp/digital/video/mizd00320/mizd00320ps.jpg",
+          "large": "https://pics.dmm.co.jp/digital/video/mizd00320/mizd00320pl.jpg"
+        },
+        "sampleImageURL": {
+          "sample_s": {
+            "image": [
+              "https://pics.dmm.co.jp/digital/video/mizd00320/mizd00320-1.jpg",
+              "https://pics.dmm.co.jp/digital/video/mizd00320/mizd00320-2.jpg"
+            ]
+          },
+          "sample_l": {
+            "image": [
+              "https://pics.dmm.co.jp/digital/video/mizd00320/mizd00320jp-1.jpg"
+            ]
+          }
+        },
+        "sampleMovieURL": {
+          "size_476_306": "https://www.dmm.co.jp/litevideo/-/part/=/cid=mizd00320/size=476_306/",
+          "size_560_360": "https://www.dmm.co.jp/litevideo/-/part/=/cid=mizd00320/size=560_360/",
+          "size_644_414": "https://www.dmm.co.jp/litevideo/-/part/=/cid=mizd00320/size=644_414/",
+          "size_720_480": "https://www.dmm.co.jp/litevideo/-/part/=/cid=mizd00320/size=720_480/",
+          "pc_flag": 1,
+          "sp_flag": 1
+        },
+        "prices": {
+          "price": "300~",
+          "deliveries": {
+            "delivery": [
+              { "type": "stream", "price": "300", "list_price": "500" },
+              { "type": "download", "price": "1800", "list_price": "1800" },
+              { "type": "4k", "price": "2480", "list_price": "2480" }
+            ]
+          }
+        },
+        "date": "2023-10-15 10:00:00",
+        "iteminfo": {
+          "genre": [
+            { "id": "6533", "name": "ハイビジョン" },
+            { "id": "4025", "name": "単体作品" }
+          ],
+          "series": [{ "id": "216861", "name": "サンプルシリーズ" }],
+          "maker": [{ "id": "45276", "name": "サンプルメーカー" }],
+          "actress": [{ "id": "1078970", "name": "サンプル女優" }],
+          "director": [{ "id": "104789", "name": "サンプル監督" }],
+          "label": [{ "id": "26527", "name": "サンプルレーベル" }]
+        }
+      },
+      {
+        "service_code": "mono",
+        "service_name": "通販",
+        "floor_code": "dvd",
+        "floor_name": "DVD",
+        "category_name": "DVD通販",
+        "content_id": "n_709sample01",
+        "title": "最小構成の商品",
+        "URL": "https://www.dmm.co.jp/mono/dvd/-/detail/=/cid=n_709sample01/",
+        "affiliateURL": "https://al.dmm.co.jp/?lurl=example&af_id=myaffiliateid-999"
+      }
+    ]
+  }
+}

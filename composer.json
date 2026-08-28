@@ -10,12 +10,18 @@
     ],
     "require": {
         "php": ">=8.3",
-        "cuyz/valinor": "^2.6"
+        "cuyz/valinor": "^2.6",
+        "php-http/discovery": "^1.19",
+        "psr/http-client": "^1.0",
+        "psr/http-factory": "^1.1"
     },
     "require-dev": {
-        "pestphp/pest": "^3.0",
-        "phpstan/phpstan": "^2.2",
         "friendsofphp/php-cs-fixer": "^3.64",
+        "guzzlehttp/guzzle": "^7.8",
+        "nyholm/psr7": "^1.8.2",
+        "pestphp/pest": "^3.0",
+        "phpstan/extension-installer": "^1.4",
+        "phpstan/phpstan": "^2.2",
         "rector/rector": "^2.0"
     },
     "autoload": {
@@ -39,7 +45,9 @@
     "config": {
         "sort-packages": true,
         "allow-plugins": {
-            "pestphp/pest-plugin": true
+            "pestphp/pest-plugin": true,
+            "php-http/discovery": true,
+            "phpstan/extension-installer": true
         }
     },
     "minimum-stability": "stable",

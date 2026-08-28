@@ -11,7 +11,7 @@ use DmmApiClient\Exception\InvalidArgumentException;
  *
  * `article` と `article_id` の対に対応する。
  */
-final class ArticleFilter
+final readonly class ArticleFilter
 {
     /**
      * @param ArticleType $type 絞り込み対象のカテゴリ
@@ -20,8 +20,8 @@ final class ArticleFilter
      * @throws InvalidArgumentException $id が空の場合
      */
     public function __construct(
-        public readonly ArticleType $type,
-        public readonly string $id,
+        public ArticleType $type,
+        public string $id,
     ) {
         if ($id === '') {
             throw new InvalidArgumentException('article_id must not be empty.');

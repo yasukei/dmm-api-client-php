@@ -1,0 +1,9 @@
+{
+  "request": { "parameters": { "api_id": "MY_API_ID", "affiliate_id": "myaffiliateid-999", "output": "json" } },
+  "result": {
+    "status": 200,
+    "result_count": 0,
+    "total_count": 0,
+    "first_position": 1
+  }
+}

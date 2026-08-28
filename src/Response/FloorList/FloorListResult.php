@@ -9,13 +9,13 @@ namespace DmmApiClient\Response\FloorList;
  *
  * 他の API と異なり、ステータスコードやページング情報を含まない。
  */
-final class FloorListResult
+final readonly class FloorListResult
 {
     /**
      * @param list<Site> $site サイトの一覧
      */
     public function __construct(
-        public readonly array $site = [],
+        public array $site = [],
     ) {
     }
 }

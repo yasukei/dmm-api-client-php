@@ -9,7 +9,7 @@ use CuyZ\Valinor\Mapper\Configurator\MapFromKey;
 /**
  * サンプル動画のプレイヤー URL とフラグ。
  */
-final class SampleMovieUrl
+final readonly class SampleMovieUrl
 {
     /**
      * @param int         $pcFlag      PC 向けサンプル動画の有無（0: なし、1: あり）
@@ -21,17 +21,17 @@ final class SampleMovieUrl
      */
     public function __construct(
         #[MapFromKey('pc_flag')]
-        public readonly int $pcFlag,
+        public int $pcFlag,
         #[MapFromKey('sp_flag')]
-        public readonly int $spFlag,
+        public int $spFlag,
         #[MapFromKey('size_476_306')]
-        public readonly ?string $size476x306 = null,
+        public ?string $size476x306 = null,
         #[MapFromKey('size_560_360')]
-        public readonly ?string $size560x360 = null,
+        public ?string $size560x360 = null,
         #[MapFromKey('size_640_400')]
-        public readonly ?string $size640x400 = null,
+        public ?string $size640x400 = null,
         #[MapFromKey('size_720_480')]
-        public readonly ?string $size720x480 = null,
+        public ?string $size720x480 = null,
     ) {
     }
 }

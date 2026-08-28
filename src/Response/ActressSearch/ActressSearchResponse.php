@@ -9,15 +9,15 @@ use DmmApiClient\Response\Common\RequestEcho;
 /**
  * 女優検索 API (`/ActressSearch`) のレスポンス。
  */
-final class ActressSearchResponse
+final readonly class ActressSearchResponse
 {
     /**
      * @param ActressSearchResult $result  検索結果
      * @param RequestEcho|null    $request 送信したリクエストパラメータのエコーバック
      */
     public function __construct(
-        public readonly ActressSearchResult $result,
-        public readonly ?RequestEcho $request = null,
+        public ActressSearchResult $result,
+        public ?RequestEcho $request = null,
     ) {
     }
 }

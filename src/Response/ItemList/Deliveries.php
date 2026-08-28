@@ -7,13 +7,13 @@ namespace DmmApiClient\Response\ItemList;
 /**
  * 配信タイプ別価格の一覧。
  */
-final class Deliveries
+final readonly class Deliveries
 {
     /**
      * @param list<Delivery> $delivery 配信タイプごとの価格
      */
     public function __construct(
-        public readonly array $delivery = [],
+        public array $delivery = [],
     ) {
     }
 }
