@@ -27,6 +27,7 @@ final readonly class ItemInfo
      * @param list<ItemInfoElement> $color       カラー
      * @param list<ItemInfoElement> $size        サイズ
      * @param list<ItemInfoElement> $manufacture 出版社。電子書籍のフロアだけが返す
+     * @param list<ItemInfoElement> $artist      アーティスト。CD のフロアだけが返す
      */
     public function __construct(
         public array $genre = [],
@@ -41,6 +42,7 @@ final readonly class ItemInfo
         public array $color = [],
         public array $size = [],
         public array $manufacture = [],
+        public array $artist = [],
     ) {
     }
 }

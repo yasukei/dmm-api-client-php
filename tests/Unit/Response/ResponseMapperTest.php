@@ -156,6 +156,22 @@ test('iteminfo をマッピングし、無いキーは空配列にする', funct
         ->and($itemInfo?->color)->toBe([]);
 });
 
+test('CD のアーティストと読み仮名をマッピングする', function (): void {
+    // 読み仮名は人物系だけが持ち、1 商品に複数のアーティストが並ぶこともある。
+    $payload = Fixture::decodedWith('item-list', ['result', 'items', 0, 'iteminfo', 'artist'], [
+        ['id' => 188080, 'name' => 'サンプルアーティスト', 'ruby' => 'さんぷるあーてぃすと'],
+        ['id' => 83163, 'name' => 'サンプルバンド', 'ruby' => 'さんぷるばんど'],
+    ]);
+
+    $itemInfo = responseMapper()->itemList($payload)->result->items[0]->iteminfo;
+
+    expect($itemInfo?->artist)->toHaveCount(2)
+        ->and($itemInfo?->artist[0]->name)->toBe('サンプルアーティスト')
+        ->and($itemInfo?->artist[0]->ruby)->toBe('さんぷるあーてぃすと')
+        // ジャンルは読み仮名を持たない。
+        ->and($itemInfo?->genre[0]->ruby)->toBeNull();
+});
+
 test('電子書籍の出版社をマッピングする', function (): void {
     // manufacture は電子書籍のフロアだけが返し、常に 1 件だけ入っている。
     $payload = Fixture::decodedWith('item-list', ['result', 'items', 0, 'iteminfo', 'manufacture'], [
