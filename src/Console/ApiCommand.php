@@ -32,7 +32,25 @@ abstract class ApiCommand implements Command
      *
      * 読み取りと書き戻しの両方に使うため、`!` を含めずに持つ（{@see self::dateOption()}）。
      */
-    private const array DATE_FORMATS = ['Y-m-d\TH:i:s', 'Y-m-d H:i:s', 'Y-m-d'];
+    private const array DATE_FORMATS = ['Y-m-d\TH:i:s', 'Y-m-d H:i:s', self::DATE_ONLY_FORMAT];
+
+    /** 時刻を伴わない書式。省略された時刻をどう埋めるかは、この書式に一致したかで決まる。 */
+    private const string DATE_ONLY_FORMAT = 'Y-m-d';
+
+    /**
+     * 日付だけを取るオプションの、ヘルプ上の値の表記（例: `--gte-birthday=DATE`）。
+     *
+     * 生年月日のように、API へ `Y-m-d` で送る値に使う。
+     */
+    public const string DATE_PLACEHOLDER = 'DATE';
+
+    /**
+     * 日付と時刻を取るオプションの、ヘルプ上の値の表記（例: `--gte-date=DATETIME`）。
+     *
+     * API へ `Y-m-d\TH:i:s` で送る値に使う。時刻を省略して書けるため、
+     * 何時何分として扱われるかをヘルプで補う必要がある。
+     */
+    public const string DATETIME_PLACEHOLDER = 'DATETIME';
 
     private readonly ResponseMapper $responseMapper;
 
@@ -210,9 +228,13 @@ abstract class ApiCommand implements Command
     /**
      * 日時として解釈したオプションの値。
      *
+     * @param bool $endOfDay 時刻を伴わない値を、その日の終わり（23:59:59）として読む。
+     *                       上限を表すオプションに使う。`--lte-date=2016-04-01` を
+     *                       00:00:00 と読むと、その日の商品がまるごと外れてしまうため
+     *
      * @throws UsageException 対応する書式で読めない場合、または存在しない日付の場合
      */
-    final protected function dateOption(Input $input, string $name): ?DateTimeImmutable
+    final protected function dateOption(Input $input, string $name, bool $endOfDay = false): ?DateTimeImmutable
     {
         $value = $input->option($name);
 
@@ -234,9 +256,13 @@ abstract class ApiCommand implements Command
             // 切り上げは getLastErrors() の警告としても取れるが、あの窓口は書式違いや
             // 区切り文字の欠落も同じ場所から返すうえ、直近 1 回分の状態を
             // DateTime と共有するグローバルな枠に置く。ここでは書式だけを見れば足りる。
-            if ($date !== false && $date->format($format) === $padded) {
-                return $date;
+            if ($date === false || $date->format($format) !== $padded) {
+                continue;
             }
+
+            return $endOfDay && $format === self::DATE_ONLY_FORMAT
+                ? $date->setTime(23, 59, 59)
+                : $date;
         }
 
         throw new UsageException(sprintf(

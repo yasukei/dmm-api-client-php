@@ -168,5 +168,47 @@ final readonly class Application
         foreach ($options as $option) {
             $this->output->line(sprintf('  %s  %s', str_pad($option->label(), $width), $option->description));
         }
+
+        $this->printDateFormats($options);
+    }
+
+    /**
+     * 日付を取るオプションがあれば、受け付ける書式を補足する。
+     *
+     * 書式は個々のオプションではなく DATE / DATETIME という値の性質なので、オプション
+     * 1 行ずつに書くと同じ説明が並ぶ。オプション一覧の後にまとめて 1 度だけ出す。
+     *
+     * どちらを取るかは API 側の都合で決まる。商品の発売日は時刻まで絞り込めるが、
+     * 女優の生年月日は日付までしか送らない。
+     *
+     * @param list<OptionDefinition> $options
+     */
+    private function printDateFormats(array $options): void
+    {
+        $notes = [
+            ApiCommand::DATETIME_PLACEHOLDER => [
+                'DATETIME は 2016-04-01、2016-04-01T12:34:56、2016-04-01 12:34:56 のいずれかで指定する。',
+                '時刻を省略した場合、--gte-date は 00:00:00、--lte-date は 23:59:59 として扱う。',
+                '空白を含む形はシェルの引用符が要る。',
+            ],
+            ApiCommand::DATE_PLACEHOLDER => [
+                'DATE は 1990-01-01 のように日付で指定する。時刻は送信しない。',
+            ],
+        ];
+
+        $placeholders = array_column($options, 'placeholder');
+
+        foreach ($notes as $placeholder => $lines) {
+            if (! in_array($placeholder, $placeholders, true)) {
+                continue;
+            }
+
+            $this->output->line();
+            $this->output->line('日付:');
+
+            foreach ($lines as $line) {
+                $this->output->line('  ' . $line);
+            }
+        }
     }
 }
