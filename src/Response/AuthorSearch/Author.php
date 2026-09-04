@@ -8,6 +8,9 @@ use CuyZ\Valinor\Mapper\Configurator\MapFromKey;
 
 /**
  * 作者情報 1 件。
+ *
+ * `list_url` はキーごと返らないことがある。一覧ページを持たないフロアがあり、
+ * 同じ ID でもフロアによって返る・返らないが変わる。
  */
 final readonly class Author
 {
@@ -15,7 +18,7 @@ final readonly class Author
      * @param string      $authorId    作者 ID（例: "21414"）
      * @param string      $name        作者名
      * @param string      $ruby        作者名かな
-     * @param string      $listUrl     この作者の作品一覧へのアフィリエイトリンク
+     * @param string|null $listUrl     この作者の作品一覧へのアフィリエイトリンク
      * @param string|null $anotherName 別名義（スラッシュ区切り、例: 別名義/アナザーネーム）
      */
     public function __construct(
@@ -24,7 +27,7 @@ final readonly class Author
         public string $name,
         public string $ruby,
         #[MapFromKey('list_url')]
-        public string $listUrl,
+        public ?string $listUrl = null,
         #[MapFromKey('another_name')]
         public ?string $anotherName = null,
     ) {

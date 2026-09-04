@@ -253,6 +253,14 @@ test('検索結果が 0 件のときの total_count は数値で返る', functio
     expect(responseMapper()->genreSearch($payload)->result->totalCount)->toBe(0);
 });
 
+test('list_url が返らないフロアの結果もマッピングできる', function (): void {
+    // 一覧ページを持たないフロアでは、list_url が null ではなくキーごと返らない。
+    // どのフロアで返らないかは API 側の都合で、同じ ID でもフロアによって変わる。
+    $payload = Fixture::decodedWithout('genre-search', ['result', 'genre', 0, 'list_url']);
+
+    expect(responseMapper()->genreSearch($payload)->result->genre[0]->listUrl)->toBeNull();
+});
+
 test('メーカー検索のレスポンスをマッピングする', function (): void {
     $response = responseMapper()->makerSearch(Fixture::decoded('maker-search'));
 
