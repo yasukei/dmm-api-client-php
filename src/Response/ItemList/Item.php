@@ -9,6 +9,10 @@ use DateTimeImmutable;
 
 /**
  * 商品情報 1 件。
+ *
+ * `title` と `URL` は、仕様上は必ず返ると期待したい項目だが、実際には欠けている商品が存在する。
+ * 登録漏れと思われ、そうした商品では `affiliateURL` も `lurl=` が空のまま返ってくる。
+ * 1 件の欠けたレコードでページ全体を取り落とさないよう、どちらも省略可能にしている。
  */
 final readonly class Item
 {
@@ -19,9 +23,9 @@ final readonly class Item
      * @param string                 $floorName      フロア名（例: ビデオ）
      * @param string                 $categoryName   カテゴリ名（例: ビデオ (動画)）
      * @param string                 $contentId      商品 ID（例: mizd00320）
-     * @param string                 $title          商品タイトル
-     * @param string                 $url            商品ページの URL
      * @param string                 $affiliateUrl   商品ページのアフィリエイト URL
+     * @param string|null            $title          商品タイトル。欠けている商品がまれにある
+     * @param string|null            $url            商品ページの URL。欠けている商品がまれにある
      * @param string|null            $productId      品番（例: 15dss00145dl）
      * @param string|null            $volume         収録時間（分）またはページ数（例: "120"）
      * @param string|null            $number         巻数（例: "1"）。電子書籍のフロアだけが返す
@@ -47,11 +51,11 @@ final readonly class Item
         public string $categoryName,
         #[MapFromKey('content_id')]
         public string $contentId,
-        public string $title,
-        #[MapFromKey('URL')]
-        public string $url,
         #[MapFromKey('affiliateURL')]
         public string $affiliateUrl,
+        public ?string $title = null,
+        #[MapFromKey('URL')]
+        public ?string $url = null,
         #[MapFromKey('product_id')]
         public ?string $productId = null,
         public ?string $volume = null,

@@ -155,6 +155,26 @@ test('iteminfo をマッピングし、無いキーは空配列にする', funct
         ->and($itemInfo?->color)->toBe([]);
 });
 
+test('title と URL が欠けている商品もマッピングできる', function (): void {
+    // 登録漏れと思われる商品が実在する。その場合 affiliateURL も lurl= が空で返る。
+    $payload = Fixture::decodedWith('item-list', ['result', 'items', 1], [
+        'service_code' => 'dmmtv',
+        'service_name' => 'DMMTV',
+        'floor_code' => 'dmmtv_video',
+        'floor_name' => 'DMMTV',
+        'category_name' => 'DMMTV',
+        'content_id' => '5267mytheater00019',
+        'affiliateURL' => 'https://al.dmm.com/?lurl=&af_id=myaffiliateid-999&ch=api',
+    ]);
+
+    $item = responseMapper()->itemList($payload)->result->items[1];
+
+    expect($item->contentId)->toBe('5267mytheater00019')
+        ->and($item->title)->toBeNull()
+        ->and($item->url)->toBeNull()
+        ->and($item->affiliateUrl)->toContain('lurl=&');
+});
+
 test('メーカーの「その他」枠は文字列の ID で返る', function (): void {
     // 実在のメーカーを指す ID ではなく、該当なしを表す区分。数値 ID のメーカーに続けて並ぶ。
     $payload = Fixture::decodedWith('item-list', ['result', 'items', 0, 'iteminfo', 'maker'], [
@@ -384,7 +404,8 @@ test('数値を表す文字列でも int には暗黙変換しない', function 
 });
 
 test('必須項目が欠けていれば検証エラーにする', function (): void {
-    $payload = Fixture::decodedWithout('item-list', ['result', 'items', 0, 'title']);
+    // title と URL は欠けることがあるので、例には使えない。content_id は全商品にあった。
+    $payload = Fixture::decodedWithout('item-list', ['result', 'items', 0, 'content_id']);
 
     expect(fn (): ItemListResponse => responseMapper()->itemList($payload))
         ->toThrow(ResponseValidationException::class);
