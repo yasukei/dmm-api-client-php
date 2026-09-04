@@ -9,11 +9,13 @@ use DmmApiClient\SiteCode;
 
 /**
  * メーカー検索 API のレスポンスの `result` 部。
+ *
+ * `status` は文字列で返る。商品情報 API が数値で返すのとは揃っていない。
  */
 final readonly class MakerSearchResult
 {
     /**
-     * @param int         $status        ステータスコード
+     * @param string      $status        ステータスコード
      * @param int         $resultCount   このレスポンスに含まれる件数
      * @param int         $totalCount    検索結果の総件数
      * @param int         $firstPosition 検索開始位置（1 始まり）
@@ -27,7 +29,7 @@ final readonly class MakerSearchResult
      * @param list<Maker> $maker         検索結果のメーカー一覧
      */
     public function __construct(
-        public int $status,
+        public string $status,
         #[MapFromKey('result_count')]
         public int $resultCount,
         #[MapFromKey('total_count')]

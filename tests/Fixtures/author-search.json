@@ -1,7 +1,7 @@
 {
   "request": { "parameters": { "api_id": "MY_API_ID", "affiliate_id": "myaffiliateid-999", "floor_id": "80", "output": "json" } },
   "result": {
-    "status": 200,
+    "status": "200",
     "result_count": 2,
     "total_count": 412,
     "first_position": 1,

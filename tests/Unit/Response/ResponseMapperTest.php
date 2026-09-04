@@ -208,6 +208,8 @@ test('ジャンル検索のレスポンスをマッピングする', function ()
     $response = responseMapper()->genreSearch(Fixture::decoded('genre-search'));
 
     expect($response)->toBeInstanceOf(GenreSearchResponse::class)
+        // 商品情報 API は数値で返すが、検索系は文字列で返す。
+        ->and($response->result->status)->toBe('200')
         ->and($response->result->siteCode)->toBe(SiteCode::Fanza)
         ->and($response->result->siteName)->toBe('FANZA（アダルト）')
         ->and($response->result->serviceCode)->toBe('digital')
