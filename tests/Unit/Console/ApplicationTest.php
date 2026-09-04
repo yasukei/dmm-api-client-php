@@ -20,6 +20,18 @@ function runApplication(array $arguments): array
     return ['code' => $code, 'stdout' => $captured->stdout(), 'stderr' => $captured->stderr()];
 }
 
+beforeEach(function (): void {
+    // 環境変数は .env より優先される。開発環境に置かれた .env を
+    // 拾って結果が変わらないよう、テスト用の値を明示的に置く。
+    putenv('DMM_API_ID=MY_API_ID');
+    putenv('DMM_AFFILIATE_ID=myaffiliateid-999');
+});
+
+afterEach(function (): void {
+    putenv('DMM_API_ID');
+    putenv('DMM_AFFILIATE_ID');
+});
+
 test('引数が無ければコマンド一覧を出す', function (): void {
     $result = runApplication([]);
 
@@ -28,9 +40,43 @@ test('引数が無ければコマンド一覧を出す', function (): void {
         ->and($result['stdout'])->toContain('floor-list');
 });
 
-scenario('--help と -h でコマンド一覧を出す', function (string $flag): void {
-    expect(runApplication([$flag])['stdout'])->toContain('dmm <command> [options]');
-})->with([['--help'], ['-h']]);
+test('--help でコマンド一覧を出す', function (): void {
+    expect(runApplication(['--help'])['stdout'])->toContain('dmm <command> [options]');
+});
+
+test('短いオプションは受け付けない', function (): void {
+    // このコマンドが持つのは長いオプションだけ。-h も例外にしない。
+    $result = runApplication(['-h']);
+
+    expect($result['code'])->toBe(Application::EXIT_USAGE)
+        ->and($result['stderr'])->toContain('Unknown command "-h"')
+        ->and($result['stdout'])->toContain('dmm <command> [options]');
+});
+
+test('コマンドの --help は使い方を出す', function (): void {
+    $result = runApplication(['item-list', '--help']);
+
+    expect($result['code'])->toBe(Application::EXIT_SUCCESS)
+        ->and($result['stdout'])->toContain('dmm item-list [options]')
+        ->and($result['stdout'])->toContain('--site');
+});
+
+test('オプションの値として書かれた -h を横取りしない', function (): void {
+    // パースの前に引数を走査していると、これがヘルプ表示になってしまう。
+    $result = runApplication(['item-list', '--site=FANZA', '--keyword', '-h', '--dry-run']);
+
+    expect($result['code'])->toBe(Application::EXIT_SUCCESS)
+        ->and($result['stdout'])->toContain('keyword=-h')
+        ->and($result['stdout'])->not->toContain('dmm item-list [options]');
+});
+
+test('コマンドの -h は使い方の誤りとして扱う', function (): void {
+    $result = runApplication(['item-list', '-h']);
+
+    expect($result['code'])->toBe(Application::EXIT_USAGE)
+        ->and($result['stderr'])->toContain('Unexpected argument "-h"')
+        ->and($result['stderr'])->toContain('Run "dmm item-list --help" for usage.');
+});
 
 test('コマンド一覧に認証情報の渡し方を書く', function (): void {
     $stdout = runApplication([])['stdout'];

@@ -56,7 +56,7 @@ final readonly class Application
         $tokens = array_slice($argv, 1);
         $name = $tokens[0] ?? null;
 
-        if ($name === null || $name === '--help' || $name === '-h') {
+        if ($name === null || $name === '--help') {
             $this->printApplicationHelp();
 
             return self::EXIT_SUCCESS;
@@ -74,14 +74,17 @@ final readonly class Application
 
         $arguments = array_slice($tokens, 1);
 
-        if (in_array('--help', $arguments, true) || in_array('-h', $arguments, true)) {
-            $this->printCommandHelp($command);
-
-            return self::EXIT_SUCCESS;
-        }
-
         try {
             $input = Input::parse($arguments, $command->options());
+
+            // ヘルプはパースを通してから判定する。パースの前に引数を走査すると、
+            // オプションとして書かれた --help と、オプションの値として書かれた
+            // --help を区別できず、値のつもりの指定を横取りしてしまう。
+            if ($input->flag('help')) {
+                $this->printCommandHelp($command);
+
+                return self::EXIT_SUCCESS;
+            }
 
             return $command->execute($input, $this->loadEnvironment($input), $this->output);
         } catch (UsageException | InvalidArgumentException $exception) {
