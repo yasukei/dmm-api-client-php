@@ -56,6 +56,7 @@ final readonly class Reporter
             'validation-ok' => 0,
             'validation-failed' => 0,
             'validation-skipped' => 0,
+            'unknown-keys' => 0,
         ];
 
         foreach ($this->records as $record) {
@@ -64,6 +65,10 @@ final readonly class Reporter
 
             if ($record->cached) {
                 $counts['cached']++;
+            }
+
+            if ($record->unknownKeys !== []) {
+                $counts['unknown-keys']++;
             }
         }
 
@@ -112,6 +117,21 @@ final readonly class Reporter
             }
         }
 
+        $unknown = $this->unknownKeyGroups();
+
+        if ($unknown !== []) {
+            $lines[] = '';
+            $lines[] = sprintf(
+                'keys the DTOs do not know (%d paths, %d responses):',
+                count($unknown),
+                $counts['unknown-keys'],
+            );
+
+            foreach ($unknown as $group) {
+                $lines[] = sprintf('  %-52s %5d', $group['path'], $group['requests']);
+            }
+        }
+
         $apiErrors = $this->apiErrorGroups();
 
         if ($apiErrors !== []) {
@@ -135,6 +155,7 @@ final readonly class Reporter
     public function writeFailures(): void
     {
         $groups = $this->failureGroups();
+        $unknownKeys = $this->unknownKeyGroups();
         $apiErrors = $this->apiErrorGroups();
         $transportErrors = $this->transportErrors();
 
@@ -145,19 +166,24 @@ final readonly class Reporter
         file_put_contents($this->run->file('failures.json'), Json::encode([
             'summary' => $this->counts(),
             'validationFailures' => $groups,
+            'unknownKeys' => $unknownKeys,
             'apiErrors' => $apiErrors,
             'transportErrors' => $transportErrors,
         ]) . PHP_EOL);
 
-        file_put_contents($this->run->file('failures.md'), $this->markdown($groups, $apiErrors, $transportErrors));
+        file_put_contents(
+            $this->run->file('failures.md'),
+            $this->markdown($groups, $unknownKeys, $apiErrors, $transportErrors),
+        );
     }
 
     /**
      * @param list<array{path: string, requests: int, messages: list<array{message: string, count: int}>, samples: list<array{file: string|null, label: string, uri: string, path: string, message: string, value: string}>}> $groups
+     * @param list<array{path: string, requests: int, messages: list<array{message: string, count: int}>, samples: list<array{file: string|null, label: string, uri: string, path: string, message: string, value: string}>}> $unknownKeys
      * @param list<array{requests: int, message: string, status: int|null, samples: list<string>}>                                                                                                                          $apiErrors
      * @param list<array{label: string, uri: string, message: string}>                                                                                                                                                      $transportErrors
      */
-    private function markdown(array $groups, array $apiErrors, array $transportErrors): string
+    private function markdown(array $groups, array $unknownKeys, array $apiErrors, array $transportErrors): string
     {
         $counts = $this->counts();
         $lines = [
@@ -214,6 +240,34 @@ final readonly class Reporter
             $lines[] = '';
         }
 
+        $lines[] = '## Keys the DTOs do not know';
+        $lines[] = '';
+        $lines[] = sprintf(
+            'Found by mapping each response a second time with a mapper that rejects unknown keys. '
+            . 'These do not fail the run — the DTOs ignore them — but they are what DMM returns and the library does not expose. '
+            . '(%d responses carry at least one.)',
+            $counts['unknown-keys'],
+        );
+        $lines[] = '';
+
+        if ($unknownKeys === []) {
+            $lines[] = 'None.';
+            $lines[] = '';
+        }
+
+        foreach ($unknownKeys as $group) {
+            $lines[] = sprintf('### `%s` (%d responses)', $group['path'], $group['requests']);
+            $lines[] = '';
+
+            foreach ($group['samples'] as $sample) {
+                $lines[] = sprintf('- `%s`', $sample['file'] ?? '(not saved)');
+                $lines[] = sprintf('  - request: %s', $sample['label']);
+                $lines[] = sprintf('  - value: `%s`', $sample['value']);
+            }
+
+            $lines[] = '';
+        }
+
         $lines[] = '## API errors';
         $lines[] = '';
 
@@ -254,18 +308,36 @@ final readonly class Reporter
      */
     private function failureGroups(): array
     {
+        return $this->groups(static fn (Record $record): array => $record->validation === Record::VALIDATION_FAILED
+            ? $record->errors
+            : []);
+    }
+
+    /**
+     * DTO が知らないキーを、同じ要領でパスごとに束ねる。
+     *
+     * @return list<array{path: string, requests: int, messages: list<array{message: string, count: int}>, samples: list<array{file: string|null, label: string, uri: string, path: string, message: string, value: string}>}>
+     */
+    private function unknownKeyGroups(): array
+    {
+        return $this->groups(static fn (Record $record): array => $record->unknownKeys);
+    }
+
+    /**
+     * @param callable(Record): list<array{path: string, message: string}> $select
+     *
+     * @return list<array{path: string, requests: int, messages: list<array{message: string, count: int}>, samples: list<array{file: string|null, label: string, uri: string, path: string, message: string, value: string}>}>
+     */
+    private function groups(callable $select): array
+    {
         /** @var array<string, array{requests: int, messages: array<string, int>, records: list<array{Record, array{path: string, message: string}}>}> $grouped */
         $grouped = [];
 
         foreach ($this->records as $record) {
-            if ($record->validation !== Record::VALIDATION_FAILED) {
-                continue;
-            }
-
             /** @var array<string, true> $seen このリクエストで既に数えたパス */
             $seen = [];
 
-            foreach ($record->errors as $error) {
+            foreach ($select($record) as $error) {
                 $path = self::normalizePath($error['path']);
                 $grouped[$path] ??= ['requests' => 0, 'messages' => [], 'records' => []];
 

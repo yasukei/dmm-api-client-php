@@ -36,6 +36,7 @@ final readonly class Record
      * @param array<string, string>                        $context       サイト・サービス・フロアの内訳
      * @param string                                       $uri           送信した URI（伏せ字済み）
      * @param list<array{path: string, message: string}>   $errors        検証エラー
+     * @param list<array{path: string, message: string}>   $unknownKeys   DTO が知らないキー
      * @param bool                                         $cached        取得せず、保存済みのファイルを使ったか（`--resume`）
      */
     public function __construct(
@@ -57,6 +58,7 @@ final readonly class Record
         public array $errors,
         public ?string $message,
         public int $durationMs,
+        public array $unknownKeys = [],
         public bool $cached = false,
     ) {
     }
@@ -71,8 +73,9 @@ final readonly class Record
      * 検証結果だけを差し替えた同じ記録を返す（`--revalidate` 用）。
      *
      * @param list<array{path: string, message: string}> $errors
+     * @param list<array{path: string, message: string}> $unknownKeys
      */
-    public function withValidation(string $validation, array $errors): self
+    public function withValidation(string $validation, array $errors, array $unknownKeys): self
     {
         return new self(
             group: $this->group,
@@ -93,6 +96,7 @@ final readonly class Record
             errors: $errors,
             message: $this->message,
             durationMs: $this->durationMs,
+            unknownKeys: $unknownKeys,
             cached: $this->cached,
         );
     }
@@ -145,6 +149,7 @@ final readonly class Record
             'errors' => $this->errors,
             'message' => $this->message,
             'durationMs' => $this->durationMs,
+            'unknownKeys' => $this->unknownKeys,
             'cached' => $this->cached,
         ];
     }
@@ -173,9 +178,10 @@ final readonly class Record
             totalCount: self::int($data, 'totalCount'),
             resultCount: self::int($data, 'resultCount'),
             validation: self::string($data, 'validation') ?? self::VALIDATION_SKIPPED,
-            errors: self::errors($data),
+            errors: self::errors($data, 'errors'),
             message: self::string($data, 'message'),
             durationMs: self::int($data, 'durationMs') ?? 0,
+            unknownKeys: self::errors($data, 'unknownKeys'),
             cached: ($data['cached'] ?? false) === true,
         );
     }
@@ -226,9 +232,9 @@ final readonly class Record
      *
      * @return list<array{path: string, message: string}>
      */
-    private static function errors(array $data): array
+    private static function errors(array $data, string $key): array
     {
-        $value = $data['errors'] ?? null;
+        $value = $data[$key] ?? null;
         $errors = [];
 
         if (! is_array($value)) {

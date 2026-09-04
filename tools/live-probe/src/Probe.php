@@ -247,6 +247,7 @@ final readonly class Probe
                 $records[] = $record->withValidation(
                     Record::VALIDATION_SKIPPED,
                     [['path' => '*file*', 'message' => 'Saved response is missing.']],
+                    [],
                 );
 
                 continue;
@@ -256,6 +257,7 @@ final readonly class Probe
             $records[] = $record->withValidation(
                 $errors === [] ? Record::VALIDATION_OK : Record::VALIDATION_FAILED,
                 $errors,
+                $validator->unknownKeys($record->responseClass, $body),
             );
         }
 

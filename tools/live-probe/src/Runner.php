@@ -147,6 +147,7 @@ final class Runner
         $body = $this->run->read($relative) ?? '';
         $responseClass = $previous === null ? $target->responseClass : $previous->responseClass;
         $errors = $this->validator->validate($responseClass, $body);
+        $unknownKeys = $this->validator->unknownKeys($responseClass, $body);
         $decoded = Json::decode($body);
 
         return new Record(
@@ -168,6 +169,7 @@ final class Runner
             errors: $errors,
             message: $previous?->message,
             durationMs: 0,
+            unknownKeys: $unknownKeys,
             cached: true,
         );
     }
@@ -202,6 +204,7 @@ final class Runner
         }
 
         $errors = $body === null ? [] : $this->validator->validate($responseClass, $body);
+        $unknownKeys = $body === null ? [] : $this->validator->unknownKeys($responseClass, $body);
         $validation = match (true) {
             $body === null => Record::VALIDATION_SKIPPED,
             $errors === [] => Record::VALIDATION_OK,
@@ -227,6 +230,7 @@ final class Runner
             errors: $errors,
             message: $message === null ? null : $this->masker->mask($message),
             durationMs: $durationMs,
+            unknownKeys: $unknownKeys,
         );
     }
 
