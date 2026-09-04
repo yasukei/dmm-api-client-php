@@ -111,6 +111,32 @@ test('巻数を API が返す文字列のまま保持する', function (): void 
     expect(responseMapper()->itemList($payload)->result->items[0]->number)->toBe('3');
 });
 
+test('ゼロが数値で返る価格もマッピングできる', function (): void {
+    // 無料の同人作品は price が "0"、list_price が 0 と、同じ商品の中で書き方が割れる。
+    $payload = Fixture::decodedWith('item-list', ['result', 'items', 0, 'prices'], [
+        'price' => '0',
+        'list_price' => 0,
+        'deliveries' => ['delivery' => [['type' => 'download', 'price' => '0', 'list_price' => 0]]],
+    ]);
+
+    $prices = responseMapper()->itemList($payload)->result->items[0]->prices;
+
+    expect($prices?->price)->toBe('0')
+        ->and($prices?->listPrice)->toBe(0)
+        ->and($prices?->deliveries?->delivery[0]->listPrice)->toBe(0);
+});
+
+test('価格が数値のみの商品もマッピングできる', function (): void {
+    // 単品価格を持たない商品（セット販売や配信の見放題）は prices が {"price": 0} だけになる。
+    $payload = Fixture::decodedWith('item-list', ['result', 'items', 0, 'prices'], ['price' => 0]);
+
+    $prices = responseMapper()->itemList($payload)->result->items[0]->prices;
+
+    expect($prices?->price)->toBe(0)
+        ->and($prices?->listPrice)->toBeNull()
+        ->and($prices?->deliveries)->toBeNull();
+});
+
 test('発売日を DateTimeImmutable に変換する', function (): void {
     $date = responseMapper()->itemList(Fixture::decoded('item-list'))->result->items[0]->date;
 
