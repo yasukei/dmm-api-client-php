@@ -200,6 +200,32 @@ The DTOs mirror what the API actually returns rather than what the values mean:
 Site codes are mapped to a `SiteCode` enum. An unknown site code is a validation failure — that is
 deliberate, so a new DMM site is noticed rather than silently ignored.
 
+### Noticing new fields
+
+Ignoring unknown keys keeps mapping working when DMM adds a field, at the price of never learning
+that it did. `ResponseMapper::strict()` trades that back: it rejects any key the DTOs do not
+declare.
+
+```php
+use DmmApiClient\Exception\ResponseValidationException;
+use DmmApiClient\Response\ResponseMapper;
+
+try {
+    ResponseMapper::strict()->itemList($payload);
+} catch (ResponseValidationException $exception) {
+    foreach ($exception->errors as $error) {
+        if ($error['code'] === ResponseValidationException::CODE_UNEXPECTED_KEY) {
+            echo "DMM added {$error['path']}\n";
+        }
+    }
+}
+```
+
+Detection only comes as a mapping failure — there is no warning level in between — so use the
+default mapper to read the response and the strict one to check it, rather than replacing one with
+the other. `ResponseMapper::strictMapperBuilder()` returns the underlying builder if you want to
+adjust it further, and `DmmApiClient` accepts a `ResponseMapper`, so either can be wired end to end.
+
 ## Command line
 
 The package ships a `dmm` command for inspecting what the API actually returns. It prints the

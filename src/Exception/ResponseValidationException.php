@@ -13,8 +13,16 @@ use RuntimeException;
 final class ResponseValidationException extends RuntimeException implements DmmApiClientException
 {
     /**
-     * @param class-string                       $targetClass マッピング先の DTO クラス
-     * @param non-empty-list<array{path: string, message: string}> $errors      パスごとのエラー内容
+     * レスポンスに DTO の知らないキーが含まれていたことを表すコード。
+     *
+     * このエラーが出るのは、知らないキーを許さないマッパーを使った場合だけ。
+     * {@see \DmmApiClient\Response\ResponseMapper::strictMapperBuilder()}
+     */
+    public const string CODE_UNEXPECTED_KEY = 'unexpected_key';
+
+    /**
+     * @param class-string                                                       $targetClass マッピング先の DTO クラス
+     * @param non-empty-list<array{path: string, message: string, code: string}> $errors      パスごとのエラー内容
      */
     private function __construct(
         string $message,
@@ -36,11 +44,13 @@ final class ResponseValidationException extends RuntimeException implements DmmA
             $errors[] = [
                 'path' => $message->path(),
                 'message' => $message->toString(),
+                // 文言ではなくコードで種類を判別できるようにしておく。
+                'code' => $message->code(),
             ];
         }
 
         if ($errors === []) {
-            $errors = [['path' => '*root*', 'message' => $error->getMessage()]];
+            $errors = [['path' => '*root*', 'message' => $error->getMessage(), 'code' => 'unknown']];
         }
 
         $summary = implode(', ', array_map(

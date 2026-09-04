@@ -34,17 +34,47 @@ final readonly class ResponseMapper
     /**
      * 既定のマッパー設定。
      *
-     * - `allowSuperfluousKeys()`: DMM 側の項目追加でマッピングが壊れないようにする。
+     * `allowSuperfluousKeys()` を加えて、DTO が知らないキーを無視する。DMM 側の項目追加で
+     * マッピングが壊れないようにするためで、通常はこちらを使う。
+     *
+     * 代償として、項目が増えても気づけない。気づきたい場合は
+     * {@see self::strictMapperBuilder()} を参照。
+     */
+    public static function defaultMapperBuilder(): MapperBuilder
+    {
+        return self::strictMapperBuilder()->allowSuperfluousKeys();
+    }
+
+    /**
+     * DTO が知らないキーを検証エラーにするマッパー設定。
+     *
+     * DMM が新しい項目を返し始めたことに気づくための設定。既定の設定では知らないキーは
+     * 黙って捨てられるため、増えても分からない。
+     *
+     * 検知はマッピングの失敗としてしか得られない（Valinor に警告という段階は無い）。
+     * 値も使いたい場合は、既定のマッパーで読み取ったうえで、この設定で別に検証する。
+     *
+     * 共通の設定は次のとおり。
      * - `supportDateFormats()`: DMM が返す日付・日時の書式を `DateTimeImmutable` に変換する。
      *   先頭の `!` は、書式に含まれない要素（`Y-m-d` における時刻など）を
      *   現在時刻ではなくゼロで埋めるための指定。
      * - 型の暗黙変換（"1" -> 1 など）は許可しない（仕様との差異を検出するため）。
      */
-    public static function defaultMapperBuilder(): MapperBuilder
+    public static function strictMapperBuilder(): MapperBuilder
     {
         return (new MapperBuilder())
-            ->allowSuperfluousKeys()
             ->supportDateFormats('!Y-m-d H:i:s', '!Y-m-d', '!Y-m-d\\TH:i:s');
+    }
+
+    /**
+     * DTO が知らないキーを検証エラーにするマッパー。
+     *
+     * 知らないキーがあると {@see ResponseValidationException} になり、その `errors` には
+     * {@see ResponseValidationException::CODE_UNEXPECTED_KEY} のコードが入る。
+     */
+    public static function strict(): self
+    {
+        return new self(self::strictMapperBuilder()->mapper());
     }
 
     public function itemList(mixed $payload): ItemListResponse

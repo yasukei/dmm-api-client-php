@@ -10,6 +10,7 @@ use DmmApiClient\Response\FloorList\FloorListResponse;
 use DmmApiClient\Response\GenreSearch\GenreSearchResponse;
 use DmmApiClient\Response\ItemList\ItemListResponse;
 use DmmApiClient\Response\MakerSearch\MakerSearchResponse;
+use DmmApiClient\Response\ResponseMapper;
 use DmmApiClient\Response\SeriesSearch\SeriesSearchResponse;
 use DmmApiClient\SiteCode;
 use Tests\Support\Fixture;
@@ -422,6 +423,45 @@ test('DMM 側で項目が増えてもマッピングは壊れない', function (
     expect(responseMapper()->itemList($payload)->result->status)->toBe(200);
 });
 
+test('厳密なマッパーは知らない項目を検証エラーにする', function (): void {
+    // 既定のマッパーは黙って捨てるので、項目が増えても気づけない。気づきたい場合の入口。
+    $payload = Fixture::decodedWith('item-list-empty', ['result', 'brand_new_field'], 'something');
+
+    expect(fn (): object => ResponseMapper::strict()->itemList($payload))
+        ->toThrow(ResponseValidationException::class);
+});
+
+test('知らない項目の検証エラーはコードで判別できる', function (): void {
+    // 文言ではなくコードで種類を判別できるようにしてある。
+    $payload = Fixture::decodedWith('item-list-empty', ['result', 'brand_new_field'], 'something');
+
+    try {
+        ResponseMapper::strict()->itemList($payload);
+    } catch (ResponseValidationException $exception) {
+        expect($exception->errors)->toHaveCount(1)
+            ->and($exception->errors[0]['path'])->toBe('result.brand_new_field')
+            ->and($exception->errors[0]['code'])->toBe(ResponseValidationException::CODE_UNEXPECTED_KEY);
+
+        return;
+    }
+
+    throw new RuntimeException('Expected the strict mapper to reject the unknown key.');
+});
+
+test('型の食い違いは知らない項目とは別のコードになる', function (): void {
+    $payload = Fixture::decodedWith('item-list-empty', ['result', 'total_count'], 'many');
+
+    try {
+        ResponseMapper::strict()->itemList($payload);
+    } catch (ResponseValidationException $exception) {
+        expect($exception->errors[0]['code'])->not->toBe(ResponseValidationException::CODE_UNEXPECTED_KEY);
+
+        return;
+    }
+
+    throw new RuntimeException('Expected the strict mapper to reject the wrong type.');
+});
+
 test('型が仕様と違えば、パス付きで検証エラーにする', function (): void {
     $payload = Fixture::decodedWith('item-list-empty', ['result', 'total_count'], 'many');
 
@@ -435,6 +475,7 @@ test('型が仕様と違えば、パス付きで検証エラーにする', funct
             ->and($exception->errors)->toBe([[
                 'path' => 'result.total_count',
                 'message' => "Value 'many' is not a valid integer.",
+                'code' => 'invalid_integer',
             ]]);
     }
 });
