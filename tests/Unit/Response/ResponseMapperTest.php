@@ -5,7 +5,6 @@ declare(strict_types=1);
 use DmmApiClient\Exception\ResponseValidationException;
 use DmmApiClient\Response\ActressSearch\ActressSearchResponse;
 use DmmApiClient\Response\AuthorSearch\AuthorSearchResponse;
-use DmmApiClient\Response\Common\RequestParameter;
 use DmmApiClient\Response\Error\ErrorResponse;
 use DmmApiClient\Response\FloorList\FloorListResponse;
 use DmmApiClient\Response\GenreSearch\GenreSearchResponse;
@@ -104,7 +103,7 @@ test('検索結果が 0 件でも items が空配列になる', function (): voi
         ->and($response->result->items)->toBe([]);
 });
 
-test('リクエストのエコーバックを連想配列形式でマッピングする', function (): void {
+test('リクエストのエコーバックをマッピングする', function (): void {
     $request = responseMapper()->itemList(Fixture::decoded('item-list'))->request;
 
     expect($request?->parameters)
@@ -112,21 +111,31 @@ test('リクエストのエコーバックを連想配列形式でマッピン�
         ->toHaveKey('site', 'FANZA');
 });
 
-test('リクエストのエコーバックを name/value 配列形式でマッピングする', function (): void {
-    $payload = Fixture::decodedWith('item-list-empty', ['request', 'parameters'], [
-        ['name' => 'api_id', 'value' => 'MY_API_ID'],
-        ['name' => 'output', 'value' => 'json'],
+test('配列で送ったパラメータは配列のままエコーバックされる', function (): void {
+    // article と article_id は article[0]=genre の形で送るため、返りも配列になる。
+    $payload = Fixture::decodedWith('item-list', ['request', 'parameters'], [
+        'api_id' => 'MY_API_ID',
+        'site' => 'DMM.com',
+        'article' => ['genre'],
+        'article_id' => ['15226'],
     ]);
 
-    $parameters = array_values(array_filter(
-        responseMapper()->itemList($payload)->request->parameters ?? [],
-        static fn (mixed $parameter): bool => $parameter instanceof RequestParameter,
-    ));
+    $request = responseMapper()->itemList($payload)->request;
 
-    expect($parameters)->toHaveCount(2)
-        ->and($parameters[0]->name)->toBe('api_id')
-        ->and($parameters[0]->value)->toBe('MY_API_ID')
-        ->and($parameters[1]->name)->toBe('output');
+    expect($request?->parameters)
+        ->toHaveKey('article', ['genre'])
+        ->toHaveKey('article_id', ['15226'])
+        ->toHaveKey('api_id', 'MY_API_ID');
+});
+
+test('name/value 形式のエコーバックは検証エラーにする', function (): void {
+    // 実際には返らない形式なので受け付けない。判断が誤っていれば例外で気づける。
+    $payload = Fixture::decodedWith('item-list', ['request', 'parameters'], [
+        ['name' => 'api_id', 'value' => 'MY_API_ID'],
+    ]);
+
+    expect(fn (): ItemListResponse => responseMapper()->itemList($payload))
+        ->toThrow(ResponseValidationException::class);
 });
 
 test('フロア構成のレスポンスをマッピングする', function (): void {

@@ -100,30 +100,33 @@ test('伏せ字にした出力も、そのまま検証にかけられる', funct
         ->and($response->result->items[0]->affiliateUrl)->toContain('af_id=***');
 });
 
-test('レスポンスの検証エラーに現れる認証情報も伏せ字にする', function (): void {
-    // request.parameters に配列の値が混ざると RequestEcho の型と一致せず、
-    // 検証エラーのメッセージが parameters の中身をそのまま抱え込む。
-    $payload = Fixture::decodedWith('item-list', ['request', 'parameters', 'article'], ['genre', 'actress']);
-    $http = StubHttpClient::respondingWith(200, (string) json_encode($payload));
+/**
+ * 型だけが合わないレスポンス。検証エラーのメッセージは合わなかった値をそのまま引用するので、
+ * その値がアフィリエイト ID を含んでいると、伏せ字にしない限り標準エラー出力に現れる。
+ */
+function invalidResponseCarryingCredentials(): StubHttpClient
+{
+    $payload = Fixture::decodedWith('item-list', ['result', 'items', 0, 'affiliateURL'], [
+        'af_id=myaffiliateid-999',
+    ]);
 
-    $result = runMasked([], $http);
+    return StubHttpClient::respondingWith(200, (string) json_encode($payload));
+}
+
+test('レスポンスの検証エラーに現れる認証情報も伏せ字にする', function (): void {
+    $result = runMasked([], invalidResponseCarryingCredentials());
 
     expect($result['code'])->toBe(Application::EXIT_FAILURE)
         ->and($result['stderr'])->toContain('Response did not match')
         ->and($result['stderr'])->toContain(CredentialMasker::MASK)
-        ->and($result['stderr'])->not->toContain('MY_API_ID')
         ->and($result['stderr'])->not->toContain('myaffiliateid-999');
 });
 
 test('--no-mask なら検証エラーにも実際の値がそのまま出る', function (): void {
     // 上のテストが伏せ字を確かめられていること自体の裏取り。
-    $payload = Fixture::decodedWith('item-list', ['request', 'parameters', 'article'], ['genre', 'actress']);
-    $http = StubHttpClient::respondingWith(200, (string) json_encode($payload));
-
-    $result = runMasked(['--no-mask'], $http);
+    $result = runMasked(['--no-mask'], invalidResponseCarryingCredentials());
 
     expect($result['code'])->toBe(Application::EXIT_FAILURE)
-        ->and($result['stderr'])->toContain('MY_API_ID')
         ->and($result['stderr'])->toContain('myaffiliateid-999');
 });
 
