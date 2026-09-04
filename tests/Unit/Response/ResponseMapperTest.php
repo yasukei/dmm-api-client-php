@@ -155,6 +155,20 @@ test('iteminfo をマッピングし、無いキーは空配列にする', funct
         ->and($itemInfo?->color)->toBe([]);
 });
 
+test('メーカーの「その他」枠は文字列の ID で返る', function (): void {
+    // 実在のメーカーを指す ID ではなく、該当なしを表す区分。数値 ID のメーカーに続けて並ぶ。
+    $payload = Fixture::decodedWith('item-list', ['result', 'items', 0, 'iteminfo', 'maker'], [
+        ['id' => 10016, 'name' => 'サンプルメーカー'],
+        ['id' => 'other', 'name' => 'その他'],
+    ]);
+
+    $itemInfo = responseMapper()->itemList($payload)->result->items[0]->iteminfo;
+
+    expect($itemInfo?->maker)->toHaveCount(2)
+        ->and($itemInfo?->maker[0]->id)->toBe(10016)
+        ->and($itemInfo?->maker[1]->id)->toBe('other');
+});
+
 test('任意項目が無い商品もマッピングできる', function (): void {
     $item = responseMapper()->itemList(Fixture::decoded('item-list'))->result->items[1];
 
