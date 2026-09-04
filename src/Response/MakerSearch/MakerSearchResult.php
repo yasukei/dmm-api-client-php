@@ -10,14 +10,15 @@ use DmmApiClient\SiteCode;
 /**
  * メーカー検索 API のレスポンスの `result` 部。
  *
- * `status` は文字列で返る。商品情報 API が数値で返すのとは揃っていない。
+ * `status` は文字列で返る。`total_count` は 0 件のときだけ数値で、それ以外は文字列。
+ * 商品情報 API はいずれも数値で返すので、揃っていない。
  */
 final readonly class MakerSearchResult
 {
     /**
      * @param string      $status        ステータスコード
      * @param int         $resultCount   このレスポンスに含まれる件数
-     * @param int         $totalCount    検索結果の総件数
+     * @param int|string  $totalCount    検索結果の総件数（0 件のときだけ数値）
      * @param int         $firstPosition 検索開始位置（1 始まり）
      * @param string      $siteName      サイト名（例: DMM.com（一般））
      * @param SiteCode    $siteCode      サイトコード
@@ -33,7 +34,7 @@ final readonly class MakerSearchResult
         #[MapFromKey('result_count')]
         public int $resultCount,
         #[MapFromKey('total_count')]
-        public int $totalCount,
+        public int|string $totalCount,
         #[MapFromKey('first_position')]
         public int $firstPosition,
         #[MapFromKey('site_name')]

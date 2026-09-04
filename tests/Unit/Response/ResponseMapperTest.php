@@ -176,9 +176,9 @@ test('女優検索のレスポンスをマッピングする', function (): void
 
     expect($response)->toBeInstanceOf(ActressSearchResponse::class)
         // 女優検索は first_position も文字列で返す。他の検索 API は数値。
+        ->and($response->result->totalCount)->toBe('3421')
         ->and($response->result->firstPosition)->toBe('1')
         ->and($response->result->resultCount)->toBe(2)
-        ->and($response->result->totalCount)->toBe(3421)
         ->and($response->result->actress)->toHaveCount(2);
 
     $actress = $response->result->actress[0];
@@ -213,6 +213,7 @@ test('ジャンル検索のレスポンスをマッピングする', function ()
     expect($response)->toBeInstanceOf(GenreSearchResponse::class)
         // 商品情報 API は数値で返すが、検索系は文字列で返す。
         ->and($response->result->status)->toBe('200')
+        ->and($response->result->totalCount)->toBe('87')
         ->and($response->result->firstPosition)->toBe(1)
         ->and($response->result->siteCode)->toBe(SiteCode::Fanza)
         ->and($response->result->siteName)->toBe('FANZA（アダルト）')
@@ -224,6 +225,13 @@ test('ジャンル検索のレスポンスをマッピングする', function ()
         ->and($response->result->genre[0]->name)->toBe('ハイビジョン')
         ->and($response->result->genre[0]->ruby)->toBe('はいびじょん')
         ->and($response->result->genre[0]->listUrl)->toContain('af_id=myaffiliateid-999');
+});
+
+test('検索結果が 0 件のときの total_count は数値で返る', function (): void {
+    // 0 件のときだけ数値、それ以外は文字列。値によって型が変わるので、両方受け付ける。
+    $payload = Fixture::decodedWith('genre-search', ['result', 'total_count'], 0);
+
+    expect(responseMapper()->genreSearch($payload)->result->totalCount)->toBe(0);
 });
 
 test('メーカー検索のレスポンスをマッピングする', function (): void {
