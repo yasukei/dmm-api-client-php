@@ -152,7 +152,21 @@ test('iteminfo をマッピングし、無いキーは空配列にする', funct
         ->and($itemInfo?->genre[0]->name)->toBe('ハイビジョン')
         ->and($itemInfo?->actress[0]->name)->toBe('サンプル女優')
         ->and($itemInfo?->author)->toBe([])
+        ->and($itemInfo?->manufacture)->toBe([])
         ->and($itemInfo?->color)->toBe([]);
+});
+
+test('電子書籍の出版社をマッピングする', function (): void {
+    // manufacture は電子書籍のフロアだけが返し、常に 1 件だけ入っている。
+    $payload = Fixture::decodedWith('item-list', ['result', 'items', 0, 'iteminfo', 'manufacture'], [
+        ['id' => 93514, 'name' => '集英社'],
+    ]);
+
+    $itemInfo = responseMapper()->itemList($payload)->result->items[0]->iteminfo;
+
+    expect($itemInfo?->manufacture)->toHaveCount(1)
+        ->and($itemInfo?->manufacture[0]->id)->toBe(93514)
+        ->and($itemInfo?->manufacture[0]->name)->toBe('集英社');
 });
 
 test('title と URL が欠けている商品もマッピングできる', function (): void {
