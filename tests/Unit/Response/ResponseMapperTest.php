@@ -47,7 +47,26 @@ test('商品のレビュー・画像・サンプルをマッピングする', fu
         ->and($item->sampleMovieUrl?->pcFlag)->toBe(1)
         ->and($item->sampleMovieUrl?->spFlag)->toBe(1)
         ->and($item->sampleMovieUrl?->size476x306)->toContain('size=476_306')
-        ->and($item->sampleMovieUrl?->size640x400)->toBeNull();
+        ->and($item->sampleMovieUrl?->size644x414)->toContain('size=644_414');
+});
+
+test('返らなかったサイズのサンプル動画 URL は null になる', function (): void {
+    // 実データで確認できたのは 476_306 / 560_360 / 720_480 の 3 つ。
+    // 仕様に載っている 644_414 が返らない商品でもマッピングできること。
+    $payload = Fixture::decodedWith('item-list', ['result', 'items', 0, 'sampleMovieURL'], [
+        'size_476_306' => 'https://www.dmm.co.jp/litevideo/-/part/=/size=476_306/',
+        'size_560_360' => 'https://www.dmm.co.jp/litevideo/-/part/=/size=560_360/',
+        'size_720_480' => 'https://www.dmm.co.jp/litevideo/-/part/=/size=720_480/',
+        'pc_flag' => 1,
+        'sp_flag' => 1,
+    ]);
+
+    $sampleMovieUrl = responseMapper()->itemList($payload)->result->items[0]->sampleMovieUrl;
+
+    expect($sampleMovieUrl?->size476x306)->toContain('size=476_306')
+        ->and($sampleMovieUrl?->size560x360)->toContain('size=560_360')
+        ->and($sampleMovieUrl?->size720x480)->toContain('size=720_480')
+        ->and($sampleMovieUrl?->size644x414)->toBeNull();
 });
 
 test('価格を API が返す文字列のまま保持する', function (): void {
@@ -228,7 +247,7 @@ test('作者検索のレスポンスをマッピングする', function (): void
         ->and($response->result->author[0]->authorId)->toBe('21414')
         ->and($response->result->author[0]->anotherName)->toBe('別名義/アナザーネーム')
         ->and($response->result->author[1]->anotherName)->toBeNull()
-        ->and($response->result->author[1]->listUrl)->toBeNull();
+        ->and($response->result->author[1]->listUrl)->toContain('af_id=');
 });
 
 test('エラーレスポンスをマッピングする', function (): void {
