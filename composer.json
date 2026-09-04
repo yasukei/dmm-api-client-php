@@ -34,11 +34,13 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Tests\\": "tests/"
+            "Tests\\": "tests/",
+            "DmmApiClient\\LiveProbe\\": "tools/live-probe/src/"
         }
     },
     "scripts": {
         "test": "pest",
+        "probe": "@php tools/live-probe/probe.php",
         "stan": "phpstan analyse",
         "cs-fix": "php-cs-fixer fix",
         "cs-check": "php-cs-fixer fix --dry-run --diff",

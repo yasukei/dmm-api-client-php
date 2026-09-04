@@ -372,6 +372,12 @@ composer install
 The test suite never touches the network. HTTP is stubbed through a PSR-18 implementation in
 `tests/Support/`, and the response shapes live as JSON in `tests/Fixtures/`.
 
+To check the DTOs against a wide slice of real data, `composer probe` walks every floor returned by
+`FloorList` and calls the other endpoints with every sort order and the first/middle/last page of
+results, then reports where the responses did not match the DTOs. It is a separate tool, not part of
+`composer test`; see [`tools/live-probe/README.md`](tools/live-probe/README.md). The responses it
+downloads are never committed.
+
 ## Contributing
 
 Bug reports and pull requests are welcome. Please open an issue to discuss significant changes before submitting a pull request.
