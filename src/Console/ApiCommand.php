@@ -108,15 +108,16 @@ abstract class ApiCommand implements Command
 
         // 認証情報はエコーバックにも affiliateURL にも埋め込まれて返ってくる。
         // 出力を保存したときに漏れないよう、既定で伏せ字にする。
-        $masker = $input->flag('no-mask')
+        // 以降の書き出しはすべてこの $output を通すので、個別に伏せ字にする必要はない。
+        $output = $output->masked($input->flag('no-mask')
             ? CredentialMasker::disabled()
-            : CredentialMasker::forCredentials($credentials);
+            : CredentialMasker::forCredentials($credentials));
 
         $client = new DmmApiClient($credentials, $this->httpClient);
         $request = $unchecked ? $this->createUncheckedRequest($input) : $this->createRequest($input);
 
         if ($input->flag('dry-run')) {
-            $output->line($masker->mask($client->buildUri($request)));
+            $output->line($client->buildUri($request));
 
             return Application::EXIT_SUCCESS;
         }
@@ -125,17 +126,17 @@ abstract class ApiCommand implements Command
             $body = $client->fetchRaw($request);
         } catch (ApiErrorException $exception) {
             // エラーの中身こそ見たいので、ボディは通常どおり標準出力へ流す。
-            $output->write($masker->mask($this->format($exception->responseBody, $input, $output)));
-            $output->error($masker->mask($exception->getMessage()));
+            $output->write($this->format($exception->responseBody, $input, $output));
+            $output->error($exception->getMessage());
 
             return Application::EXIT_FAILURE;
         } catch (TransportException $exception) {
-            $output->error($masker->mask($exception->getMessage()));
+            $output->error($exception->getMessage());
 
             return Application::EXIT_FAILURE;
         }
 
-        $output->write($masker->mask($this->format($body, $input, $output)));
+        $output->write($this->format($body, $input, $output));
 
         if ($input->flag('no-validate-response')) {
             return Application::EXIT_SUCCESS;
@@ -320,6 +321,9 @@ abstract class ApiCommand implements Command
 
     /**
      * レスポンスが DTO と一致するか確かめ、食い違いを標準エラー出力へ書き出す。
+     *
+     * 検証エラーには、型が合わなかった値そのものが含まれる。認証情報を含む値であっても
+     * 伏せ字は {@see Output} 側で適用されるため、ここでは何もしない。
      */
     private function validate(string $body, Output $output): int
     {

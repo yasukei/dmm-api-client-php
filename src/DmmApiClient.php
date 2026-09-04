@@ -172,7 +172,11 @@ final readonly class DmmApiClient
         try {
             $httpResponse = $this->httpClient->sendRequest($httpRequest);
         } catch (ClientExceptionInterface $exception) {
-            throw TransportException::fromClientException($request->endpoint(), $exception);
+            throw TransportException::fromClientException(
+                $request->endpoint(),
+                $exception,
+                CredentialMasker::forCredentials($this->credentials),
+            );
         }
 
         $body = (string) $httpResponse->getBody();

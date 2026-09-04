@@ -204,6 +204,27 @@ test('通信に失敗したら TransportException にする', function (): void 
     }
 });
 
+test('通信エラーのメッセージから認証情報を伏せ字にする', function (): void {
+    // Guzzle などは PSR-18 の例外メッセージに送信先 URI をそのまま載せるため、
+    // 何もしないと api_id と affiliate_id が例外のログに残ってしまう。
+    $http = StubHttpClient::failingWith(
+        'cURL error 6: Could not resolve host (see https://curl.se/libcurl/c/libcurl-errors.html)'
+        . ' for https://api.dmm.com/affiliate/v3/ItemList'
+        . '?api_id=MY_API_ID&affiliate_id=myaffiliateid-999&site=FANZA&output=json',
+    );
+    $client = new DmmApiClient(credentials(), $http);
+
+    try {
+        $client->itemList(new ItemListRequest(site: SiteCode::Fanza));
+        $this->fail('TransportException が送出されませんでした。');
+    } catch (TransportException $exception) {
+        expect($exception->getMessage())->toContain('Could not resolve host')
+            ->and($exception->getMessage())->toContain('api_id=***&affiliate_id=***')
+            ->and($exception->getMessage())->not->toContain('MY_API_ID')
+            ->and($exception->getMessage())->not->toContain('myaffiliateid-999');
+    }
+});
+
 test('PSR-18 の実装を渡さなくても自動検出する', function (): void {
     expect((new DmmApiClient(credentials()))->buildUri(new FloorListRequest()))
         ->toStartWith('https://api.dmm.com/affiliate/v3/FloorList?');

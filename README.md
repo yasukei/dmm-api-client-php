@@ -164,6 +164,26 @@ try {
 otherwise — for example when a proxy returns an HTML error page. The raw body is always available in
 `$responseBody`.
 
+PSR-18 implementations tend to append the request URI to their exception messages, which would put
+your credentials into any log that records a failed request. `TransportException::getMessage()` is
+therefore masked before the exception is built.
+
+The masking covers that message and nothing else. The original PSR-18 exception stays attached as
+`getPrevious()` with its message untouched, because it belongs to the HTTP client and cannot be
+rewritten. `Exception::__toString()` concatenates the whole chain, so anything that stringifies the
+exception still prints the unmasked URI:
+
+```php
+$logger->error($e->getMessage());   // masked
+$logger->error((string) $e);        // NOT masked — includes the previous exception
+error_log($e);                      // NOT masked — same reason
+throw $e;                           // NOT masked if it goes uncaught — PHP prints the chain
+```
+
+Log `getMessage()`, or run the string through `CredentialMasker` first. For the same reason,
+`ApiErrorException::$responseBody` and `MalformedResponseException::$responseBody` are raw by
+design — mask them before logging them.
+
 ## How responses are typed
 
 The DTOs mirror what the API actually returns rather than what the values mean:
@@ -255,6 +275,10 @@ $ dmm item-list --site=FANZA | grep affiliate
 correctly or when copying the URI from `--dry-run` into curl. Masking only substitutes the
 credential strings, so the JSON structure is untouched and a masked response still maps onto the
 DTOs — which is what makes it usable as test data.
+
+Masking applies to everything the command writes, stderr included. Validation errors quote the value
+that did not match, and that value can be the echoed request parameters, so `dmm … 2> err.log` would
+otherwise write your credentials into the log.
 
 The same masking is available from PHP through `CredentialMasker`, for anyone logging responses:
 
