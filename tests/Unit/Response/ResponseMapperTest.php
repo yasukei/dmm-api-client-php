@@ -42,7 +42,7 @@ test('商品のレビュー・画像・サンプルをマッピングする', fu
         ->and($item->review?->average)->toBe('4.20')
         ->and($item->imageUrl?->list)->toContain('mizd00320pt.jpg')
         ->and($item->imageUrl?->large)->toContain('mizd00320pl.jpg')
-        ->and($item->sampleImageUrl?->sampleS->image)->toHaveCount(2)
+        ->and($item->sampleImageUrl?->sampleS?->image)->toHaveCount(2)
         ->and($item->sampleImageUrl?->sampleL?->image)->toHaveCount(1)
         ->and($item->sampleMovieUrl?->pcFlag)->toBe(1)
         ->and($item->sampleMovieUrl?->spFlag)->toBe(1)
@@ -78,6 +78,18 @@ test('価格を API が返す文字列のまま保持する', function (): void 
         ->and($prices?->deliveries?->delivery[0]->type)->toBe('stream')
         ->and($prices?->deliveries?->delivery[0]->price)->toBe('300')
         ->and($prices?->deliveries?->delivery[0]->listPrice)->toBe('500');
+});
+
+test('大サイズだけのサンプル画像もマッピングできる', function (): void {
+    // 同人のフロアは sample_l だけを返し、sample_s はキーごと落とす。
+    $payload = Fixture::decodedWith('item-list', ['result', 'items', 0, 'sampleImageURL'], [
+        'sample_l' => ['image' => ['https://pics.dmm.co.jp/digital/doujin/sample-1.jpg']],
+    ]);
+
+    $sampleImageUrl = responseMapper()->itemList($payload)->result->items[0]->sampleImageUrl;
+
+    expect($sampleImageUrl?->sampleS)->toBeNull()
+        ->and($sampleImageUrl?->sampleL?->image)->toHaveCount(1);
 });
 
 test('巻数を API が返す文字列のまま保持する', function (): void {
