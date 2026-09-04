@@ -175,6 +175,9 @@ test('女優検索のレスポンスをマッピングする', function (): void
     $response = responseMapper()->actressSearch(Fixture::decoded('actress-search'));
 
     expect($response)->toBeInstanceOf(ActressSearchResponse::class)
+        // 女優検索は first_position も文字列で返す。他の検索 API は数値。
+        ->and($response->result->firstPosition)->toBe('1')
+        ->and($response->result->resultCount)->toBe(2)
         ->and($response->result->totalCount)->toBe(3421)
         ->and($response->result->actress)->toHaveCount(2);
 
@@ -210,6 +213,7 @@ test('ジャンル検索のレスポンスをマッピングする', function ()
     expect($response)->toBeInstanceOf(GenreSearchResponse::class)
         // 商品情報 API は数値で返すが、検索系は文字列で返す。
         ->and($response->result->status)->toBe('200')
+        ->and($response->result->firstPosition)->toBe(1)
         ->and($response->result->siteCode)->toBe(SiteCode::Fanza)
         ->and($response->result->siteName)->toBe('FANZA（アダルト）')
         ->and($response->result->serviceCode)->toBe('digital')
