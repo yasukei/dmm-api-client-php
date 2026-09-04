@@ -17,7 +17,7 @@ function runCommand(string $command, array $arguments, ?StubHttpClient $http = n
 {
     $captured = new CapturingOutput();
     $http ??= StubHttpClient::respondingWith(200, '{}');
-    $code = (new Application($http, $captured->output))->run(['dmm', $command, ...$arguments]);
+    $code = (new Application($http, $captured->output))->run(['dmm-api-client', $command, ...$arguments]);
 
     return ['code' => $code, 'stdout' => $captured->stdout(), 'stderr' => $captured->stderr()];
 }

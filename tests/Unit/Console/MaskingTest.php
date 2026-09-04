@@ -17,7 +17,7 @@ function runMasked(array $arguments, ?StubHttpClient $http = null): array
 {
     $captured = new CapturingOutput();
     $http ??= StubHttpClient::respondingWithFixture('item-list');
-    $code = (new Application($http, $captured->output))->run(['dmm', 'item-list', '--site=FANZA', ...$arguments]);
+    $code = (new Application($http, $captured->output))->run(['dmm-api-client', 'item-list', '--site=FANZA', ...$arguments]);
 
     return ['code' => $code, 'stdout' => $captured->stdout(), 'stderr' => $captured->stderr()];
 }

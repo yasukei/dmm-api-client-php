@@ -8,7 +8,7 @@ use Tests\Support\Fixture;
 use Tests\Support\StubHttpClient;
 
 /**
- * `dmm floor-list` を実行し、終了コードと出力を返す。
+ * `dmm-api-client floor-list` を実行し、終了コードと出力を返す。
  *
  * @param list<string> $arguments
  *
@@ -17,7 +17,7 @@ use Tests\Support\StubHttpClient;
 function runFloorList(StubHttpClient $http, array $arguments = []): array
 {
     $captured = new CapturingOutput();
-    $code = (new Application($http, $captured->output))->run(['dmm', 'floor-list', ...$arguments]);
+    $code = (new Application($http, $captured->output))->run(['dmm-api-client', 'floor-list', ...$arguments]);
 
     return ['code' => $code, 'stdout' => $captured->stdout(), 'stderr' => $captured->stderr()];
 }
@@ -232,7 +232,7 @@ test('--help は使い方を出して終わる', function (): void {
 
     expect($result['code'])->toBe(Application::EXIT_SUCCESS)
         ->and($http->requests)->toBe([])
-        ->and($result['stdout'])->toContain('dmm floor-list [options]')
+        ->and($result['stdout'])->toContain('dmm-api-client floor-list [options]')
         ->and($result['stdout'])->toContain('--env-file=PATH')
         ->and($result['stdout'])->not->toContain('--api-id');
 });

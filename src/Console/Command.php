@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace DmmApiClient\Console;
 
 /**
- * `bin/dmm` のサブコマンド。
+ * `bin/dmm-api-client` のサブコマンド。
  */
 interface Command
 {

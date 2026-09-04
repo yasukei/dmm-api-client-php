@@ -10,7 +10,7 @@ use DmmApiClient\Exception\UsageException;
 use Psr\Http\Client\ClientInterface;
 
 /**
- * `bin/dmm` の入口。サブコマンドを選び、引数を解釈して実行する。
+ * `bin/dmm-api-client` の入口。サブコマンドを選び、引数を解釈して実行する。
  */
 final readonly class Application
 {
@@ -22,7 +22,7 @@ final readonly class Application
     /** コマンドラインの指定に誤りがある。 */
     public const int EXIT_USAGE = 2;
 
-    private const string BINARY = 'dmm';
+    private const string BINARY = 'dmm-api-client';
 
     /** @var list<Command> */
     private array $commands;

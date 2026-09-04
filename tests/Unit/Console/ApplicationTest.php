@@ -15,7 +15,7 @@ function runApplication(array $arguments): array
 {
     $captured = new CapturingOutput();
     $http = StubHttpClient::respondingWith(200, '{}');
-    $code = (new Application($http, $captured->output))->run(['dmm', ...$arguments]);
+    $code = (new Application($http, $captured->output))->run(['dmm-api-client', ...$arguments]);
 
     return ['code' => $code, 'stdout' => $captured->stdout(), 'stderr' => $captured->stderr()];
 }
@@ -36,12 +36,12 @@ test('引数が無ければコマンド一覧を出す', function (): void {
     $result = runApplication([]);
 
     expect($result['code'])->toBe(Application::EXIT_SUCCESS)
-        ->and($result['stdout'])->toContain('dmm <command> [options]')
+        ->and($result['stdout'])->toContain('dmm-api-client <command> [options]')
         ->and($result['stdout'])->toContain('floor-list');
 });
 
 test('--help でコマンド一覧を出す', function (): void {
-    expect(runApplication(['--help'])['stdout'])->toContain('dmm <command> [options]');
+    expect(runApplication(['--help'])['stdout'])->toContain('dmm-api-client <command> [options]');
 });
 
 test('短いオプションは受け付けない', function (): void {
@@ -50,14 +50,14 @@ test('短いオプションは受け付けない', function (): void {
 
     expect($result['code'])->toBe(Application::EXIT_USAGE)
         ->and($result['stderr'])->toContain('Unknown command "-h"')
-        ->and($result['stdout'])->toContain('dmm <command> [options]');
+        ->and($result['stdout'])->toContain('dmm-api-client <command> [options]');
 });
 
 test('コマンドの --help は使い方を出す', function (): void {
     $result = runApplication(['item-list', '--help']);
 
     expect($result['code'])->toBe(Application::EXIT_SUCCESS)
-        ->and($result['stdout'])->toContain('dmm item-list [options]')
+        ->and($result['stdout'])->toContain('dmm-api-client item-list [options]')
         ->and($result['stdout'])->toContain('--site');
 });
 
@@ -67,7 +67,7 @@ test('オプションの値として書かれた -h を横取りしない', func
 
     expect($result['code'])->toBe(Application::EXIT_SUCCESS)
         ->and($result['stdout'])->toContain('keyword=-h')
-        ->and($result['stdout'])->not->toContain('dmm item-list [options]');
+        ->and($result['stdout'])->not->toContain('dmm-api-client item-list [options]');
 });
 
 test('コマンドの -h は使い方の誤りとして扱う', function (): void {
@@ -75,7 +75,7 @@ test('コマンドの -h は使い方の誤りとして扱う', function (): voi
 
     expect($result['code'])->toBe(Application::EXIT_USAGE)
         ->and($result['stderr'])->toContain('Unexpected argument "-h"')
-        ->and($result['stderr'])->toContain('Run "dmm item-list --help" for usage.');
+        ->and($result['stderr'])->toContain('Run "dmm-api-client item-list --help" for usage.');
 });
 
 test('コマンド一覧に認証情報の渡し方を書く', function (): void {
