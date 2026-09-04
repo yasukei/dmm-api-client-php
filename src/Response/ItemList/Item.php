@@ -24,7 +24,7 @@ final readonly class Item
      * @param string                 $affiliateUrl   商品ページのアフィリエイト URL
      * @param string|null            $productId      品番（例: 15dss00145dl）
      * @param string|null            $volume         収録時間（分）またはページ数（例: "120"）
-     * @param int|null               $number         巻数
+     * @param string|null            $number         巻数（例: "1"）。電子書籍のフロアだけが返す
      * @param Review|null            $review         レビュー集計
      * @param ItemImageUrl|null      $imageUrl       商品画像の URL
      * @param Tachiyomi|null         $tachiyomi      立ち読みページへのリンク
@@ -55,7 +55,7 @@ final readonly class Item
         #[MapFromKey('product_id')]
         public ?string $productId = null,
         public ?string $volume = null,
-        public ?int $number = null,
+        public ?string $number = null,
         public ?Review $review = null,
         #[MapFromKey('imageURL')]
         public ?ItemImageUrl $imageUrl = null,

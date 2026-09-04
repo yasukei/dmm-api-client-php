@@ -80,6 +80,25 @@ test('価格を API が返す文字列のまま保持する', function (): void 
         ->and($prices?->deliveries?->delivery[0]->listPrice)->toBe('500');
 });
 
+test('巻数を API が返す文字列のまま保持する', function (): void {
+    // number を返すのは電子書籍のフロアだけで、実データでは常に "1" のような文字列。
+    $payload = Fixture::decodedWith('item-list', ['result', 'items'], [[
+        'service_code' => 'ebook',
+        'service_name' => '電子書籍',
+        'floor_code' => 'comic',
+        'floor_name' => 'コミック',
+        'category_name' => 'コミック',
+        'content_id' => 'b123asample00001',
+        'title' => 'サンプルコミック',
+        'URL' => 'https://book.dmm.co.jp/product/000000/b123asample00001/',
+        'affiliateURL' => 'https://al.dmm.co.jp/?lurl=example&af_id=myaffiliateid-999',
+        'volume' => '180',
+        'number' => '3',
+    ]]);
+
+    expect(responseMapper()->itemList($payload)->result->items[0]->number)->toBe('3');
+});
+
 test('発売日を DateTimeImmutable に変換する', function (): void {
     $date = responseMapper()->itemList(Fixture::decoded('item-list'))->result->items[0]->date;
 
