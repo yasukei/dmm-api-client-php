@@ -91,7 +91,7 @@ test('iteminfo をマッピングし、無いキーは空配列にする', funct
     $itemInfo = responseMapper()->itemList(Fixture::decoded('item-list'))->result->items[0]->iteminfo;
 
     expect($itemInfo?->genre)->toHaveCount(2)
-        ->and($itemInfo?->genre[0]->id)->toBe('6533')
+        ->and($itemInfo?->genre[0]->id)->toBe(6533)
         ->and($itemInfo?->genre[0]->name)->toBe('ハイビジョン')
         ->and($itemInfo?->actress[0]->name)->toBe('サンプル女優')
         ->and($itemInfo?->author)->toBe([])

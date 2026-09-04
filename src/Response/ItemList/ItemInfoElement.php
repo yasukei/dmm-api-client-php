@@ -10,11 +10,13 @@ namespace DmmApiClient\Response\ItemList;
 final readonly class ItemInfoElement
 {
     /**
-     * @param string $id   対象の ID
+     * ID は数値で返る。フロア検索が `floor_id` を文字列で返すのとは揃っていない。
+     *
+     * @param int    $id   対象の ID
      * @param string $name 対象の名称
      */
     public function __construct(
-        public string $id,
+        public int $id,
         public string $name,
     ) {
     }
