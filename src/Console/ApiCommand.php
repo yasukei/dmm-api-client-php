@@ -27,8 +27,12 @@ use Psr\Http\Client\ClientInterface;
  */
 abstract class ApiCommand implements Command
 {
-    /** `--gte-date` などが受け付ける日時の書式。 */
-    private const array DATE_FORMATS = ['!Y-m-d\TH:i:s', '!Y-m-d H:i:s', '!Y-m-d'];
+    /**
+     * `--gte-date` などが受け付ける日時の書式。
+     *
+     * 読み取りと書き戻しの両方に使うため、`!` を含めずに持つ（{@see self::dateOption()}）。
+     */
+    private const array DATE_FORMATS = ['Y-m-d\TH:i:s', 'Y-m-d H:i:s', 'Y-m-d'];
 
     private readonly ResponseMapper $responseMapper;
 
@@ -206,7 +210,7 @@ abstract class ApiCommand implements Command
     /**
      * 日時として解釈したオプションの値。
      *
-     * @throws UsageException 対応する書式で読めない場合
+     * @throws UsageException 対応する書式で読めない場合、または存在しない日付の場合
      */
     final protected function dateOption(Input $input, string $name): ?DateTimeImmutable
     {
@@ -216,10 +220,21 @@ abstract class ApiCommand implements Command
             return null;
         }
 
-        foreach (self::DATE_FORMATS as $format) {
-            $date = DateTimeImmutable::createFromFormat($format, $value);
+        $padded = self::padDate($value);
 
-            if ($date !== false) {
+        foreach (self::DATE_FORMATS as $format) {
+            // 先頭の `!` は、書式に含まれない要素（日付だけの場合の時刻など）を
+            // 現在時刻ではなくゼロで埋めるための指定。
+            $date = DateTimeImmutable::createFromFormat('!' . $format, $padded);
+
+            // createFromFormat は範囲外の値を切り上げて受け付ける（2016-04-31 → 2016-05-01）。
+            // 打ち間違いが別の日付として通ってしまわないよう、同じ書式へ戻して入力と突き合わせ、
+            // 一致した場合だけ採用する。切り上げが起きていれば別の日付になるので一致しない。
+            //
+            // 切り上げは getLastErrors() の警告としても取れるが、あの窓口は書式違いや
+            // 区切り文字の欠落も同じ場所から返すうえ、直近 1 回分の状態を
+            // DateTime と共有するグローバルな枠に置く。ここでは書式だけを見れば足りる。
+            if ($date !== false && $date->format($format) === $padded) {
                 return $date;
             }
         }
@@ -229,6 +244,29 @@ abstract class ApiCommand implements Command
             $name,
             $value,
         ));
+    }
+
+    /**
+     * 日付部分の年・月・日を、書式が求める桁数までゼロで埋める。
+     *
+     * `2016-4-1` のように桁を詰めた書き方は日付では珍しくないため受け付ける。
+     * 往復比較は書き戻した文字列と突き合わせるので、埋めておかないと桁数の差だけで弾かれる。
+     *
+     * 時刻には同じ扱いをしない。分と秒は 2 桁で書くのが通例で、`1:2:3` のような表記は
+     * まず使われないため、受け付ける形を広げる理由がない。
+     */
+    private static function padDate(string $value): string
+    {
+        return preg_replace_callback(
+            '/^(\d{1,4})-(\d{1,2})-(\d{1,2})(?=$|[T ])/',
+            static fn (array $matches): string => sprintf(
+                '%04d-%02d-%02d',
+                $matches[1],
+                $matches[2],
+                $matches[3],
+            ),
+            $value,
+        ) ?? $value;
     }
 
     /**
