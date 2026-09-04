@@ -94,7 +94,18 @@ final readonly class RunDirectory
             throw new ProbeException(sprintf('Could not create the directory "%s".', $directory));
         }
 
-        if (file_put_contents($path, $contents) === false) {
+        // 書き込んでから名前を付け替える。実行は数十分に及び、途中で止められることを
+        // 前提にしている。書き込みの途中で死ぬと、--resume は切れたファイルを
+        // 取得済みとみなしてしまう。名前が付くのは中身が揃ったあとだけにする。
+        $temporary = $path . '.part';
+
+        if (file_put_contents($temporary, $contents) === false) {
+            throw new ProbeException(sprintf('Could not write "%s".', $temporary));
+        }
+
+        if (! rename($temporary, $path)) {
+            @unlink($temporary);
+
             throw new ProbeException(sprintf('Could not write "%s".', $path));
         }
     }
