@@ -208,16 +208,12 @@ test('--no-validate-request でも複数指定はそのまま送る', function (
     ]);
 });
 
-test('--no-validate-request ならアフィリエイト ID の形式も検証しない', function (): void {
+test('アフィリエイト ID は形式を問わずそのまま送る', function (): void {
+    // 受け付ける形式は API 側の都合で決まるため、コマンド側では検証しない。
     putenv('DMM_AFFILIATE_ID=myaffiliateid-123');
 
-    $rejected = runItemList(['--site=FANZA', '--dry-run']);
+    $result = runItemList(['--site=FANZA', '--dry-run', '--no-mask']);
 
-    expect($rejected['code'])->toBe(Application::EXIT_USAGE)
-        ->and($rejected['stderr'])->toContain('affiliate_id must end with 990-999');
-
-    $accepted = runItemList(['--site=FANZA', '--no-validate-request', '--dry-run', '--no-mask']);
-
-    expect($accepted['code'])->toBe(Application::EXIT_SUCCESS)
-        ->and($accepted['stdout'])->toContain('affiliate_id=myaffiliateid-123');
+    expect($result['code'])->toBe(Application::EXIT_SUCCESS)
+        ->and($result['stdout'])->toContain('affiliate_id=myaffiliateid-123');
 });

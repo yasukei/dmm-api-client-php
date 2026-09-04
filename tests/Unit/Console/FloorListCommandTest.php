@@ -203,13 +203,17 @@ test('--no-validate-request でもリクエストの組み立て方は変わら�
         );
 });
 
-test('アフィリエイト ID の形式が不正なら使い方の誤りとして扱う', function (): void {
+test('アフィリエイト ID は形式を問わずそのまま送る', function (): void {
+    // 受け付ける形式は API 側の都合で決まるため、コマンド側では検証しない。
     putenv('DMM_AFFILIATE_ID=bad-123');
 
-    $result = runFloorList(StubHttpClient::respondingWithFixture('floor-list'));
+    $result = runFloorList(
+        StubHttpClient::respondingWithFixture('floor-list'),
+        ['--dry-run', '--no-mask'],
+    );
 
-    expect($result['code'])->toBe(Application::EXIT_USAGE)
-        ->and($result['stderr'])->toContain('affiliate_id must end with 990-999');
+    expect($result['code'])->toBe(Application::EXIT_SUCCESS)
+        ->and($result['stdout'])->toContain('affiliate_id=bad-123');
 });
 
 test('未定義のオプションは使い方の誤りとして扱う', function (): void {

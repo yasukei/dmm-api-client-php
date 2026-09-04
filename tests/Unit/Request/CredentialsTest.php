@@ -14,29 +14,23 @@ test('クエリパラメータを返す', function (): void {
     ]);
 });
 
-scenario('末尾が 990〜999 のアフィリエイト ID を受け付ける', function (string $affiliateId): void {
-    expect(new Credentials('MY_API_ID', $affiliateId))->toBeInstanceOf(Credentials::class);
-})->with(['myaffiliateid-990', 'myaffiliateid-995', 'myaffiliateid-999', 'a-b-c-991']);
+scenario('アフィリエイト ID の形式は検証しない', function (string $affiliateId): void {
+    // 受け付ける形式は API 側の都合で決まる。合わない値は API がエラーを返すので、そちらに任せる。
+    $credentials = new Credentials('MY_API_ID', $affiliateId);
 
-scenario('末尾が 990〜999 でないアフィリエイト ID を拒否する', function (string $affiliateId): void {
-    expect(fn (): Credentials => new Credentials('MY_API_ID', $affiliateId))
-        ->toThrow(InvalidArgumentException::class, 'affiliate_id must end with 990-999');
-})->with(['myaffiliateid-001', 'myaffiliateid', 'myaffiliateid-99', 'myaffiliateid-9990', 'myaffiliateid-999x', '']);
+    expect($credentials->affiliateId)->toBe($affiliateId)
+        ->and($credentials->toQueryParameters())
+        ->toBe(['api_id' => 'MY_API_ID', 'affiliate_id' => $affiliateId]);
+})->with([
+    'myaffiliateid-999',
+    'myaffiliateid-001',
+    'myaffiliateid',
+    'myaffiliateid-9990',
+    'myaffiliateid-999x',
+    '',
+]);
 
 test('api_id が空なら拒否する', function (): void {
     expect(fn (): Credentials => new Credentials('', 'myaffiliateid-999'))
         ->toThrow(InvalidArgumentException::class, 'api_id must not be empty.');
 });
-
-scenario('unchecked は形式を検証しない', function (string $apiId, string $affiliateId): void {
-    $credentials = Credentials::unchecked($apiId, $affiliateId);
-
-    expect($credentials->apiId)->toBe($apiId)
-        ->and($credentials->affiliateId)->toBe($affiliateId)
-        ->and($credentials->toQueryParameters())
-        ->toBe(['api_id' => $apiId, 'affiliate_id' => $affiliateId]);
-})->with([
-    ['MY_API_ID', 'myaffiliateid-001'],
-    ['MY_API_ID', 'myaffiliateid'],
-    ['', ''],
-]);

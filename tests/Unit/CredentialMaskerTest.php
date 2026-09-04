@@ -52,8 +52,8 @@ test('空の値は伏せ字の対象にしない', function (): void {
     expect($masker->mask('a=real-999 b=other'))->toBe('a=*** b=other');
 });
 
-test('形式を検証していない認証情報でも伏せ字にできる', function (): void {
-    $masker = CredentialMasker::forCredentials(Credentials::unchecked('MY_API_ID', 'not-a-valid-affiliate'));
+test('どんな形式のアフィリエイト ID でも伏せ字にできる', function (): void {
+    $masker = CredentialMasker::forCredentials(new Credentials('MY_API_ID', 'not-a-valid-affiliate'));
 
     expect($masker->mask('affiliate_id=not-a-valid-affiliate'))->toBe('affiliate_id=***');
 });

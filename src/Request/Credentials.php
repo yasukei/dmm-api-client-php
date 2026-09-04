@@ -12,42 +12,23 @@ use DmmApiClient\Exception\InvalidArgumentException;
 final readonly class Credentials
 {
     /**
-     * @param string $apiId          DMM ウェブサービスで発行された API ID
-     * @param string $affiliateId    アフィリエイト ID。末尾が 990〜999 である必要がある（例: xxxxx-999）
-     * @param bool   $validateFormat 形式を検証するか。通常は指定しない。
-     *                               検証を外したい場合は {@see self::unchecked()} を使う
+     * アフィリエイト ID の形式は検証しない。
      *
-     * @throws InvalidArgumentException 値が空、またはアフィリエイト ID の形式が不正な場合
+     * 受け付ける形式は API 側の都合で決まり、将来広がることも狭まることもある。
+     * 形式に合わない値は API がエラーを返すので、そちらに任せる。
+     *
+     * @param string $apiId       DMM ウェブサービスで発行された API ID
+     * @param string $affiliateId アフィリエイト ID
+     *
+     * @throws InvalidArgumentException API ID が空の場合
      */
     public function __construct(
         public string $apiId,
         public string $affiliateId,
-        bool $validateFormat = true,
     ) {
-        if (! $validateFormat) {
-            return;
-        }
-
         if ($apiId === '') {
             throw new InvalidArgumentException('api_id must not be empty.');
         }
-
-        if (preg_match('/-99[0-9]$/', $affiliateId) !== 1) {
-            throw new InvalidArgumentException(
-                sprintf('affiliate_id must end with 990-999, "%s" given.', $affiliateId),
-            );
-        }
-    }
-
-    /**
-     * 形式を検証せずに認証情報を作る。
-     *
-     * 末尾が 990〜999 でないアフィリエイト ID を送ったときに API がどう応答するかなど、
-     * 実際の挙動を確かめたい場合の逃げ道。通常は `new Credentials()` を使う。
-     */
-    public static function unchecked(string $apiId, string $affiliateId): self
-    {
-        return new self($apiId, $affiliateId, validateFormat: false);
     }
 
     /**

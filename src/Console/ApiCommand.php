@@ -108,7 +108,7 @@ abstract class ApiCommand implements Command
     final public function execute(Input $input, Environment $environment, Output $output): int
     {
         $unchecked = $input->flag('no-validate-request');
-        $credentials = $this->resolveCredentials($environment, $unchecked);
+        $credentials = $this->resolveCredentials($environment);
 
         // 認証情報はエコーバックにも affiliateURL にも埋め込まれて返ってくる。
         // 出力を保存したときに漏れないよう、既定で伏せ字にする。
@@ -275,11 +275,9 @@ abstract class ApiCommand implements Command
      * コマンドライン引数からは受け取らない。引数は ps などから他のユーザーにも見え、
      * シェルの履歴にも残るため、認証情報の渡し方として適さない。
      *
-     * @param bool $unchecked true の場合、アフィリエイト ID の形式を検証しない
-     *
      * @throws UsageException 認証情報が揃わない場合
      */
-    private function resolveCredentials(Environment $environment, bool $unchecked): Credentials
+    private function resolveCredentials(Environment $environment): Credentials
     {
         $apiId = $environment->get('DMM_API_ID');
         $affiliateId = $environment->get('DMM_AFFILIATE_ID');
@@ -301,9 +299,7 @@ abstract class ApiCommand implements Command
             ));
         }
 
-        return $unchecked
-            ? Credentials::unchecked($apiId, $affiliateId)
-            : new Credentials($apiId, $affiliateId);
+        return new Credentials($apiId, $affiliateId);
     }
 
     /**
