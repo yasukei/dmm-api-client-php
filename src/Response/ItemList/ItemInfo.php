@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace DmmApiClient\Response\ItemList;
 
+use CuyZ\Valinor\Mapper\Configurator\MapFromKey;
+
 /**
  * 商品に紐づく分類情報。
  *
@@ -15,19 +17,20 @@ namespace DmmApiClient\Response\ItemList;
 final readonly class ItemInfo
 {
     /**
-     * @param list<ItemInfoElement> $genre       ジャンル
-     * @param list<ItemInfoElement> $series      シリーズ
-     * @param list<ItemInfoElement> $maker       メーカー
-     * @param list<ItemInfoElement> $actor       男優
-     * @param list<ItemInfoElement> $actress     女優
-     * @param list<ItemInfoElement> $director    監督
-     * @param list<ItemInfoElement> $author      作者
-     * @param list<ItemInfoElement> $label       レーベル
-     * @param list<ItemInfoElement> $type        タイプ
-     * @param list<ItemInfoElement> $color       カラー
-     * @param list<ItemInfoElement> $size        サイズ
-     * @param list<ItemInfoElement> $manufacture 出版社。電子書籍のフロアだけが返す
-     * @param list<ItemInfoElement> $artist      アーティスト。CD のフロアだけが返す
+     * @param list<ItemInfoElement> $genre         ジャンル
+     * @param list<ItemInfoElement> $series        シリーズ
+     * @param list<ItemInfoElement> $maker         メーカー
+     * @param list<ItemInfoElement> $actor         男優
+     * @param list<ItemInfoElement> $actress       女優
+     * @param list<ItemInfoElement> $director      監督
+     * @param list<ItemInfoElement> $author        作者
+     * @param list<ItemInfoElement> $label         レーベル
+     * @param list<ItemInfoElement> $type          タイプ
+     * @param list<ItemInfoElement> $color         カラー
+     * @param list<ItemInfoElement> $size          サイズ
+     * @param list<ItemInfoElement> $manufacture   出版社。電子書籍のフロアだけが返す
+     * @param list<ItemInfoElement> $artist        アーティスト。CD のフロアだけが返す
+     * @param list<ItemInfoElement> $genreCategory ジャンルの大分類。DVD のフロアの一部だけが返す
      */
     public function __construct(
         public array $genre = [],
@@ -43,6 +46,8 @@ final readonly class ItemInfo
         public array $size = [],
         public array $manufacture = [],
         public array $artist = [],
+        #[MapFromKey('genre_category')]
+        public array $genreCategory = [],
     ) {
     }
 }

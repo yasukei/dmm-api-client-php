@@ -156,6 +156,19 @@ test('iteminfo をマッピングし、無いキーは空配列にする', funct
         ->and($itemInfo?->color)->toBe([]);
 });
 
+test('ジャンルの大分類をマッピングする', function (): void {
+    // genre にある値と同じものが genre_category にも入る。付いている商品は一部だけ。
+    $payload = Fixture::decodedWith('item-list', ['result', 'items', 0, 'iteminfo', 'genre_category'], [
+        ['id' => 6014, 'name' => 'イメージビデオ'],
+    ]);
+
+    $itemInfo = responseMapper()->itemList($payload)->result->items[0]->iteminfo;
+
+    expect($itemInfo?->genreCategory)->toHaveCount(1)
+        ->and($itemInfo?->genreCategory[0]->id)->toBe(6014)
+        ->and($itemInfo?->genreCategory[0]->name)->toBe('イメージビデオ');
+});
+
 test('CD のアーティストと読み仮名をマッピングする', function (): void {
     // 読み仮名は人物系だけが持ち、1 商品に複数のアーティストが並ぶこともある。
     $payload = Fixture::decodedWith('item-list', ['result', 'items', 0, 'iteminfo', 'artist'], [
