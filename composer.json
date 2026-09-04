@@ -40,7 +40,10 @@
     },
     "scripts": {
         "test": "pest",
-        "probe": "@php tools/live-probe/probe.php",
+        "probe": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php tools/live-probe/probe.php"
+        ],
         "stan": "phpstan analyse",
         "cs-fix": "php-cs-fixer fix",
         "cs-check": "php-cs-fixer fix --dry-run --diff",
