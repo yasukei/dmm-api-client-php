@@ -39,6 +39,7 @@ final readonly class Item
      * @param DateTimeImmutable|null $date           発売日・配信開始日
      * @param ItemInfo|null          $iteminfo       ジャンル・女優などの分類情報
      * @param MonoStock|null         $stock          在庫状況。通販（mono）のフロアだけが返す
+     * @param list<Directory>|null   $directory      商品が属する商品階層のリスト（=パンくずリスト）。通販（mono）のフロアだけが返す
      */
     public function __construct(
         #[MapFromKey('service_code')]
@@ -74,6 +75,7 @@ final readonly class Item
         public ?DateTimeImmutable $date = null,
         public ?ItemInfo $iteminfo = null,
         public ?MonoStock $stock = null,
+        public ?array $directory = null,
     ) {
     }
 }

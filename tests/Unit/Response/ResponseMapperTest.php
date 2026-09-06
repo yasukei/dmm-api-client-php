@@ -9,6 +9,7 @@ use DmmApiClient\Api\Response\AuthorSearch\AuthorSearchResponse;
 use DmmApiClient\Api\Response\Error\ErrorResponse;
 use DmmApiClient\Api\Response\FloorList\FloorListResponse;
 use DmmApiClient\Api\Response\GenreSearch\GenreSearchResponse;
+use DmmApiClient\Api\Response\ItemList\Directory;
 use DmmApiClient\Api\Response\ItemList\ItemListResponse;
 use DmmApiClient\Api\Response\MakerSearch\MakerSearchResponse;
 use DmmApiClient\Api\Response\ResponseMapper;
@@ -157,6 +158,38 @@ test('未知の在庫状況は検証エラーにする', function (): void {
         ->toThrow(ResponseValidationException::class);
 });
 
+test('商品階層を上位から下位の順にマッピングする', function (): void {
+    // 実データでは 1〜5 段。空の配列で返ることはない。
+    $payload = Fixture::decodedWith('item-list', ['result', 'items'], [monoItem(['directory' => [
+        ['id' => 102, 'name' => 'DVD'],
+        ['id' => 123, 'name' => 'イメージビデオ'],
+        ['id' => 343, 'name' => '女性アイドル・グラビア'],
+    ]])]);
+
+    $directory = responseMapper()->itemList($payload)->result->items[0]->directory;
+
+    expect($directory)->not->toBeNull()
+        ->and(array_map(static fn (Directory $d): array => [$d->id, $d->name], $directory ?? []))
+        ->toBe([[102, 'DVD'], [123, 'イメージビデオ'], [343, '女性アイドル・グラビア']]);
+});
+
+test('商品階層を返さない商品では null になる', function (): void {
+    // 実データに空配列は無い。返らないフロアと、空の商品階層とを取り違えずに済む。
+    $payload = Fixture::decodedWith('item-list', ['result', 'items'], [monoItem()]);
+
+    expect(responseMapper()->itemList($payload)->result->items[0]->directory)->toBeNull();
+});
+
+test('商品階層の ID が文字列なら検証エラーにする', function (): void {
+    // iteminfo の ID とは違い、実データはすべて数値。文字列を許すのは仕様との差異を見逃すことになる。
+    $payload = Fixture::decodedWith('item-list', ['result', 'items'], [monoItem([
+        'directory' => [['id' => '102', 'name' => 'DVD']],
+    ])]);
+
+    expect(fn (): ItemListResponse => responseMapper()->itemList($payload))
+        ->toThrow(ResponseValidationException::class);
+});
+
 test('ゼロが数値で返る価格もマッピングできる', function (): void {
     // 無料の同人作品は price が "0"、list_price が 0 と、同じ商品の中で書き方が割れる。
     $payload = Fixture::decodedWith('item-list', ['result', 'items', 0, 'prices'], [
@@ -293,7 +326,8 @@ test('任意項目が無い商品もマッピングできる', function (): void
         ->and($item->prices)->toBeNull()
         ->and($item->date)->toBeNull()
         ->and($item->iteminfo)->toBeNull()
-        ->and($item->stock)->toBeNull();
+        ->and($item->stock)->toBeNull()
+        ->and($item->directory)->toBeNull();
 });
 
 test('検索結果が 0 件でも items が空配列になる', function (): void {
