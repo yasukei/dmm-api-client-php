@@ -565,6 +565,13 @@ test('作者検索のレスポンスをマッピングする', function (): void
         ->and($response->result->author[1]->listUrl)->toContain('af_id=');
 });
 
+test('区切りの無い別名義もマッピングする', function (): void {
+    // スラッシュで連ねた値は実データでは 320 件中 82 件。大半は区切りの無い 1 つの名義。
+    $payload = Fixture::decodedWith('author-search', ['result', 'author', 0, 'another_name'], 'NOISE');
+
+    expect(responseMapper()->authorSearch($payload)->result->author[0]->anotherName)->toBe('NOISE');
+});
+
 test('エラーレスポンスをマッピングする', function (): void {
     $response = responseMapper()->error(Fixture::decoded('error'));
 

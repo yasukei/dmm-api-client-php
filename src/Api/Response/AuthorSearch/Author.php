@@ -19,7 +19,7 @@ final readonly class Author
      * @param string      $name        作者名
      * @param string      $ruby        作者名かな
      * @param string|null $listUrl     この作者の作品一覧へのアフィリエイトリンク
-     * @param string|null $anotherName 別名義（スラッシュ区切り、例: 別名義/アナザーネーム）
+     * @param string|null $anotherName 別名義
      */
     public function __construct(
         #[MapFromKey('author_id')]
