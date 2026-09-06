@@ -190,6 +190,32 @@ test('商品階層の ID が文字列なら検証エラーにする', function (
         ->toThrow(ResponseValidationException::class);
 });
 
+scenario('JAN コードを API が返す文字列のまま保持する', function (string $jancode): void {
+    // 先頭が 0 の値も、13 桁でない値も実データにある。形式は検証しない。
+    $payload = Fixture::decodedWith('item-list', ['result', 'items'], [monoItem(['jancode' => $jancode])]);
+
+    expect(responseMapper()->itemList($payload)->result->items[0]->jancode)->toBe($jancode);
+})->with([
+    '13 桁' => ['4997766612850'],
+    '先頭が 0' => ['0000049376197'],
+    '13 桁でない' => ['9009751388'],
+]);
+
+test('JAN コードを返さない商品では null になる', function (): void {
+    // 通販でも本・コミックのフロアは返さず、他のフロアでも 3 割ほどの商品が持たない。
+    $payload = Fixture::decodedWith('item-list', ['result', 'items'], [monoItem()]);
+
+    expect(responseMapper()->itemList($payload)->result->items[0]->jancode)->toBeNull();
+});
+
+test('JAN コードが数値で返れば検証エラーにする', function (): void {
+    // 実データは常に文字列。数値を受け入れると、先頭が 0 の値を取り違える余地が生まれる。
+    $payload = Fixture::decodedWith('item-list', ['result', 'items'], [monoItem(['jancode' => 4997766612850])]);
+
+    expect(fn (): ItemListResponse => responseMapper()->itemList($payload))
+        ->toThrow(ResponseValidationException::class);
+});
+
 test('ゼロが数値で返る価格もマッピングできる', function (): void {
     // 無料の同人作品は price が "0"、list_price が 0 と、同じ商品の中で書き方が割れる。
     $payload = Fixture::decodedWith('item-list', ['result', 'items', 0, 'prices'], [
@@ -327,7 +353,8 @@ test('任意項目が無い商品もマッピングできる', function (): void
         ->and($item->date)->toBeNull()
         ->and($item->iteminfo)->toBeNull()
         ->and($item->stock)->toBeNull()
-        ->and($item->directory)->toBeNull();
+        ->and($item->directory)->toBeNull()
+        ->and($item->jancode)->toBeNull();
 });
 
 test('検索結果が 0 件でも items が空配列になる', function (): void {

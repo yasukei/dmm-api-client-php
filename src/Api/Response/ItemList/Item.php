@@ -40,6 +40,7 @@ final readonly class Item
      * @param ItemInfo|null          $iteminfo       ジャンル・女優などの分類情報
      * @param MonoStock|null         $stock          在庫状況。通販（mono）のフロアだけが返す
      * @param list<Directory>|null   $directory      商品が属する商品階層のリスト（=パンくずリスト）。通販（mono）のフロアだけが返す
+     * @param string|null            $jancode        JAN コード。0で始まるデータが存在するため文字列。通販（mono）のフロアが返す（本・コミックを除く）
      */
     public function __construct(
         #[MapFromKey('service_code')]
@@ -76,6 +77,7 @@ final readonly class Item
         public ?ItemInfo $iteminfo = null,
         public ?MonoStock $stock = null,
         public ?array $directory = null,
+        public ?string $jancode = null,
     ) {
     }
 }
