@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace DmmApiClient\Api;
 
 /**
- * 通販（mono）商品の在庫絞り込み（`mono_stock` パラメータ）。
+ * 通販（mono）商品の在庫状況
  *
- * 未指定（null）の場合は絞り込みを行わない。
+ * リクエストは `mono_stock` パラメータに、レスポンスは `stock` フィールドに現れる。
  */
 enum MonoStock: string
 {
@@ -20,6 +20,18 @@ enum MonoStock: string
     /** 予約商品（キャンセル待ち） */
     case ReserveEmpty = 'reserve_empty';
 
-    /** DMM通販のみ */
+    /** 在庫なし
+     *
+     * リクエストの絞り込み条件には使えない（指定しても、 empty 以外のデータも含めてデータが返ってくる）。
+     * レスポンスのみに現れる。
+     */
+    case Empty = 'empty';
+
+    /** DMM通販のみ
+     *
+     * ドキュメント上は存在するが、未使用と思われる。
+     * リクエストパラメータとして指定しても、レスポンスは mono にフィルタされず、
+     * 実レスポンスを断片的に見る限り、データとしても現れない。
+     */
     case Mono = 'mono';
 }

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use DmmApiClient\Api\Exception\ResponseValidationException;
+use DmmApiClient\Api\MonoStock;
 use DmmApiClient\Api\Response\ActressSearch\ActressSearchResponse;
 use DmmApiClient\Api\Response\AuthorSearch\AuthorSearchResponse;
 use DmmApiClient\Api\Response\Error\ErrorResponse;
@@ -14,6 +15,30 @@ use DmmApiClient\Api\Response\ResponseMapper;
 use DmmApiClient\Api\Response\SeriesSearch\SeriesSearchResponse;
 use DmmApiClient\Api\SiteCode;
 use Tests\Support\Fixture;
+
+/**
+ * 通販（mono）のフロアが返す商品 1 件。
+ *
+ * フィクスチャの商品は配信（digital）のもので、通販のフロアだけが返す項目を持たない。
+ *
+ * @param array<string, mixed> $overrides 差し替える項目
+ *
+ * @return array<string, mixed>
+ */
+function monoItem(array $overrides = []): array
+{
+    return array_merge([
+        'service_code' => 'mono',
+        'service_name' => '通販',
+        'floor_code' => 'dvd',
+        'floor_name' => 'DVD',
+        'category_name' => 'DVD',
+        'content_id' => 'n_709sample01',
+        'title' => 'サンプル通販商品',
+        'URL' => 'https://www.dmm.co.jp/mono/dvd/-/detail/=/cid=n_709sample01/',
+        'affiliateURL' => 'https://al.dmm.co.jp/?lurl=example&af_id=myaffiliateid-999',
+    ], $overrides);
+}
 
 test('商品情報のレスポンスをマッピングする', function (): void {
     $response = responseMapper()->itemList(Fixture::decoded('item-list'));
@@ -110,6 +135,26 @@ test('巻数を API が返す文字列のまま保持する', function (): void 
     ]]);
 
     expect(responseMapper()->itemList($payload)->result->items[0]->number)->toBe('3');
+});
+
+scenario('在庫状況を MonoStock に変換する', function (string $value, MonoStock $expected): void {
+    // stock を返すのは通販（mono）のフロアだけ。そこでは全商品が必ず持つ。
+    $payload = Fixture::decodedWith('item-list', ['result', 'items'], [monoItem(['stock' => $value])]);
+
+    expect(responseMapper()->itemList($payload)->result->items[0]->stock)->toBe($expected);
+})->with([
+    'stock' => ['stock', MonoStock::Stock],
+    'reserve' => ['reserve', MonoStock::Reserve],
+    'reserve_empty' => ['reserve_empty', MonoStock::ReserveEmpty],
+    'empty' => ['empty', MonoStock::Empty],
+]);
+
+test('未知の在庫状況は検証エラーにする', function (): void {
+    // 5 つ目の値が来ればページ全体が例外になる。増えたことを見逃さないための代償。
+    $payload = Fixture::decodedWith('item-list', ['result', 'items'], [monoItem(['stock' => 'sold_out'])]);
+
+    expect(fn (): ItemListResponse => responseMapper()->itemList($payload))
+        ->toThrow(ResponseValidationException::class);
 });
 
 test('ゼロが数値で返る価格もマッピングできる', function (): void {
@@ -247,7 +292,8 @@ test('任意項目が無い商品もマッピングできる', function (): void
         ->and($item->sampleMovieUrl)->toBeNull()
         ->and($item->prices)->toBeNull()
         ->and($item->date)->toBeNull()
-        ->and($item->iteminfo)->toBeNull();
+        ->and($item->iteminfo)->toBeNull()
+        ->and($item->stock)->toBeNull();
 });
 
 test('検索結果が 0 件でも items が空配列になる', function (): void {

@@ -6,6 +6,7 @@ namespace DmmApiClient\Api\Response\ItemList;
 
 use CuyZ\Valinor\Mapper\Configurator\MapFromKey;
 use DateTimeImmutable;
+use DmmApiClient\Api\MonoStock;
 
 /**
  * 商品情報 1 件。
@@ -37,6 +38,7 @@ final readonly class Item
      * @param ItemPrices|null        $prices         価格情報
      * @param DateTimeImmutable|null $date           発売日・配信開始日
      * @param ItemInfo|null          $iteminfo       ジャンル・女優などの分類情報
+     * @param MonoStock|null         $stock          在庫状況。通販（mono）のフロアだけが返す
      */
     public function __construct(
         #[MapFromKey('service_code')]
@@ -71,6 +73,7 @@ final readonly class Item
         public ?ItemPrices $prices = null,
         public ?DateTimeImmutable $date = null,
         public ?ItemInfo $iteminfo = null,
+        public ?MonoStock $stock = null,
     ) {
     }
 }
