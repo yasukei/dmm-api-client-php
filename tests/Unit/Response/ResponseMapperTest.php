@@ -216,6 +216,24 @@ test('JAN コードが数値で返れば検証エラーにする', function (): 
         ->toThrow(ResponseValidationException::class);
 });
 
+scenario('ISBN を API が返す文字列のまま保持する', function (string $isbn): void {
+    // 13 桁と 10 桁があり、10 桁はチェックディジットが X になることがある。
+    $payload = Fixture::decodedWith('item-list', ['result', 'items'], [monoItem(['isbn' => $isbn])]);
+
+    expect(responseMapper()->itemList($payload)->result->items[0]->isbn)->toBe($isbn);
+})->with([
+    'ISBN-13' => ['9784847083761'],
+    'ISBN-10' => ['4894235137'],
+    'チェックディジットが X' => ['477690151X'],
+]);
+
+test('ISBN を返さない商品では null になる', function (): void {
+    // 返すのは本・コミックのフロアだけ。そこでも 1〜2 割の商品が持たない。
+    $payload = Fixture::decodedWith('item-list', ['result', 'items'], [monoItem()]);
+
+    expect(responseMapper()->itemList($payload)->result->items[0]->isbn)->toBeNull();
+});
+
 test('ゼロが数値で返る価格もマッピングできる', function (): void {
     // 無料の同人作品は price が "0"、list_price が 0 と、同じ商品の中で書き方が割れる。
     $payload = Fixture::decodedWith('item-list', ['result', 'items', 0, 'prices'], [
@@ -354,7 +372,8 @@ test('任意項目が無い商品もマッピングできる', function (): void
         ->and($item->iteminfo)->toBeNull()
         ->and($item->stock)->toBeNull()
         ->and($item->directory)->toBeNull()
-        ->and($item->jancode)->toBeNull();
+        ->and($item->jancode)->toBeNull()
+        ->and($item->isbn)->toBeNull();
 });
 
 test('検索結果が 0 件でも items が空配列になる', function (): void {
