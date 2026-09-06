@@ -528,6 +528,22 @@ test('メーカー検索のレスポンスをマッピングする', function ()
         ->and($response->result->maker[0]->name)->toBe('サンプルメーカー');
 });
 
+test('メーカーの別名をマッピングする', function (): void {
+    // 別名を持つメーカーはごく少なく、値は読み仮名とは限らない。
+    $payload = Fixture::decodedWith('maker-search', ['result', 'maker', 0, 'another_name'], 'hmp/エイチエムピー');
+
+    $maker = responseMapper()->makerSearch($payload)->result->maker[0];
+
+    expect($maker->anotherName)->toBe('hmp/エイチエムピー')
+        ->and($maker->ruby)->toBe('さんぷるめーかー');
+});
+
+test('別名を持たないメーカーもマッピングできる', function (): void {
+    $maker = responseMapper()->makerSearch(Fixture::decoded('maker-search'))->result->maker[0];
+
+    expect($maker->anotherName)->toBeNull();
+});
+
 test('シリーズ検索のレスポンスをマッピングする', function (): void {
     $response = responseMapper()->seriesSearch(Fixture::decoded('series-search'));
 
