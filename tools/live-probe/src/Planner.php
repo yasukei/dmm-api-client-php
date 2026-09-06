@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace DmmApiClient\LiveProbe;
 
-use DmmApiClient\Request\ActressSearchRequest;
-use DmmApiClient\Request\ActressSearchSort;
-use DmmApiClient\Request\AuthorSearchRequest;
-use DmmApiClient\Request\GenreSearchRequest;
-use DmmApiClient\Request\ItemListRequest;
-use DmmApiClient\Request\ItemListSort;
-use DmmApiClient\Request\MakerSearchRequest;
-use DmmApiClient\Request\Request;
-use DmmApiClient\Request\SeriesSearchRequest;
-use DmmApiClient\Response\ActressSearch\ActressSearchResponse;
-use DmmApiClient\Response\AuthorSearch\AuthorSearchResponse;
-use DmmApiClient\Response\GenreSearch\GenreSearchResponse;
-use DmmApiClient\Response\ItemList\ItemListResponse;
-use DmmApiClient\Response\MakerSearch\MakerSearchResponse;
-use DmmApiClient\Response\SeriesSearch\SeriesSearchResponse;
+use DmmApiClient\Api\Request\ActressSearchRequest;
+use DmmApiClient\Api\Request\ActressSearchSort;
+use DmmApiClient\Api\Request\AuthorSearchRequest;
+use DmmApiClient\Api\Request\GenreSearchRequest;
+use DmmApiClient\Api\Request\ItemListRequest;
+use DmmApiClient\Api\Request\ItemListSort;
+use DmmApiClient\Api\Request\MakerSearchRequest;
+use DmmApiClient\Api\Request\Request;
+use DmmApiClient\Api\Request\SeriesSearchRequest;
+use DmmApiClient\Api\Response\ActressSearch\ActressSearchResponse;
+use DmmApiClient\Api\Response\AuthorSearch\AuthorSearchResponse;
+use DmmApiClient\Api\Response\GenreSearch\GenreSearchResponse;
+use DmmApiClient\Api\Response\ItemList\ItemListResponse;
+use DmmApiClient\Api\Response\MakerSearch\MakerSearchResponse;
+use DmmApiClient\Api\Response\SeriesSearch\SeriesSearchResponse;
 
 /**
  * フロアの一覧と絞り込み条件から、叩く対象を組み立てる。

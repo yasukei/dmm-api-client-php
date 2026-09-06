@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace DmmApiClient\Console;
 
-use DmmApiClient\CredentialMasker;
+use DmmApiClient\Api\CredentialMasker;
 
 /**
  * 標準出力・標準エラー出力への書き出し。

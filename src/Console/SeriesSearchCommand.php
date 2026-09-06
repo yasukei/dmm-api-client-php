@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace DmmApiClient\Console;
 
-use DmmApiClient\Request\Request;
-use DmmApiClient\Request\SeriesSearchRequest;
-use DmmApiClient\Response\SeriesSearch\SeriesSearchResponse;
+use DmmApiClient\Api\Request\Request;
+use DmmApiClient\Api\Request\SeriesSearchRequest;
+use DmmApiClient\Api\Response\SeriesSearch\SeriesSearchResponse;
 
 /**
  * シリーズ検索 API (`/SeriesSearch`) を呼び出す。

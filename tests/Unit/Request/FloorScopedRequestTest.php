@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-use DmmApiClient\Exception\InvalidArgumentException;
-use DmmApiClient\Request\AuthorSearchRequest;
-use DmmApiClient\Request\GenreSearchRequest;
-use DmmApiClient\Request\MakerSearchRequest;
-use DmmApiClient\Request\Request;
-use DmmApiClient\Request\SeriesSearchRequest;
+use DmmApiClient\Api\Exception\InvalidArgumentException;
+use DmmApiClient\Api\Request\AuthorSearchRequest;
+use DmmApiClient\Api\Request\GenreSearchRequest;
+use DmmApiClient\Api\Request\MakerSearchRequest;
+use DmmApiClient\Api\Request\Request;
+use DmmApiClient\Api\Request\SeriesSearchRequest;
 
 /*
  * floor_id を必須とする 4 つの検索 API は、同じパラメータ構成とバリデーションを持つ。

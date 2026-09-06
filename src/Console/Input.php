@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace DmmApiClient\Console;
 
-use DmmApiClient\Exception\UsageException;
-
 /**
  * コマンド名より後ろの引数を、定義済みのオプションに従って解釈した結果。
  *

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace DmmApiClient\LiveProbe;
 
-use DmmApiClient\Exception\ResponseValidationException;
-use DmmApiClient\Response\ResponseMapper;
+use DmmApiClient\Api\Exception\ResponseValidationException;
+use DmmApiClient\Api\Response\ResponseMapper;
 
 /**
  * 受け取ったボディを DTO へマッピングできるか確かめる。

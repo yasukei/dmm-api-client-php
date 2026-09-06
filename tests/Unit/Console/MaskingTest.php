@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
+use DmmApiClient\Api\CredentialMasker;
 use DmmApiClient\Console\Application;
-use DmmApiClient\CredentialMasker;
 use Tests\Support\CapturingOutput;
 use Tests\Support\Fixture;
 use Tests\Support\StubHttpClient;

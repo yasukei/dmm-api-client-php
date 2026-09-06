@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use DmmApiClient\Exception\InvalidArgumentException;
-use DmmApiClient\Request\ArticleFilter;
-use DmmApiClient\Request\ArticleType;
+use DmmApiClient\Api\Exception\InvalidArgumentException;
+use DmmApiClient\Api\Request\ArticleFilter;
+use DmmApiClient\Api\Request\ArticleType;
 
 test('種別と ID を保持する', function (): void {
     $filter = new ArticleFilter(ArticleType::Maker, '45276');

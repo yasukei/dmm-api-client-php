@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use DmmApiClient\CredentialMasker;
+use DmmApiClient\Api\CredentialMasker;
 use Tests\Support\CapturingOutput;
 
 test('masked() を通した Output は write / line / error のすべてを伏せ字にする', function (): void {

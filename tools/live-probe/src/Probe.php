@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace DmmApiClient\LiveProbe;
 
+use DmmApiClient\Api\CredentialMasker;
+use DmmApiClient\Api\DmmApiClient;
+use DmmApiClient\Api\Exception\DmmApiClientException;
+use DmmApiClient\Api\Request\Credentials;
+use DmmApiClient\Api\Request\FloorListRequest;
+use DmmApiClient\Api\Request\Request;
+use DmmApiClient\Api\Response\FloorList\FloorListResponse;
 use DmmApiClient\Console\Environment;
 use DmmApiClient\Console\Output;
-use DmmApiClient\CredentialMasker;
-use DmmApiClient\DmmApiClient;
-use DmmApiClient\Exception\DmmApiClientException;
-use DmmApiClient\Exception\UsageException;
-use DmmApiClient\Request\Credentials;
-use DmmApiClient\Request\FloorListRequest;
-use DmmApiClient\Request\Request;
-use DmmApiClient\Response\FloorList\FloorListResponse;
+use DmmApiClient\Console\UsageException;
 use GuzzleHttp\Client as GuzzleClient;
 use Psr\Http\Client\ClientInterface;
 

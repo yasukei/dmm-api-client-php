@@ -124,7 +124,7 @@ DTO が知らないキーがあっても 1 にしない。DTO がそれを無視
 利用者のコードが壊れないようにするためだが、代償として**増えたこと自体に気づけない**。
 そこで probe は、各レスポンスをもう一度、未知のフィールドをエラーにするマッパーで読み直す。
 
-2 つのマッパーはどちらも本体の `DmmApiClient\Response\ResponseMapper` で、違いは
+2 つのマッパーはどちらも本体の `DmmApiClient\Api\Response\ResponseMapper` で、違いは
 `allowSuperfluousKeys()` の有無だけ。probe はこれを両方持つ。
 
 | | 使うマッパー | 報告先 |

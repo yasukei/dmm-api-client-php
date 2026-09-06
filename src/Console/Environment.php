@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace DmmApiClient\Console;
 
-use DmmApiClient\Exception\UsageException;
-
 /**
  * 環境変数と `.env` ファイルから設定値を読み出す。
  *

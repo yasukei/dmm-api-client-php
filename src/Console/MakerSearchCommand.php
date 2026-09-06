@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace DmmApiClient\Console;
 
-use DmmApiClient\Request\MakerSearchRequest;
-use DmmApiClient\Request\Request;
-use DmmApiClient\Response\MakerSearch\MakerSearchResponse;
+use DmmApiClient\Api\Request\MakerSearchRequest;
+use DmmApiClient\Api\Request\Request;
+use DmmApiClient\Api\Response\MakerSearch\MakerSearchResponse;
 
 /**
  * メーカー検索 API (`/MakerSearch`) を呼び出す。

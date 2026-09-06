@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-use DmmApiClient\Exception\InvalidArgumentException;
-use DmmApiClient\Request\ArticleFilter;
-use DmmApiClient\Request\ArticleType;
-use DmmApiClient\Request\ItemListRequest;
-use DmmApiClient\Request\ItemListSort;
-use DmmApiClient\Request\MonoStock;
-use DmmApiClient\SiteCode;
+use DmmApiClient\Api\Exception\InvalidArgumentException;
+use DmmApiClient\Api\MonoStock;
+use DmmApiClient\Api\Request\ArticleFilter;
+use DmmApiClient\Api\Request\ArticleType;
+use DmmApiClient\Api\Request\ItemListRequest;
+use DmmApiClient\Api\Request\ItemListSort;
+use DmmApiClient\Api\SiteCode;
 
 test('エンドポイントを返す', function (): void {
     expect((new ItemListRequest(site: SiteCode::Fanza))->endpoint())->toBe('/ItemList');

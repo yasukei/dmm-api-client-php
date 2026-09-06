@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-use DmmApiClient\Exception\ResponseValidationException;
-use DmmApiClient\Response\ActressSearch\ActressSearchResponse;
-use DmmApiClient\Response\AuthorSearch\AuthorSearchResponse;
-use DmmApiClient\Response\Error\ErrorResponse;
-use DmmApiClient\Response\FloorList\FloorListResponse;
-use DmmApiClient\Response\GenreSearch\GenreSearchResponse;
-use DmmApiClient\Response\ItemList\ItemListResponse;
-use DmmApiClient\Response\MakerSearch\MakerSearchResponse;
-use DmmApiClient\Response\ResponseMapper;
-use DmmApiClient\Response\SeriesSearch\SeriesSearchResponse;
-use DmmApiClient\SiteCode;
+use DmmApiClient\Api\Exception\ResponseValidationException;
+use DmmApiClient\Api\Response\ActressSearch\ActressSearchResponse;
+use DmmApiClient\Api\Response\AuthorSearch\AuthorSearchResponse;
+use DmmApiClient\Api\Response\Error\ErrorResponse;
+use DmmApiClient\Api\Response\FloorList\FloorListResponse;
+use DmmApiClient\Api\Response\GenreSearch\GenreSearchResponse;
+use DmmApiClient\Api\Response\ItemList\ItemListResponse;
+use DmmApiClient\Api\Response\MakerSearch\MakerSearchResponse;
+use DmmApiClient\Api\Response\ResponseMapper;
+use DmmApiClient\Api\Response\SeriesSearch\SeriesSearchResponse;
+use DmmApiClient\Api\SiteCode;
 use Tests\Support\Fixture;
 
 test('商品情報のレスポンスをマッピングする', function (): void {

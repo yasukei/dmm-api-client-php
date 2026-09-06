@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace DmmApiClient\Console;
 
-use DmmApiClient\Request\ActressSearchRequest;
-use DmmApiClient\Request\ActressSearchSort;
-use DmmApiClient\Request\Request;
-use DmmApiClient\Response\ActressSearch\ActressSearchResponse;
+use DmmApiClient\Api\Request\ActressSearchRequest;
+use DmmApiClient\Api\Request\ActressSearchSort;
+use DmmApiClient\Api\Request\Request;
+use DmmApiClient\Api\Response\ActressSearch\ActressSearchResponse;
 
 /**
  * 女優検索 API (`/ActressSearch`) を呼び出す。

@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use DmmApiClient\Exception\InvalidArgumentException;
-use DmmApiClient\Request\Credentials;
+use DmmApiClient\Api\Exception\InvalidArgumentException;
+use DmmApiClient\Api\Request\Credentials;
 
 test('クエリパラメータを返す', function (): void {
     $credentials = new Credentials('MY_API_ID', 'myaffiliateid-999');

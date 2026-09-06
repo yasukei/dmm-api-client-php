@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace DmmApiClient\LiveProbe;
 
-use DmmApiClient\CredentialMasker;
-use DmmApiClient\DmmApiClient;
-use DmmApiClient\Exception\ApiErrorException;
-use DmmApiClient\Exception\TransportException;
-use DmmApiClient\Request\Request;
-use DmmApiClient\Response\Error\ErrorResponse;
+use DmmApiClient\Api\CredentialMasker;
+use DmmApiClient\Api\DmmApiClient;
+use DmmApiClient\Api\Exception\ApiErrorException;
+use DmmApiClient\Api\Exception\TransportException;
+use DmmApiClient\Api\Request\Request;
+use DmmApiClient\Api\Response\Error\ErrorResponse;
 
 /**
  * 対象を 1 本ずつ叩き、レスポンスを保存して検証する。

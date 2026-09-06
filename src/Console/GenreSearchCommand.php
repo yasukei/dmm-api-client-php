@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace DmmApiClient\Console;
 
-use DmmApiClient\Request\GenreSearchRequest;
-use DmmApiClient\Request\Request;
-use DmmApiClient\Response\GenreSearch\GenreSearchResponse;
+use DmmApiClient\Api\Request\GenreSearchRequest;
+use DmmApiClient\Api\Request\Request;
+use DmmApiClient\Api\Response\GenreSearch\GenreSearchResponse;
 
 /**
  * ジャンル検索 API (`/GenreSearch`) を呼び出す。

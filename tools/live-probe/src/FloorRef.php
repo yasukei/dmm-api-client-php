@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace DmmApiClient\LiveProbe;
 
-use DmmApiClient\SiteCode;
+use DmmApiClient\Api\SiteCode;
 
 /**
  * `FloorList` から取り出した、1 つのフロアを指す座標。

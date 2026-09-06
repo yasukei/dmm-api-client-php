@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace DmmApiClient\Console;
 
-use DmmApiClient\Request\FloorListRequest;
-use DmmApiClient\Request\Request;
-use DmmApiClient\Response\FloorList\FloorListResponse;
+use DmmApiClient\Api\Request\FloorListRequest;
+use DmmApiClient\Api\Request\Request;
+use DmmApiClient\Api\Response\FloorList\FloorListResponse;
 
 /**
  * フロア検索 API (`/FloorList`) を呼び出す。

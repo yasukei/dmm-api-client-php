@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace DmmApiClient\LiveProbe;
 
 use Closure;
-use DmmApiClient\Request\Request;
+use DmmApiClient\Api\Request\Request;
 
 /**
  * 「同じ条件でページ位置だけを変えて叩く」ひとまとまりの取得対象。

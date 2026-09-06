@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use DmmApiClient\Exception\InvalidArgumentException;
-use DmmApiClient\Request\ActressSearchRequest;
-use DmmApiClient\Request\ActressSearchSort;
+use DmmApiClient\Api\Exception\InvalidArgumentException;
+use DmmApiClient\Api\Request\ActressSearchRequest;
+use DmmApiClient\Api\Request\ActressSearchSort;
 
 test('エンドポイントを返す', function (): void {
     expect((new ActressSearchRequest())->endpoint())->toBe('/ActressSearch');

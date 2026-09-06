@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace DmmApiClient\Console;
 
-use DmmApiClient\Request\Request;
+use DmmApiClient\Api\Request\Request;
 
 /**
  * フロア ID を必須とする検索 API（ジャンル・メーカー・シリーズ・作者）の共通部分。

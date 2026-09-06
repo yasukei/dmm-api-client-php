@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace DmmApiClient\Console;
 
-use DmmApiClient\Exception\UsageException;
-use DmmApiClient\Request\ArticleFilter;
-use DmmApiClient\Request\ArticleType;
-use DmmApiClient\Request\ItemListRequest;
-use DmmApiClient\Request\ItemListSort;
-use DmmApiClient\Request\MonoStock;
-use DmmApiClient\Request\Request;
-use DmmApiClient\Response\ItemList\ItemListResponse;
-use DmmApiClient\SiteCode;
+use DmmApiClient\Api\MonoStock;
+use DmmApiClient\Api\Request\ArticleFilter;
+use DmmApiClient\Api\Request\ArticleType;
+use DmmApiClient\Api\Request\ItemListRequest;
+use DmmApiClient\Api\Request\ItemListSort;
+use DmmApiClient\Api\Request\Request;
+use DmmApiClient\Api\Response\ItemList\ItemListResponse;
+use DmmApiClient\Api\SiteCode;
 
 /**
  * 商品情報 API (`/ItemList`) を呼び出す。

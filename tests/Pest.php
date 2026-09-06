@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use DmmApiClient\Request\Credentials;
-use DmmApiClient\Response\ResponseMapper;
+use DmmApiClient\Api\Request\Credentials;
+use DmmApiClient\Api\Response\ResponseMapper;
 use Pest\PendingCalls\TestCall;
 
 /*

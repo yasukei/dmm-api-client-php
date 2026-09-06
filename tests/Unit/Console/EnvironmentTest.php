@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use DmmApiClient\Console\Environment;
-use DmmApiClient\Exception\UsageException;
+use DmmApiClient\Console\UsageException;
 
 /**
  * 一時ファイルに .env を書き出し、そのパスを返す。

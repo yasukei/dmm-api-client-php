@@ -2,29 +2,29 @@
 
 declare(strict_types=1);
 
-use DmmApiClient\DmmApiClient;
-use DmmApiClient\Exception\ApiErrorException;
-use DmmApiClient\Exception\MalformedResponseException;
-use DmmApiClient\Exception\ResponseValidationException;
-use DmmApiClient\Exception\TransportException;
-use DmmApiClient\Request\ActressSearchRequest;
-use DmmApiClient\Request\ArticleFilter;
-use DmmApiClient\Request\ArticleType;
-use DmmApiClient\Request\AuthorSearchRequest;
-use DmmApiClient\Request\FloorListRequest;
-use DmmApiClient\Request\GenreSearchRequest;
-use DmmApiClient\Request\ItemListRequest;
-use DmmApiClient\Request\ItemListSort;
-use DmmApiClient\Request\MakerSearchRequest;
-use DmmApiClient\Request\SeriesSearchRequest;
-use DmmApiClient\Response\ActressSearch\ActressSearchResponse;
-use DmmApiClient\Response\AuthorSearch\AuthorSearchResponse;
-use DmmApiClient\Response\FloorList\FloorListResponse;
-use DmmApiClient\Response\GenreSearch\GenreSearchResponse;
-use DmmApiClient\Response\ItemList\ItemListResponse;
-use DmmApiClient\Response\MakerSearch\MakerSearchResponse;
-use DmmApiClient\Response\SeriesSearch\SeriesSearchResponse;
-use DmmApiClient\SiteCode;
+use DmmApiClient\Api\DmmApiClient;
+use DmmApiClient\Api\Exception\ApiErrorException;
+use DmmApiClient\Api\Exception\MalformedResponseException;
+use DmmApiClient\Api\Exception\ResponseValidationException;
+use DmmApiClient\Api\Exception\TransportException;
+use DmmApiClient\Api\Request\ActressSearchRequest;
+use DmmApiClient\Api\Request\ArticleFilter;
+use DmmApiClient\Api\Request\ArticleType;
+use DmmApiClient\Api\Request\AuthorSearchRequest;
+use DmmApiClient\Api\Request\FloorListRequest;
+use DmmApiClient\Api\Request\GenreSearchRequest;
+use DmmApiClient\Api\Request\ItemListRequest;
+use DmmApiClient\Api\Request\ItemListSort;
+use DmmApiClient\Api\Request\MakerSearchRequest;
+use DmmApiClient\Api\Request\SeriesSearchRequest;
+use DmmApiClient\Api\Response\ActressSearch\ActressSearchResponse;
+use DmmApiClient\Api\Response\AuthorSearch\AuthorSearchResponse;
+use DmmApiClient\Api\Response\FloorList\FloorListResponse;
+use DmmApiClient\Api\Response\GenreSearch\GenreSearchResponse;
+use DmmApiClient\Api\Response\ItemList\ItemListResponse;
+use DmmApiClient\Api\Response\MakerSearch\MakerSearchResponse;
+use DmmApiClient\Api\Response\SeriesSearch\SeriesSearchResponse;
+use DmmApiClient\Api\SiteCode;
 use Tests\Support\StubHttpClient;
 
 test('認証情報・リクエストパラメータ・output を載せた URI を組み立てる', function (): void {

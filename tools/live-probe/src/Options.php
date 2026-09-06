@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace DmmApiClient\LiveProbe;
 
-use DmmApiClient\DmmApiClient;
+use DmmApiClient\Api\DmmApiClient;
 
 /**
  * probe.php のコマンドライン引数。

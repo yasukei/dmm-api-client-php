@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace DmmApiClient\Console;
 
-use DmmApiClient\Request\AuthorSearchRequest;
-use DmmApiClient\Request\Request;
-use DmmApiClient\Response\AuthorSearch\AuthorSearchResponse;
+use DmmApiClient\Api\Request\AuthorSearchRequest;
+use DmmApiClient\Api\Request\Request;
+use DmmApiClient\Api\Response\AuthorSearch\AuthorSearchResponse;
 
 /**
  * 作者検索 API (`/AuthorSearch`) を呼び出す。

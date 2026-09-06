@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use DmmApiClient\Request\FloorListRequest;
+use DmmApiClient\Api\Request\FloorListRequest;
 
 test('エンドポイントを返す', function (): void {
     expect((new FloorListRequest())->endpoint())->toBe('/FloorList');

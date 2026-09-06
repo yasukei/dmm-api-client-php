@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace DmmApiClient\Console;
 
-use DmmApiClient\Exception\DmmApiClientException;
-use DmmApiClient\Exception\InvalidArgumentException;
-use DmmApiClient\Exception\UsageException;
+use DmmApiClient\Api\Exception\DmmApiClientException;
+use DmmApiClient\Api\Exception\InvalidArgumentException;
 use Psr\Http\Client\ClientInterface;
 
 /**

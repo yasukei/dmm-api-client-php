@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use DmmApiClient\CredentialMasker;
-use DmmApiClient\Request\Credentials;
+use DmmApiClient\Api\CredentialMasker;
+use DmmApiClient\Api\Request\Credentials;
 
 test('認証情報の値を伏せ字にする', function (): void {
     $masker = CredentialMasker::forCredentials(new Credentials('MY_API_ID', 'myaffiliateid-999'));

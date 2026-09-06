@@ -6,16 +6,15 @@ namespace DmmApiClient\Console;
 
 use BackedEnum;
 use DateTimeImmutable;
-use DmmApiClient\CredentialMasker;
-use DmmApiClient\DmmApiClient;
-use DmmApiClient\Exception\ApiErrorException;
-use DmmApiClient\Exception\ResponseValidationException;
-use DmmApiClient\Exception\TransportException;
-use DmmApiClient\Exception\UsageException;
-use DmmApiClient\Request\Credentials;
-use DmmApiClient\Request\RawRequest;
-use DmmApiClient\Request\Request;
-use DmmApiClient\Response\ResponseMapper;
+use DmmApiClient\Api\CredentialMasker;
+use DmmApiClient\Api\DmmApiClient;
+use DmmApiClient\Api\Exception\ApiErrorException;
+use DmmApiClient\Api\Exception\ResponseValidationException;
+use DmmApiClient\Api\Exception\TransportException;
+use DmmApiClient\Api\Request\Credentials;
+use DmmApiClient\Api\Request\RawRequest;
+use DmmApiClient\Api\Request\Request;
+use DmmApiClient\Api\Response\ResponseMapper;
 use JsonException;
 use Psr\Http\Client\ClientInterface;
 

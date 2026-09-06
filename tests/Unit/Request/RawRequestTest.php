@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use DmmApiClient\Request\ItemListRequest;
-use DmmApiClient\Request\RawRequest;
+use DmmApiClient\Api\Request\ItemListRequest;
+use DmmApiClient\Api\Request\RawRequest;
 
 test('エンドポイントとパラメータをそのまま返す', function (): void {
     $request = new RawRequest(ItemListRequest::ENDPOINT, ['site' => 'FANZA', 'hits' => '20']);

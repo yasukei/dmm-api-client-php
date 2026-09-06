@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace DmmApiClient\LiveProbe;
 
-use DmmApiClient\SiteCode;
+use DmmApiClient\Api\SiteCode;
 
 /**
  * `FloorList` のレスポンスから、フロアの一覧を取り出す。

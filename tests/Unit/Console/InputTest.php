@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use DmmApiClient\Console\Input;
 use DmmApiClient\Console\OptionDefinition;
-use DmmApiClient\Exception\UsageException;
+use DmmApiClient\Console\UsageException;
 
 /**
  * @return list<OptionDefinition>
