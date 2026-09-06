@@ -234,6 +234,21 @@ test('ISBN を返さない商品では null になる', function (): void {
     expect(responseMapper()->itemList($payload)->result->items[0]->isbn)->toBeNull();
 });
 
+test('CD の種別をマッピングする', function (): void {
+    // CD のフロアは kind ひとつだけを持つオブジェクトを返す。
+    $payload = Fixture::decodedWith('item-list', ['result', 'items'], [monoItem([
+        'cdinfo' => ['kind' => 'アルバム'],
+    ])]);
+
+    expect(responseMapper()->itemList($payload)->result->items[0]->cdinfo?->kind)->toBe('アルバム');
+});
+
+test('CD 以外のフロアの商品では cdinfo が null になる', function (): void {
+    $payload = Fixture::decodedWith('item-list', ['result', 'items'], [monoItem()]);
+
+    expect(responseMapper()->itemList($payload)->result->items[0]->cdinfo)->toBeNull();
+});
+
 test('ゼロが数値で返る価格もマッピングできる', function (): void {
     // 無料の同人作品は price が "0"、list_price が 0 と、同じ商品の中で書き方が割れる。
     $payload = Fixture::decodedWith('item-list', ['result', 'items', 0, 'prices'], [
@@ -373,7 +388,8 @@ test('任意項目が無い商品もマッピングできる', function (): void
         ->and($item->stock)->toBeNull()
         ->and($item->directory)->toBeNull()
         ->and($item->jancode)->toBeNull()
-        ->and($item->isbn)->toBeNull();
+        ->and($item->isbn)->toBeNull()
+        ->and($item->cdinfo)->toBeNull();
 });
 
 test('検索結果が 0 件でも items が空配列になる', function (): void {
