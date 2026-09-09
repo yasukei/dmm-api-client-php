@@ -627,6 +627,20 @@ test('エラーレスポンスをマッピングする', function (): void {
         ->and($response->result->errors)->toBe(['affiliate_id' => 'Invalid Request Error']);
 });
 
+test('エラーレスポンスもリクエストのエコーバックを持つ', function (): void {
+    // 成功時と同じく result と並んで返る。何を送った結果のエラーなのかが読み取れる。
+    $request = responseMapper()->error(Fixture::decoded('error'))->request;
+
+    expect($request?->parameters)->toHaveKey('api_id', 'MY_API_ID');
+});
+
+test('エコーバックの無いエラーレスポンスも受け付ける', function (): void {
+    $payload = Fixture::decoded('error');
+    unset($payload['request']);
+
+    expect(responseMapper()->error($payload)->request)->toBeNull();
+});
+
 test('DMM 側で項目が増えてもマッピングは壊れない', function (): void {
     $payload = Fixture::decodedWith('item-list-empty', ['result', 'brand_new_field'], 'something');
     $payload['brand_new_top_level'] = ['nested' => true];

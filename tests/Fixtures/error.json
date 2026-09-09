@@ -1,4 +1,11 @@
 {
+  "request": {
+    "parameters": {
+      "api_id": "MY_API_ID",
+      "affiliate_id": "myaffiliateid-999",
+      "output": "json"
+    }
+  },
   "result": {
     "status": 400,
     "message": "BAD REQUEST",
