@@ -43,6 +43,7 @@ final readonly class Item
      * @param string|null            $jancode        JAN コード。0で始まるデータが存在するため文字列。通販（mono）のフロアが返す（本・コミックを除く）
      * @param string|null            $isbn           ISBN。チェックディジットが X になるデータが存在するため文字列。本・コミックのフロアが返す
      * @param CdInfo|null            $cdinfo         CD 商品に固有の情報。CD のフロアだけが返す
+     * @param list<Campaign>|null    $campaign       実施中のキャンペーン。FANZA の動画・同人のフロアだけが返す
      */
     public function __construct(
         #[MapFromKey('service_code')]
@@ -82,6 +83,7 @@ final readonly class Item
         public ?string $jancode = null,
         public ?string $isbn = null,
         public ?CdInfo $cdinfo = null,
+        public ?array $campaign = null,
     ) {
     }
 }

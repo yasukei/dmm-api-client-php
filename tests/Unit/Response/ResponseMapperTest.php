@@ -9,6 +9,7 @@ use DmmApiClient\Api\Response\AuthorSearch\AuthorSearchResponse;
 use DmmApiClient\Api\Response\Error\ErrorResponse;
 use DmmApiClient\Api\Response\FloorList\FloorListResponse;
 use DmmApiClient\Api\Response\GenreSearch\GenreSearchResponse;
+use DmmApiClient\Api\Response\ItemList\Campaign;
 use DmmApiClient\Api\Response\ItemList\Directory;
 use DmmApiClient\Api\Response\ItemList\ItemListResponse;
 use DmmApiClient\Api\Response\MakerSearch\MakerSearchResponse;
@@ -39,6 +40,16 @@ function monoItem(array $overrides = []): array
         'URL' => 'https://www.dmm.co.jp/mono/dvd/-/detail/=/cid=n_709sample01/',
         'affiliateURL' => 'https://al.dmm.co.jp/?lurl=example&af_id=myaffiliateid-999',
     ], $overrides);
+}
+
+/**
+ * キャンペーン 1 件を、比較しやすい配列に均す。
+ *
+ * @return array{string, string, string}
+ */
+function campaignToArray(Campaign $campaign): array
+{
+    return [$campaign->dateBegin, $campaign->dateEnd, $campaign->title];
 }
 
 test('商品情報のレスポンスをマッピングする', function (): void {
@@ -249,6 +260,40 @@ test('CD 以外のフロアの商品では cdinfo が null になる', function 
     expect(responseMapper()->itemList($payload)->result->items[0]->cdinfo)->toBeNull();
 });
 
+test('キャンペーンの日時を API が返す文字列のまま保持する', function (): void {
+    // 動画のフロアの書式。日時に見えるが、DateTimeImmutable には変換しない。
+    $payload = Fixture::decodedWith('item-list', ['result', 'items', 0, 'campaign'], [[
+        'date_begin' => '2026-09-04 10:10:00',
+        'date_end' => '2026-09-07 09:59:59',
+        'title' => '50%OFF',
+    ]]);
+
+    $campaign = responseMapper()->itemList($payload)->result->items[0]->campaign;
+
+    expect($campaign)->not->toBeNull()
+        ->and(array_map(campaignToArray(...), $campaign ?? []))
+        ->toBe([['2026-09-04 10:10:00', '2026-09-07 09:59:59', '50%OFF']]);
+});
+
+test('同人のフロアの書式のキャンペーンもマッピングできる', function (): void {
+    // 開始日時は ISO 8601、終了日時は常に空文字。動画のフロアとは書式が揃っていない。
+    $payload = Fixture::decodedWith('item-list', ['result', 'items', 0, 'campaign'], [[
+        'date_begin' => '2026-09-04T00:00:00Z',
+        'date_end' => '',
+        'title' => '95%OFF',
+    ]]);
+
+    $campaign = responseMapper()->itemList($payload)->result->items[0]->campaign;
+
+    expect($campaign)->not->toBeNull()
+        ->and(array_map(campaignToArray(...), $campaign ?? []))
+        ->toBe([['2026-09-04T00:00:00Z', '', '95%OFF']]);
+});
+
+test('キャンペーンの無い商品では null になる', function (): void {
+    expect(responseMapper()->itemList(Fixture::decoded('item-list'))->result->items[0]->campaign)->toBeNull();
+});
+
 test('ゼロが数値で返る価格もマッピングできる', function (): void {
     // 無料の同人作品は price が "0"、list_price が 0 と、同じ商品の中で書き方が割れる。
     $payload = Fixture::decodedWith('item-list', ['result', 'items', 0, 'prices'], [
@@ -389,7 +434,8 @@ test('任意項目が無い商品もマッピングできる', function (): void
         ->and($item->directory)->toBeNull()
         ->and($item->jancode)->toBeNull()
         ->and($item->isbn)->toBeNull()
-        ->and($item->cdinfo)->toBeNull();
+        ->and($item->cdinfo)->toBeNull()
+        ->and($item->campaign)->toBeNull();
 });
 
 test('検索結果が 0 件でも items が空配列になる', function (): void {
