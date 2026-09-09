@@ -53,6 +53,7 @@ final readonly class Reporter
             'cached' => 0,
             'api-error' => 0,
             'transport-error' => 0,
+            'unexpected-ok' => 0,
             'validation-ok' => 0,
             'validation-failed' => 0,
             'validation-skipped' => 0,
@@ -91,6 +92,7 @@ final readonly class Reporter
                 $counts['transport-error'],
                 $counts['cached'],
             ),
+            ...self::unexpectedOk($counts),
             sprintf(
                 'validation  ok: %d   failed: %d   skipped: %d',
                 $counts['validation-ok'],
@@ -198,6 +200,7 @@ final readonly class Reporter
                 $counts['transport-error'],
                 $counts['cached'],
             ),
+            ...array_map(static fn (string $line): string => '- ' . $line, self::unexpectedOk($counts)),
             sprintf(
                 '- validation: ok %d / failed %d / skipped %d',
                 $counts['validation-ok'],
@@ -528,6 +531,25 @@ final readonly class Reporter
     private static function normalizeMessage(string $message): string
     {
         return self::truncate($message, 200);
+    }
+
+    /**
+     * エラーを引くつもりが通ってしまったリクエストの件数。
+     *
+     * 起きたときだけ 1 行として現れる。通常の実行では 0 で、常に出しても読み手の役に立たない。
+     *
+     * @param array<string, int> $counts
+     *
+     * @return list<string>
+     */
+    private static function unexpectedOk(array $counts): array
+    {
+        $unexpected = $counts['unexpected-ok'] ?? 0;
+
+        return $unexpected === 0 ? [] : [sprintf(
+            'requests that should have been rejected but succeeded: %d',
+            $unexpected,
+        )];
     }
 
     private static function truncate(string $value, int $limit): string

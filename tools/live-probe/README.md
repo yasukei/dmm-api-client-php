@@ -24,6 +24,7 @@
 | `SeriesSearch` | floor_id | なし | 500 | 先頭・中間・末尾 |
 | `AuthorSearch` | floor_id | なし | 500 | 先頭・中間・末尾 |
 | `ActressSearch` | フロアに依存しない | 14 種すべて | 100 | 先頭・中間・末尾 |
+| `Errors` | フロアに依存しない | なし | なし | なし（ケースごとに 1 件） |
 
 中間と末尾のページ位置は、先頭ページの `total_count` から決める（末尾 = `total_count - hits + 1`、
 中間 = `total_count / 2`。いずれも 1〜50000 に収める）。総件数が 1 ページに収まる場合は先頭だけを取る。
@@ -31,6 +32,9 @@
 フロア × API の中には、そのフロアには存在しない組み合わせ（動画フロアの `AuthorSearch` など）も含まれる。
 0 件で返るのが通常なので、これは失敗ではなく通常の成功として扱う。API がエラーを返した場合は
 `api-error` として記録し、エラーボディも保存したうえで `ErrorResponse` として検証する。
+
+`Errors` は、確実にエラーになるリクエストを送って `ErrorResponse` を検証するための対象。何をどう誤らせて
+いるかは [`src/Planner.php`](src/Planner.php) の `errorCases()` にある。
 
 フロアが 30 ほどあるとして、全体で 800〜900 リクエスト。既定の 1 req/秒で 15〜20 分、
 出力は 100〜200MB 程度になる。
@@ -42,6 +46,9 @@
 ```bash
 composer probe                              # 全フロア・全 API
 composer probe -- --help                    # オプション一覧
+
+# わざとエラーを引く分だけ（3 リクエスト）
+composer probe -- --endpoint=Errors
 
 # 最初は対象を絞って様子を見る
 composer probe -- --floor=videoa --endpoint=ItemList
@@ -67,6 +74,7 @@ tools/live-probe/runs/20260904-120000/
   ItemList/FANZA__digital__videoa-43__sort-date__hits-100__offset-000001.json
   GenreSearch/FANZA__digital__videoa-43__hits-500__offset-000401.json
   ActressSearch/all__sort--birthday__hits-100__offset-000065.json
+  Errors/invalid-api-id.json
   manifest.jsonl   1 リクエスト 1 行。条件・URI・件数・検証結果・DTO が知らないキー
   run.json         実行条件と集計
   failures.json    検証に失敗した箇所と、DTO が知らないキーの一覧
@@ -105,7 +113,7 @@ tools/live-probe/runs/20260904-120000/
 ```
 
 API errors はエラーメッセージで束ねてある。存在しない組み合わせを叩けば、同じエラーが何十件も出るため。
-Transport errors は束ねず、リクエストごとにそのまま並べる。
+わざとエラーを引いた分もここに並ぶ。Transport errors は束ねず、リクエストごとにそのまま並べる。
 
 標準出力には、パスと件数だけに切り詰めたサマリを出す。実例まで見たいときに `failures.md` を開く。
 
@@ -115,6 +123,9 @@ Transport errors は束ねず、リクエストごとにそのまま並べる。
 
 API がエラーを返しただけ（`api-error`）では 1 にしない。存在しない組み合わせを叩けば必ず起きるため。
 DTO が知らないキーがあっても 1 にしない。DTO がそれを無視しても、ライブラリの利用者には何も起きないため。
+
+わざとエラーを引く対象が成功してしまった場合（`unexpected-ok`）は 1 にする。検証の失敗として、
+`*outcome*` というパスで報告する。
 
 ## 備考
 

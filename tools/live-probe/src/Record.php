@@ -21,6 +21,9 @@ final readonly class Record
     /** HTTP 通信に失敗した。 */
     public const string OUTCOME_TRANSPORT_ERROR = 'transport-error';
 
+    /** エラーを引くつもりのリクエストが成功してしまった。 */
+    public const string OUTCOME_UNEXPECTED_OK = 'unexpected-ok';
+
     public const string VALIDATION_OK = 'ok';
 
     public const string VALIDATION_FAILED = 'failed';
@@ -108,7 +111,7 @@ final readonly class Record
     {
         $parts = [$this->endpoint];
 
-        foreach (['site', 'service', 'floor'] as $key) {
+        foreach (['case', 'site', 'service', 'floor'] as $key) {
             if (isset($this->context[$key])) {
                 $parts[] = $this->context[$key];
             }

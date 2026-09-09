@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace DmmApiClient\LiveProbe;
 
 use Closure;
+use DmmApiClient\Api\Request\Credentials;
 use DmmApiClient\Api\Request\Request;
 
 /**
@@ -25,6 +26,8 @@ final readonly class Target
      * @param int                    $offsetMax     offset の上限
      * @param array<string, string>  $context       manifest に残す内訳
      * @param Closure(int): Request  $build         offset からリクエストを組み立てる
+     * @param Credentials|null       $credentials   送信に使う認証情報。null なら実行に指定されたものを使う
+     * @param bool                   $expectsError  API がエラーを返すことを前提にした対象か。返らなければ実行を失敗させる
      */
     public function __construct(
         public string $group,
@@ -36,6 +39,8 @@ final readonly class Target
         public int $offsetMax,
         public array $context,
         private Closure $build,
+        public ?Credentials $credentials = null,
+        public bool $expectsError = false,
     ) {
     }
 

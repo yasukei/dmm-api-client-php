@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace DmmApiClient\LiveProbe;
 
 use DmmApiClient\Api\CredentialMasker;
-use DmmApiClient\Api\DmmApiClient;
 use DmmApiClient\Api\Exception\ApiErrorException;
 use DmmApiClient\Api\Exception\TransportException;
 use DmmApiClient\Api\Request\Request;
@@ -22,6 +21,17 @@ final class Runner
     /** 再試行までの待ち時間（秒）。 */
     private const array BACKOFF = [2, 5];
 
+    /**
+     * エラーを引くつもりのリクエストが成功してしまった場合に、検証エラーとして記録する内容。
+     *
+     * DTO のフィールドではないので、`*` で囲んだ擬似的なパスにする（{@see Validator} と同じ書き方）。
+     */
+    private const string UNEXPECTED_OK_PATH = '*outcome*';
+
+    private const string UNEXPECTED_OK_MESSAGE =
+        'Expected the API to reject this request, but it returned a successful response. '
+        . 'The error DTOs got no coverage from it.';
+
     /** 直前のリクエストを送った時刻。レート制御に使う。 */
     private float $lastRequestAt = 0.0;
 
@@ -32,7 +42,7 @@ final class Runner
      * @param array<string, Record> $previous `--resume` のときに引き継ぐ、前回の記録（ファイルの相対パスをキーにする）
      */
     public function __construct(
-        private readonly DmmApiClient $client,
+        private readonly Clients $clients,
         private readonly CredentialMasker $masker,
         private readonly Validator $validator,
         private readonly RunDirectory $run,
@@ -55,7 +65,8 @@ final class Runner
     {
         $request = $target->request($offset);
         $relative = $target->group . '/' . $target->fileName($offset);
-        $uri = $this->masker->mask($this->client->buildUri($request));
+        $client = $this->clients->forTarget($target);
+        $uri = $this->masker->mask($client->buildUri($request));
 
         if ($this->options->resume && $this->run->has($relative)) {
             return $this->cached($target, $offset, $page, $relative, $uri);
@@ -69,7 +80,11 @@ final class Runner
             $this->sent++;
 
             try {
-                $body = $this->client->fetchRaw($request);
+                $body = $client->fetchRaw($request);
+
+                // エラーを引くつもりの対象が通ってしまった場合。API の挙動が変わったか、
+                // 壊したはずの認証情報が受け入れられたかで、いずれにせよ前提が崩れている。
+                $unexpected = $target->expectsError;
 
                 return $this->store(
                     $target,
@@ -78,9 +93,9 @@ final class Runner
                     $relative,
                     $uri,
                     $body,
-                    Record::OUTCOME_OK,
+                    $unexpected ? Record::OUTCOME_UNEXPECTED_OK : Record::OUTCOME_OK,
                     200,
-                    null,
+                    $unexpected ? self::UNEXPECTED_OK_MESSAGE : null,
                     self::elapsed($startedAt),
                 );
             } catch (ApiErrorException $exception) {
@@ -133,7 +148,7 @@ final class Runner
      */
     public function uri(Request $request): string
     {
-        return $this->masker->mask($this->client->buildUri($request));
+        return $this->masker->mask($this->clients->primary()->buildUri($request));
     }
 
     /**
@@ -203,8 +218,18 @@ final class Runner
             $this->run->save($relative, $this->masker->mask($body));
         }
 
-        $errors = $body === null ? [] : $this->validator->validate($responseClass, $body);
-        $unknownKeys = $body === null ? [] : $this->validator->unknownKeys($responseClass, $body);
+        // 成功してしまった対象のボディを、エラー用の DTO で検証しても意味のある結果にならない。
+        // 検証の代わりに、前提が崩れたことをそのまま検証エラーとして記録する。
+        $errors = match (true) {
+            $body === null => [],
+            $outcome === Record::OUTCOME_UNEXPECTED_OK => [
+                ['path' => self::UNEXPECTED_OK_PATH, 'message' => self::UNEXPECTED_OK_MESSAGE],
+            ],
+            default => $this->validator->validate($responseClass, $body),
+        };
+        $unknownKeys = $body === null || $outcome === Record::OUTCOME_UNEXPECTED_OK
+            ? []
+            : $this->validator->unknownKeys($responseClass, $body);
         $validation = match (true) {
             $body === null => Record::VALIDATION_SKIPPED,
             $errors === [] => Record::VALIDATION_OK,

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace DmmApiClient\LiveProbe;
 
 use DmmApiClient\Api\CredentialMasker;
-use DmmApiClient\Api\DmmApiClient;
 use DmmApiClient\Api\Exception\DmmApiClientException;
 use DmmApiClient\Api\Request\Credentials;
 use DmmApiClient\Api\Request\FloorListRequest;
@@ -88,15 +87,15 @@ final readonly class Probe
         $credentials = $this->credentials();
         $masker = $this->options->mask ? CredentialMasker::forCredentials($credentials) : CredentialMasker::disabled();
         $console = new Console((new Output())->masked($masker));
-        $client = new DmmApiClient($credentials, self::httpClient(), baseUri: $this->options->baseUri);
+        $clients = new Clients($credentials, self::httpClient(), $this->options->baseUri);
 
         if ($this->options->dryRun) {
-            return $this->dryRun($client, $masker, $console);
+            return $this->dryRun($clients, $credentials, $masker, $console);
         }
 
         $run = $this->openRunDirectory(create: true);
         $previous = $this->options->resume ? self::index($run) : [];
-        $runner = new Runner($client, $masker, new Validator(), $run, $this->options, $previous);
+        $runner = new Runner($clients, $masker, new Validator(), $run, $this->options, $previous);
         $startedAt = date('c');
 
         $run->writeRun([
@@ -122,7 +121,7 @@ final readonly class Probe
             throw new ProbeException('FloorList returned no usable floors; nothing else can be planned.');
         }
 
-        $targets = Planner::build($catalog->floors, $this->options);
+        $targets = Planner::build($catalog->floors, $this->options, $credentials);
         $console->progress(sprintf(
             'planned %d targets over %d floors (%d floors matched the filters)',
             count($targets),
@@ -235,7 +234,9 @@ final readonly class Probe
         $records = [];
 
         foreach ($run->records() as $record) {
-            if ($record->file === null) {
+            // エラーを引くつもりで成功してしまった記録は、検証し直しても言うことが変わらない。
+            // 保存されているのは成功したレスポンスで、エラー用の DTO と突き合わせても意味が無い。
+            if ($record->file === null || $record->outcome === Record::OUTCOME_UNEXPECTED_OK) {
                 $records[] = $record;
 
                 continue;
@@ -274,22 +275,26 @@ final readonly class Probe
      *
      * @throws ProbeException
      */
-    private function dryRun(DmmApiClient $client, CredentialMasker $masker, Console $console): int
-    {
+    private function dryRun(
+        Clients $clients,
+        Credentials $credentials,
+        CredentialMasker $masker,
+        Console $console,
+    ): int {
         $body = $this->savedFloorList();
 
         if ($body === null) {
             $console->progress('No saved FloorList found; fetching it once.');
-            $body = $masker->mask($client->fetchRaw(new FloorListRequest()));
+            $body = $masker->mask($clients->primary()->fetchRaw(new FloorListRequest()));
         }
 
         $catalog = FloorCatalog::fromDecoded(Json::decode($body) ?? []);
-        $targets = Planner::build($catalog->floors, $this->options);
+        $targets = Planner::build($catalog->floors, $this->options, $credentials);
 
-        $console->report($client->buildUri(new FloorListRequest()) . PHP_EOL);
+        $console->report($clients->primary()->buildUri(new FloorListRequest()) . PHP_EOL);
 
         foreach ($targets as $target) {
-            $console->report($masker->mask($client->buildUri($target->request(1))) . PHP_EOL);
+            $console->report($masker->mask($clients->forTarget($target)->buildUri($target->request(1))) . PHP_EOL);
         }
 
         $console->progress(sprintf(
@@ -444,6 +449,8 @@ final readonly class Probe
 
             FloorList で全フロアを取り出し、フロアごとに各 API を sort の全種別・
             先頭/中間/末尾のページで叩いて、レスポンスの保存と DTO 検証を行う。
+            最後に、わざとエラーを引くリクエスト（--endpoint=Errors）を送り、
+            エラー用の DTO も実データで検証する。
 
             保存先:
               {$defaultOutRoot}/<日時>/
@@ -461,6 +468,7 @@ final readonly class Probe
               --revalidate      取得せず、保存済みのレスポンスを検証し直してレポートを作り直す
               --dry-run         送信せず、叩く予定の URI を並べる
               --endpoint=A,B    対象の API（既定: 全部。FloorList は常に取得する）
+                                Errors を指定すると、わざとエラーを引く対象だけを送る
               --site=CODE,...   対象のサイトコード（DMM.com, FANZA）
               --service=CODE,.. 対象のサービスコード（digital, mono, ...）
               --floor=CODE,...  対象のフロアコード（videoa, dvd, ...）
@@ -477,6 +485,7 @@ final readonly class Probe
 
             Examples:
               php tools/live-probe/probe.php --floor=videoa --endpoint=ItemList --pages=first
+              php tools/live-probe/probe.php --endpoint=Errors
               php tools/live-probe/probe.php --revalidate
               php tools/live-probe/probe.php --revalidate --run={$defaultOutRoot}/20260904-120000
 
