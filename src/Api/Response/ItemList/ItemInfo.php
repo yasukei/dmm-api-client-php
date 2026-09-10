@@ -20,7 +20,7 @@ final readonly class ItemInfo
      * @param list<ItemInfoElement> $genre         ジャンル
      * @param list<ItemInfoElement> $series        シリーズ
      * @param list<ItemInfoElement> $maker         メーカー
-     * @param list<ItemInfoElement> $actor         男優
+     * @param list<ItemInfoElement> $actor         俳優
      * @param list<ItemInfoElement> $actress       女優
      * @param list<ItemInfoElement> $director      監督
      * @param list<ItemInfoElement> $author        作者

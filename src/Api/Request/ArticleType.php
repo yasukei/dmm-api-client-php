@@ -46,7 +46,7 @@ enum ArticleType: string
     /** 監督 */
     case Director = 'director';
 
-    /** 男優 */
+    /** 俳優 */
     case Actor = 'actor';
 
     /** アーティスト */
