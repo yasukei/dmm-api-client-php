@@ -117,6 +117,10 @@ final readonly class Record
             }
         }
 
+        if (isset($this->context['article'], $this->context['article_id'])) {
+            $parts[] = sprintf('article=%s:%s', $this->context['article'], $this->context['article_id']);
+        }
+
         if ($this->sort !== null) {
             $parts[] = 'sort=' . $this->sort;
         }

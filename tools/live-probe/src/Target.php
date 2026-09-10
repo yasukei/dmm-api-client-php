@@ -28,6 +28,7 @@ final readonly class Target
      * @param Closure(int): Request  $build         offset からリクエストを組み立てる
      * @param Credentials|null       $credentials   送信に使う認証情報。null なら実行に指定されたものを使う
      * @param bool                   $expectsError  API がエラーを返すことを前提にした対象か。返らなければ実行を失敗させる
+     * @param bool                   $firstPageOnly 先頭ページだけを取る対象か。中間・末尾は取らない
      */
     public function __construct(
         public string $group,
@@ -41,6 +42,7 @@ final readonly class Target
         private Closure $build,
         public ?Credentials $credentials = null,
         public bool $expectsError = false,
+        public bool $firstPageOnly = false,
     ) {
     }
 

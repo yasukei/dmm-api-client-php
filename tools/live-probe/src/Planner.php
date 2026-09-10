@@ -6,6 +6,8 @@ namespace DmmApiClient\LiveProbe;
 
 use DmmApiClient\Api\Request\ActressSearchRequest;
 use DmmApiClient\Api\Request\ActressSearchSort;
+use DmmApiClient\Api\Request\ArticleFilter;
+use DmmApiClient\Api\Request\ArticleType;
 use DmmApiClient\Api\Request\AuthorSearchRequest;
 use DmmApiClient\Api\Request\Credentials;
 use DmmApiClient\Api\Request\FloorListRequest;
@@ -38,8 +40,17 @@ final class Planner
         'MakerSearch',
         'SeriesSearch',
         'AuthorSearch',
+        self::ARTICLES,
         self::ERRORS,
     ];
+
+    /**
+     * `article` / `article_id` を指定して叩き直す対象をまとめた、擬似的なエンドポイント名。
+     *
+     * 叩くのは `ItemList` だが、何を指定するかがフロアの実データ次第で決まるので、
+     * 通常の `ItemList` とは別に選び分けられるようにする。
+     */
+    public const string ARTICLES = 'Articles';
 
     /**
      * わざとエラーを引くための対象をまとめた、擬似的なエンドポイント名。
@@ -177,6 +188,79 @@ final class Planner
             credentials: $credentials,
             expectsError: true,
         );
+    }
+
+    /**
+     * 実データに出た分類を `article` / `article_id` に指定して、同じフロアをもう一度叩く対象。
+     *
+     * 何を指定できるかはフロアごとに違い、そのフロアの `ItemList` を集めてみるまで分からない。
+     * だから対象は、フロアの sweep が済んだあとに {@see ArticleTally} から組み立てる。
+     *
+     * 取るのは先頭ページだけ。見たいのは「指定した分類で絞り込めるか」であって、
+     * その分類の商品を集めることではない。ページを振っても分かることは増えず、
+     * 取得するデータだけが増える。
+     *
+     * @return list<Target>
+     */
+    public static function articleTargets(FloorRef $floor, ArticleTally $tally, Options $options): array
+    {
+        $hits = $options->hitsFor(ItemListRequest::HITS_MAX);
+        $targets = [];
+
+        foreach ($tally->articles as $article => $id) {
+            $targets[] = new Target(
+                group: self::ARTICLES,
+                endpoint: ItemListRequest::ENDPOINT,
+                responseClass: ItemListResponse::class,
+                key: $floor->key() . '__article-' . Target::sanitize($article) . '-' . Target::sanitize($id),
+                sort: null,
+                hits: $hits,
+                offsetMax: ItemListRequest::OFFSET_MAX,
+                context: $floor->context() + ['article' => $article, 'article_id' => $id],
+                build: static fn (int $offset): Request => self::articleRequest($floor, $article, $id, $hits, $offset),
+                firstPageOnly: true,
+            );
+        }
+
+        return $targets;
+    }
+
+    /**
+     * 公式ドキュメントが `article` に挙げている分類は {@see ItemListRequest} で組み立てる。
+     * ライブラリ自身の article 組み立てを、実データで通せる唯一の経路になる。
+     *
+     * それ以外は {@see ArticleType} に無いので {@see RawRequest} で送る。使えると分かってから
+     * enum に足す順序にしている。ドキュメントに無いものを、確かめる前に API として提供したくない。
+     */
+    private static function articleRequest(
+        FloorRef $floor,
+        string $article,
+        string $id,
+        int $hits,
+        int $offset,
+    ): Request {
+        $type = ArticleType::tryFrom($article);
+
+        if ($type !== null) {
+            return new ItemListRequest(
+                site: $floor->site,
+                service: $floor->serviceCode,
+                floor: $floor->floorCode,
+                articles: [new ArticleFilter($type, $id)],
+                hits: $hits,
+                offset: $offset,
+            );
+        }
+
+        return new RawRequest(ItemListRequest::ENDPOINT, [
+            'site' => $floor->site->value,
+            'service' => $floor->serviceCode,
+            'floor' => $floor->floorCode,
+            'article' => [$article],
+            'article_id' => [$id],
+            'hits' => (string) $hits,
+            'offset' => (string) $offset,
+        ]);
     }
 
     /**

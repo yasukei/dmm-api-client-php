@@ -123,6 +123,27 @@ final readonly class RunDirectory
     }
 
     /**
+     * 保存済みのレスポンスを、名前の順に 1 つずつ読み出す。
+     *
+     * まとめて配列に載せない。1 フロア分でも数十 MB になり、数える側は 1 つずつ見れば足りるため。
+     *
+     * @param string $group  サブディレクトリ名（例: ItemList）
+     * @param string $prefix ファイル名の先頭（例: FANZA__digital__videoa-43__）
+     *
+     * @return iterable<string>
+     */
+    public function bodies(string $group, string $prefix): iterable
+    {
+        foreach (glob($this->file($group . '/' . $prefix . '*.json')) ?: [] as $path) {
+            $contents = @file_get_contents($path);
+
+            if ($contents !== false) {
+                yield $contents;
+            }
+        }
+    }
+
+    /**
      * 1 件ずつ追記する。途中で止まっても、それまでの結果が残るようにするため。
      */
     public function appendRecord(Record $record): void

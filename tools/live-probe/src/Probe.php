@@ -129,18 +129,8 @@ final readonly class Probe
             count(array_filter($catalog->floors, $this->options->wantsFloor(...))),
         ));
 
-        $index = 0;
-        $total = count($targets);
-
-        foreach ($targets as $target) {
-            $index++;
-            $this->processTarget($runner, $target, $index, $total, $console, $records, $run);
-
-            if ($this->options->limit !== null && $runner->sent() >= $this->options->limit) {
-                $console->progress(sprintf('reached --limit=%d; stopping.', $this->options->limit));
-
-                break;
-            }
+        if ($this->runTargets($runner, $targets, $console, $records, $run)) {
+            $this->processArticles($runner, $catalog, $console, $records, $run);
         }
 
         $run->writeRun([
@@ -151,6 +141,81 @@ final readonly class Probe
         ]);
 
         return $this->report($records, $run, $console);
+    }
+
+    /**
+     * 対象を順に処理する。
+     *
+     * @param list<Target> $targets
+     * @param list<Record> $records
+     *
+     * @return bool `--limit` に達せず最後まで回ったか
+     */
+    private function runTargets(
+        Runner $runner,
+        array $targets,
+        Console $console,
+        array &$records,
+        RunDirectory $run,
+    ): bool {
+        $index = 0;
+        $total = count($targets);
+
+        foreach ($targets as $target) {
+            $index++;
+            $this->processTarget($runner, $target, $index, $total, $console, $records, $run);
+
+            if ($this->options->limit !== null && $runner->sent() >= $this->options->limit) {
+                $console->progress(sprintf('reached --limit=%d; stopping.', $this->options->limit));
+
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * フロアごとに、集まった実データから `article` に指定するものを決めて叩き直す。
+     *
+     * 何を指定できるかはフロアの中身次第なので、対象は sweep が済むまで決まらない。
+     * 数えるのは保存済みのレスポンスなので、`--resume` で過去の実行に足すこともできる
+     * （`--endpoint=Articles --resume` で、取得済みの `ItemList` から article だけを試せる）。
+     *
+     * @param list<Record> $records
+     */
+    private function processArticles(
+        Runner $runner,
+        FloorCatalog $catalog,
+        Console $console,
+        array &$records,
+        RunDirectory $run,
+    ): void {
+        if (! $this->options->wantsEndpoint(Planner::ARTICLES) || ! $this->options->wantsUnsortedEndpoints()) {
+            return;
+        }
+
+        $floors = array_values(array_filter($catalog->floors, $this->options->wantsFloor(...)));
+        $targets = [];
+
+        foreach ($floors as $floor) {
+            $tally = ArticleTally::fromBodies($run->bodies('ItemList', $floor->key() . '__'));
+            $targets = [...$targets, ...Planner::articleTargets($floor, $tally, $this->options)];
+        }
+
+        if ($targets === []) {
+            $console->progress('no article filters to try; no saved ItemList response carries iteminfo.');
+
+            return;
+        }
+
+        $console->progress(sprintf(
+            'planned %d article filters over %d floors',
+            count($targets),
+            count($floors),
+        ));
+
+        $this->runTargets($runner, $targets, $console, $records, $run);
     }
 
     /**
@@ -200,7 +265,7 @@ final readonly class Probe
      */
     private static function followUpOffsets(Target $target, ?int $totalCount, Options $options): array
     {
-        if ($totalCount === null || $target->hits === null || $totalCount <= $target->hits) {
+        if ($target->firstPageOnly || $totalCount === null || $target->hits === null || $totalCount <= $target->hits) {
             return [];
         }
 
@@ -301,6 +366,7 @@ final readonly class Probe
             '%d targets planned (first page only is shown; middle/last depend on total_count).',
             count($targets),
         ));
+        $console->progress('Article filters are not listed; what they send is decided from the ItemList responses.');
 
         return self::EXIT_SUCCESS;
     }
@@ -449,8 +515,9 @@ final readonly class Probe
 
             FloorList で全フロアを取り出し、フロアごとに各 API を sort の全種別・
             先頭/中間/末尾のページで叩いて、レスポンスの保存と DTO 検証を行う。
-            最後に、わざとエラーを引くリクエスト（--endpoint=Errors）を送り、
-            エラー用の DTO も実データで検証する。
+            続いて、フロアごとに実データへ出た分類を article / article_id に指定して
+            叩き直す（--endpoint=Articles）。最後に、わざとエラーを引くリクエスト
+            （--endpoint=Errors）を送り、エラー用の DTO も実データで検証する。
 
             保存先:
               {$defaultOutRoot}/<日時>/
@@ -468,7 +535,8 @@ final readonly class Probe
               --revalidate      取得せず、保存済みのレスポンスを検証し直してレポートを作り直す
               --dry-run         送信せず、叩く予定の URI を並べる
               --endpoint=A,B    対象の API（既定: 全部。FloorList は常に取得する）
-                                Errors を指定すると、わざとエラーを引く対象だけを送る
+                                Articles / Errors は API 名ではなく、article の検証と
+                                わざとエラーを引く対象を指す
               --site=CODE,...   対象のサイトコード（DMM.com, FANZA）
               --service=CODE,.. 対象のサービスコード（digital, mono, ...）
               --floor=CODE,...  対象のフロアコード（videoa, dvd, ...）
@@ -486,6 +554,7 @@ final readonly class Probe
             Examples:
               php tools/live-probe/probe.php --floor=videoa --endpoint=ItemList --pages=first
               php tools/live-probe/probe.php --endpoint=Errors
+              php tools/live-probe/probe.php --endpoint=Articles --resume  # 取得済みの ItemList から
               php tools/live-probe/probe.php --revalidate
               php tools/live-probe/probe.php --revalidate --run={$defaultOutRoot}/20260904-120000
 

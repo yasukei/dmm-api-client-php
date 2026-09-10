@@ -145,6 +145,28 @@ final readonly class Reporter
             }
         }
 
+        $articles = self::articleGroups($this->articleFilters());
+
+        if ($articles !== []) {
+            $lines[] = '';
+            $lines[] = sprintf('article filters (%d kinds):', count($articles));
+
+            foreach ($articles as $group) {
+                $verdicts = [];
+
+                foreach ($group['verdicts'] as $verdict => $count) {
+                    $verdicts[] = sprintf('%s %d', $verdict, $count);
+                }
+
+                $lines[] = sprintf(
+                    '  %-20s %5d  %s',
+                    $group['article'],
+                    $group['requests'],
+                    implode('  ', $verdicts),
+                );
+            }
+        }
+
         $lines[] = '';
         $lines[] = 'details: ' . $this->run->file('failures.md');
 
@@ -160,6 +182,7 @@ final readonly class Reporter
         $unknownKeys = $this->unknownKeyGroups();
         $apiErrors = $this->apiErrorGroups();
         $transportErrors = $this->transportErrors();
+        $articleFilters = $this->articleFilters();
 
         $this->run->writeRun([
             'summary' => $this->counts(),
@@ -171,11 +194,12 @@ final readonly class Reporter
             'unknownKeys' => $unknownKeys,
             'apiErrors' => $apiErrors,
             'transportErrors' => $transportErrors,
+            'articleFilters' => $articleFilters,
         ]) . PHP_EOL);
 
         file_put_contents(
             $this->run->file('failures.md'),
-            $this->markdown($groups, $unknownKeys, $apiErrors, $transportErrors),
+            $this->markdown($groups, $unknownKeys, $apiErrors, $transportErrors, $articleFilters),
         );
     }
 
@@ -184,9 +208,15 @@ final readonly class Reporter
      * @param list<array{path: string, requests: int, messages: list<array{message: string, count: int}>, samples: list<array{file: string|null, label: string, uri: string, path: string, message: string, value: string}>}> $unknownKeys
      * @param list<array{requests: int, message: string, status: int|null, samples: list<string>}>                                                                                                                          $apiErrors
      * @param list<array{label: string, uri: string, message: string}>                                                                                                                                                      $transportErrors
+     * @param list<array{floor: string, article: string, id: string, verdict: string, returned: int, matching: int, totalCount: int|null, unfiltered: int|null, file: string|null, label: string, message: string|null}>      $articleFilters
      */
-    private function markdown(array $groups, array $unknownKeys, array $apiErrors, array $transportErrors): string
-    {
+    private function markdown(
+        array $groups,
+        array $unknownKeys,
+        array $apiErrors,
+        array $transportErrors,
+        array $articleFilters,
+    ): string {
         $counts = $this->counts();
         $lines = [
             '# live-probe failures',
@@ -301,7 +331,7 @@ final readonly class Reporter
             $lines[] = sprintf('  - %s', $error['message']);
         }
 
-        return implode(PHP_EOL, $lines) . PHP_EOL;
+        return implode(PHP_EOL, [...$lines, '', ...self::articleMarkdown($articleFilters)]) . PHP_EOL;
     }
 
     /**
@@ -550,6 +580,208 @@ final readonly class Reporter
             'requests that should have been rejected but succeeded: %d',
             $unexpected,
         )];
+    }
+
+    /**
+     * `article` を指定した対象について、フィルタが実際に効いたかを判定する。
+     *
+     * 見るのは件数ではなく中身。API が `article` を黙って無視して通常の結果を返す可能性があり、
+     * 件数だけでは「効いた」と「無視された」を区別できないため、返ってきた商品が
+     * その ID を実際に持っているかを数える。
+     *
+     * 絞り込み無しの件数は、同じフロアの通常の `ItemList` から借りる。追加のリクエストは要らない。
+     *
+     * @return list<array{floor: string, article: string, id: string, verdict: string, returned: int, matching: int, totalCount: int|null, unfiltered: int|null, file: string|null, label: string, message: string|null}>
+     */
+    private function articleFilters(): array
+    {
+        $unfiltered = $this->unfilteredTotals();
+        $filters = [];
+
+        foreach ($this->records as $record) {
+            if ($record->group !== Planner::ARTICLES) {
+                continue;
+            }
+
+            $article = $record->context['article'] ?? null;
+            $id = $record->context['article_id'] ?? null;
+
+            if ($article === null || $id === null) {
+                continue;
+            }
+
+            $items = ArticleTally::itemsOf($this->decoded($record));
+            $matching = 0;
+
+            foreach ($items as $item) {
+                if (ArticleTally::carries($item, $article, $id)) {
+                    $matching++;
+                }
+            }
+
+            $filters[] = [
+                'floor' => $record->context['floor'] ?? '',
+                'article' => $article,
+                'id' => $id,
+                'verdict' => self::verdict($record, count($items), $matching),
+                'returned' => count($items),
+                'matching' => $matching,
+                'totalCount' => $record->totalCount,
+                'unfiltered' => $unfiltered[$record->context['floor_id'] ?? ''] ?? null,
+                'file' => $record->file,
+                'label' => $record->label(),
+                'message' => $record->message,
+            ];
+        }
+
+        return $filters;
+    }
+
+    /**
+     * 絞り込みを掛けなかった場合の、フロアごとの総件数。
+     *
+     * @return array<string, int>
+     */
+    private function unfilteredTotals(): array
+    {
+        $totals = [];
+
+        foreach ($this->records as $record) {
+            $floorId = $record->context['floor_id'] ?? null;
+
+            if ($record->group === 'ItemList' && $floorId !== null && $record->totalCount !== null) {
+                $totals[$floorId] ??= $record->totalCount;
+            }
+        }
+
+        return $totals;
+    }
+
+    /**
+     * 商品が実際にその分類を持っているかで判定する。
+     *
+     * - `rejected`: API がエラーを返した。その分類は `article` に指定できない
+     * - `empty`: 0 件で返った。指定は通ったが該当が無い（無視されたのではない）
+     * - `honored`: 返った商品がすべてその ID を持つ。絞り込めている
+     * - `ignored`: どの商品もその ID を持たない。`article` が読み捨てられている
+     * - `partial`: 一部だけが持つ。上の 3 つのどれとも言えず、実物を見る必要がある
+     */
+    private static function verdict(Record $record, int $returned, int $matching): string
+    {
+        return match (true) {
+            $record->outcome === Record::OUTCOME_API_ERROR => 'rejected',
+            $returned === 0 => 'empty',
+            $matching === $returned => 'honored',
+            $matching === 0 => 'ignored',
+            default => 'partial',
+        };
+    }
+
+    /**
+     * 分類ごとに、判定の内訳を数える。
+     *
+     * @param list<array{article: string, verdict: string, ...}> $filters
+     *
+     * @return list<array{article: string, requests: int, verdicts: array<string, int>}>
+     */
+    private static function articleGroups(array $filters): array
+    {
+        /** @var array<string, array{requests: int, verdicts: array<string, int>}> $grouped */
+        $grouped = [];
+
+        foreach ($filters as $filter) {
+            $grouped[$filter['article']] ??= ['requests' => 0, 'verdicts' => []];
+            $grouped[$filter['article']]['requests']++;
+            $verdict = $filter['verdict'];
+            $grouped[$filter['article']]['verdicts'][$verdict] =
+                ($grouped[$filter['article']]['verdicts'][$verdict] ?? 0) + 1;
+        }
+
+        uasort($grouped, static fn (array $a, array $b): int => $b['requests'] <=> $a['requests']);
+
+        $groups = [];
+
+        foreach ($grouped as $article => $group) {
+            arsort($group['verdicts']);
+            $groups[] = ['article' => $article, 'requests' => $group['requests'], 'verdicts' => $group['verdicts']];
+        }
+
+        return $groups;
+    }
+
+    /**
+     * 保存したレスポンスを読み直す。
+     *
+     * @return array<mixed>|null
+     */
+    private function decoded(Record $record): ?array
+    {
+        if ($record->file === null) {
+            return null;
+        }
+
+        $body = $this->run->read($record->file);
+
+        return $body === null ? null : Json::decode($body);
+    }
+
+    /**
+     * `article` の判定結果を、分類ごとの内訳と 1 行 1 リクエストの表にする。
+     *
+     * 公式ドキュメントに無い分類が `honored` で並んでいれば、それは API に載っていないだけで
+     * 実際には使える、ということになる。`rejected` と `empty` の違いも読めるようにしておく。
+     * 前者は指定そのものを受け付けず、後者は受け付けたうえで該当が無い。
+     *
+     * @param list<array{floor: string, article: string, id: string, verdict: string, returned: int, matching: int, totalCount: int|null, unfiltered: int|null, file: string|null, label: string, message: string|null}> $filters
+     *
+     * @return list<string>
+     */
+    private static function articleMarkdown(array $filters): array
+    {
+        $lines = ['## Article filters', ''];
+        $lines[] = 'Each floor is swept again with the most frequent id of every article the floor\'s items '
+            . 'actually carry. A response counts as honored only when every item it returns carries that id — '
+            . 'a filter the API quietly drops would still answer with items.';
+        $lines[] = '';
+
+        if ($filters === []) {
+            $lines[] = 'None.';
+
+            return $lines;
+        }
+
+        $lines[] = '| article | requests | verdicts |';
+        $lines[] = '| --- | --- | --- |';
+
+        foreach (self::articleGroups($filters) as $group) {
+            $verdicts = [];
+
+            foreach ($group['verdicts'] as $verdict => $count) {
+                $verdicts[] = sprintf('%s %d', $verdict, $count);
+            }
+
+            $lines[] = sprintf('| `%s` | %d | %s |', $group['article'], $group['requests'], implode(', ', $verdicts));
+        }
+
+        $lines[] = '';
+        $lines[] = '| floor | article | article_id | verdict | items | carrying | total_count | unfiltered |';
+        $lines[] = '| --- | --- | --- | --- | --- | --- | --- | --- |';
+
+        foreach ($filters as $filter) {
+            $lines[] = sprintf(
+                '| %s | `%s` | `%s` | %s | %d | %d | %s | %s |',
+                $filter['floor'],
+                $filter['article'],
+                $filter['id'],
+                $filter['verdict'],
+                $filter['returned'],
+                $filter['matching'],
+                $filter['totalCount'] === null ? '-' : (string) $filter['totalCount'],
+                $filter['unfiltered'] === null ? '-' : (string) $filter['unfiltered'],
+            );
+        }
+
+        return $lines;
     }
 
     private static function truncate(string $value, int $limit): string

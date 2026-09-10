@@ -24,6 +24,7 @@
 | `SeriesSearch` | floor_id | なし | 500 | 先頭・中間・末尾 |
 | `AuthorSearch` | floor_id | なし | 500 | 先頭・中間・末尾 |
 | `ActressSearch` | フロアに依存しない | 14 種すべて | 100 | 先頭・中間・末尾 |
+| `Articles` | site + service + floor | なし | 100 | 先頭のみ |
 | `Errors` | フロアに依存しない | なし | なし | なし（ケースごとに 1 件） |
 
 中間と末尾のページ位置は、先頭ページの `total_count` から決める（末尾 = `total_count - hits + 1`、
@@ -32,6 +33,12 @@
 フロア × API の中には、そのフロアには存在しない組み合わせ（動画フロアの `AuthorSearch` など）も含まれる。
 0 件で返るのが通常なので、これは失敗ではなく通常の成功として扱う。API がエラーを返した場合は
 `api-error` として記録し、エラーボディも保存したうえで `ErrorResponse` として検証する。
+
+`Articles` は、フロアの sweep が済んだあとに、そのフロアの `iteminfo` に実際に出た分類を
+`article` / `article_id` に指定して叩き直す対象。何が指定できるかはフロアの中身次第なので、
+対象は取得してみるまで決まらない。公式ドキュメントに載っていない分類（`label` や `director` など）も
+使えるかどうかを確かめる。詳細は [`src/ArticleTally.php`](src/ArticleTally.php) と
+[`src/Planner.php`](src/Planner.php) の `articleTargets()` にある。
 
 `Errors` は、確実にエラーになるリクエストを送って `ErrorResponse` を検証するための対象。何をどう誤らせて
 いるかは [`src/Planner.php`](src/Planner.php) の `errorCases()` にある。
@@ -49,6 +56,9 @@ composer probe -- --help                    # オプション一覧
 
 # わざとエラーを引く分だけ（3 リクエスト）
 composer probe -- --endpoint=Errors
+
+# 取得済みの ItemList から、article の検証だけをやり直す
+composer probe -- --endpoint=Articles --resume
 
 # 最初は対象を絞って様子を見る
 composer probe -- --floor=videoa --endpoint=ItemList
@@ -74,6 +84,7 @@ tools/live-probe/runs/20260904-120000/
   ItemList/FANZA__digital__videoa-43__sort-date__hits-100__offset-000001.json
   GenreSearch/FANZA__digital__videoa-43__hits-500__offset-000401.json
   ActressSearch/all__sort--birthday__hits-100__offset-000065.json
+  Articles/FANZA__digital__videoa-43__article-actress-1234__hits-100__offset-000001.json
   Errors/invalid-api-id.json
   manifest.jsonl   1 リクエスト 1 行。条件・URI・件数・検証結果・DTO が知らないキー
   run.json         実行条件と集計
@@ -88,7 +99,7 @@ tools/live-probe/runs/20260904-120000/
 
 ### レポート
 
-`failures.md` は 4 節に分かれている。
+`failures.md` は 5 節に分かれている。
 
 | 節 | 内容 | 実行を失敗させるか |
 | --- | --- | --- |
@@ -96,6 +107,7 @@ tools/live-probe/runs/20260904-120000/
 | Keys the DTOs do not know | DMM が返しているが、DTO が知らないフィールド | しない |
 | API errors | API がエラーを返したリクエスト | しない |
 | Transport errors | レスポンスを受け取れなかったリクエスト | する |
+| Article filters | `article` を指定した結果が、実際に絞り込めていたか | しない |
 
 前の 2 節は、DTO のフィールド（配列の添字を `*` に均したパス）で束ねてある。同じ食い違いが数百件出ても
 1 つの見出しにまとまり、直すべき箇所の数がそのまま見出しの数になる。見出しごとに、実際に来ていた値と、
@@ -126,6 +138,9 @@ DTO が知らないキーがあっても 1 にしない。DTO がそれを無視
 
 わざとエラーを引く対象が成功してしまった場合（`unexpected-ok`）は 1 にする。検証の失敗として、
 `*outcome*` というパスで報告する。
+
+`article` が効かなかった場合は 1 にしない。ドキュメントに無い分類が使えないのは発見であって、
+ライブラリの不具合ではないため。
 
 ## 備考
 
