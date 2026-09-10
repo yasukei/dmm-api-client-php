@@ -122,7 +122,7 @@ scenario('不正な値を、受け付ける値とともに拒否する', functio
 })->with([
     'site' => ['--site=BOGUS', 'Expected one of: DMM.com, FANZA.'],
     'sort' => ['--sort=nope', 'Expected one of: rank, price, -price, date, review, match.'],
-    'mono-stock' => ['--mono-stock=nope', 'Expected one of: stock, reserve, reserve_empty, empty, mono.'],
+    'mono-stock' => ['--mono-stock=nope', 'Expected one of: stock, reserve, reserve_empty, empty, mono, order.'],
     'article' => ['--article=nope --article-id=1', 'Expected one of: actress, author, genre, series, maker.'],
     'hits が整数でない' => ['--hits=abc', 'Option "--hits" must be an integer'],
     'hits が範囲外' => ['--hits=101', 'hits must be between 1 and 100'],

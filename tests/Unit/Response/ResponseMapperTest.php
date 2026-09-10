@@ -159,10 +159,11 @@ scenario('在庫状況を MonoStock に変換する', function (string $value, M
     'reserve' => ['reserve', MonoStock::Reserve],
     'reserve_empty' => ['reserve_empty', MonoStock::ReserveEmpty],
     'empty' => ['empty', MonoStock::Empty],
+    'order' => ['order', MonoStock::Order],
 ]);
 
 test('未知の在庫状況は検証エラーにする', function (): void {
-    // 5 つ目の値が来ればページ全体が例外になる。増えたことを見逃さないための代償。
+    // 知らない値が来ればページ全体が例外になる。増えたことを見逃さないための代償。
     $payload = Fixture::decodedWith('item-list', ['result', 'items'], [monoItem(['stock' => 'sold_out'])]);
 
     expect(fn (): ItemListResponse => responseMapper()->itemList($payload))
