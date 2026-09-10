@@ -226,11 +226,11 @@ final class Planner
     }
 
     /**
-     * 公式ドキュメントが `article` に挙げている分類は {@see ItemListRequest} で組み立てる。
-     * ライブラリ自身の article 組み立てを、実データで通せる唯一の経路になる。
+     * {@see ArticleType} にある分類は {@see ItemListRequest} で組み立てる。ライブラリ自身の
+     * article 組み立てを、実データで通せる唯一の経路になる。
      *
-     * それ以外は {@see ArticleType} に無いので {@see RawRequest} で送る。使えると分かってから
-     * enum に足す順序にしている。ドキュメントに無いものを、確かめる前に API として提供したくない。
+     * 無いものは {@see RawRequest} で送る。enum に足すのは絞り込みが効くと確かめてからで、
+     * ドキュメントに無いものを、確かめる前に API として提供したくないため。
      */
     private static function articleRequest(
         FloorRef $floor,
