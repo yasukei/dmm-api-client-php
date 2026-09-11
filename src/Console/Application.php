@@ -196,18 +196,25 @@ final readonly class Application
         ];
 
         $placeholders = array_column($options, 'placeholder');
+        $lines = [];
 
-        foreach ($notes as $placeholder => $lines) {
-            if (! in_array($placeholder, $placeholders, true)) {
-                continue;
+        foreach ($notes as $placeholder => $note) {
+            if (in_array($placeholder, $placeholders, true)) {
+                $lines = [...$lines, ...$note];
             }
+        }
 
-            $this->output->line();
-            $this->output->line('日付:');
+        if ($lines === []) {
+            return;
+        }
 
-            foreach ($lines as $line) {
-                $this->output->line('  ' . $line);
-            }
+        // 見出しはオプション一覧のあとに 1 度だけ出す。両方の書式を持つコマンドができても、
+        // 「日付:」が 2 つ並ばないようにここで一度にまとめる。
+        $this->output->line();
+        $this->output->line('日付:');
+
+        foreach ($lines as $line) {
+            $this->output->line('  ' . $line);
         }
     }
 }
