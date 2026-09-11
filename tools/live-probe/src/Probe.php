@@ -129,11 +129,11 @@ final readonly class Probe
             count(array_filter($catalog->floors, $this->options->wantsFloor(...))),
         ));
 
-        if ($this->runTargets($runner, $targets, $console, $run)
-            && $this->processArticles($runner, $catalog, $console, $run)) {
-            $this->processArticleCombos($runner, $catalog, $console, $run);
-            $this->processMonoStock($runner, $catalog, $console, $run);
-        }
+        // 前の段が `--limit` に達したら、その先の段は始めない。
+        $this->runTargets($runner, $targets, $console, $run)
+            && $this->processArticles($runner, $catalog, $console, $run)
+            && $this->processArticleCombos($runner, $catalog, $console, $run)
+            && $this->processMonoStock($runner, $catalog, $console, $run);
 
         $run->writeRun([
             'startedAt' => $startedAt,
@@ -312,15 +312,17 @@ final readonly class Probe
      *
      * 選ぶのは、そのサイトで実データに出た分類がいちばん多いフロア。同数なら floor_id の小さい方。
      * 複数指定が最も意味を持つ場所であり、選び方は実行のたびに変わらない。
+     *
+     * @return bool `--limit` に達せず最後まで回ったか
      */
     private function processArticleCombos(
         Runner $runner,
         FloorCatalog $catalog,
         Console $console,
         RunDirectory $run,
-    ): void {
+    ): bool {
         if (! $this->wantsFollowUps()) {
-            return;
+            return true;
         }
 
         $plans = [];
@@ -342,12 +344,12 @@ final readonly class Probe
         if ($plans === []) {
             $console->progress('no article combinations to try; no floor carries two articles on one item.');
 
-            return;
+            return true;
         }
 
         $console->progress(sprintf('planned %d article combinations', count($plans)));
 
-        $this->runTargets($runner, $plans, $console, $run);
+        return $this->runTargets($runner, $plans, $console, $run);
     }
 
     /**
@@ -469,15 +471,17 @@ final readonly class Probe
      * どの値で絞り込めるかは、`article` と同じく実際に叩かないと分からない。
      * 絞り込みに使えないと分かっている値も送る。そう書いてあるだけで、
      * 全フロアで裏を取ったわけではないため。
+     *
+     * @return bool `--limit` に達せず最後まで回ったか
      */
     private function processMonoStock(
         Runner $runner,
         FloorCatalog $catalog,
         Console $console,
         RunDirectory $run,
-    ): void {
+    ): bool {
         if (! $this->wantsFollowUps()) {
-            return;
+            return true;
         }
 
         $targets = [];
@@ -491,12 +495,12 @@ final readonly class Probe
         if ($targets === []) {
             $console->progress('no mono_stock filters to try; no floor matched the mono service.');
 
-            return;
+            return true;
         }
 
         $console->progress(sprintf('planned %d mono_stock filters', count($targets)));
 
-        $this->runTargets($runner, $targets, $console, $run);
+        return $this->runTargets($runner, $targets, $console, $run);
     }
 
     /**
@@ -849,7 +853,8 @@ final readonly class Probe
                                 総件数を知るため、先頭ページは指定によらず必ず取得する
               --hits=N          hits の上書き（API ごとの上限で頭打ちにする）
               --rate=N          1 秒あたりのリクエスト数（既定: 1。0 で待たない）
-              --limit=N         送信するリクエストの上限（試し打ち用）
+              --limit=N         送信するリクエストの上限（試し打ち用。同じ条件のページは
+                                まとめて取るので、その分だけ超えることがある）
               --no-mask         認証情報を伏せ字にせず保存する
               --env-file=PATH   読み込む .env（既定: カレントディレクトリの .env）
               --base-uri=URI    API のベース URI（既定: 本番。差し替えるのは動作確認用）
