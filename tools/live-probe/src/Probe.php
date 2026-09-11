@@ -127,8 +127,9 @@ final readonly class Probe
             count(array_filter($catalog->floors, $this->options->wantsFloor(...))),
         ));
 
-        if ($this->runTargets($runner, $targets, $console, $run)) {
-            $this->processArticles($runner, $catalog, $console, $run);
+        if ($this->runTargets($runner, $targets, $console, $run)
+            && $this->processArticles($runner, $catalog, $console, $run)) {
+            $this->processMonoStock($runner, $catalog, $console, $run);
         }
 
         $run->writeRun([
@@ -184,15 +185,17 @@ final readonly class Probe
      *
      * 数えるのは保存済みのレスポンスなので、`--resume` なら取得は走らない
      * （`--endpoint=ItemList --resume` で、取得済みの `ItemList` から article だけを試し直せる）。
+     *
+     * @return bool `--limit` に達せず最後まで回ったか
      */
     private function processArticles(
         Runner $runner,
         FloorCatalog $catalog,
         Console $console,
         RunDirectory $run,
-    ): void {
-        if (! $this->options->wantsEndpoint('ItemList') || ! $this->options->wantsUnsortedEndpoints()) {
-            return;
+    ): bool {
+        if (! $this->wantsFollowUps()) {
+            return true;
         }
 
         $floors = array_values(array_filter($catalog->floors, $this->options->wantsFloor(...)));
@@ -209,7 +212,7 @@ final readonly class Probe
         if ($plans === []) {
             $console->progress('no article filters to try; no saved ItemList response carries iteminfo.');
 
-            return;
+            return true;
         }
 
         $console->progress(sprintf('planned %d article filters over %d floors', count($plans), count($floors)));
@@ -247,9 +250,58 @@ final readonly class Probe
             if ($this->options->limit !== null && $runner->sent() >= $this->options->limit) {
                 $console->progress(sprintf('reached --limit=%d; stopping.', $this->options->limit));
 
-                break;
+                return false;
             }
         }
+
+        return true;
+    }
+
+    /**
+     * 通販のフロアを、`mono_stock` の値ごとに叩き直す。
+     *
+     * どの値で絞り込めるかは、`article` と同じく実際に叩かないと分からない。
+     * 絞り込みに使えないと分かっている値も送る。そう書いてあるだけで、
+     * 全フロアで裏を取ったわけではないため。
+     */
+    private function processMonoStock(
+        Runner $runner,
+        FloorCatalog $catalog,
+        Console $console,
+        RunDirectory $run,
+    ): void {
+        if (! $this->wantsFollowUps()) {
+            return;
+        }
+
+        $targets = [];
+
+        foreach ($catalog->floors as $floor) {
+            if ($this->options->wantsFloor($floor)) {
+                $targets = [...$targets, ...Planner::monoStockTargets($floor, $this->options)];
+            }
+        }
+
+        if ($targets === []) {
+            $console->progress('no mono_stock filters to try; no floor matched the mono service.');
+
+            return;
+        }
+
+        $console->progress(sprintf('planned %d mono_stock filters', count($targets)));
+
+        $this->runTargets($runner, $targets, $console, $run);
+    }
+
+    /**
+     * `ItemList` の sweep のあとに続ける対象（article と mono_stock）を回すか。
+     *
+     * どちらも `ItemList` の一部なので `--endpoint` では選べない。sort を持たないので、
+     * `--sort` で絞られた回は sort を持たない他の API と同じく対象から外す。
+     */
+    private function wantsFollowUps(): bool
+    {
+        return $this->options->wantsEndpoint('ItemList') && $this->options->wantsUnsortedEndpoints();
     }
 
     /**

@@ -18,7 +18,7 @@
 
 | API | 単位 | hits | ページ | 備考 |
 | --- | --- | --- | --- | --- |
-| `ItemList` | site + service + floor | 100 | 先頭・中間・末尾 | sort 6 種すべて。最後に article で叩き直す |
+| `ItemList` | site + service + floor | 100 | 先頭・中間・末尾 | sort 6 種すべて。最後に article と mono_stock で叩き直す |
 | `GenreSearch` | floor_id | 500 | 先頭・中間・末尾 | |
 | `MakerSearch` | floor_id | 500 | 先頭・中間・末尾 | |
 | `SeriesSearch` | floor_id | 500 | 先頭・中間・末尾 | |
@@ -39,6 +39,10 @@
 sort は指定しない。0 件で返った ID は、次に多い ID で 1 度だけ引き直す。詳細は
 [`src/ArticleTally.php`](src/ArticleTally.php) と [`src/Planner.php`](src/Planner.php) の
 `articleTarget()` にある。
+
+続けて、通販（mono）のフロアを `mono_stock` の値ごとに叩き直す。`MonoStock` の全種を送る。
+絞り込みには使えないと docblock が書いている値も含めるのは、そう書いてあるだけで全フロアで裏を
+取ったわけではないため。詳細は [`src/Planner.php`](src/Planner.php) の `monoStockTargets()` にある。
 
 `Errors` は、確実にエラーになるリクエストを送って `ErrorResponse` を検証するための対象。何をどう誤らせて
 いるかは [`src/Planner.php`](src/Planner.php) の `errorCases()` にある。
@@ -85,6 +89,7 @@ tools/live-probe/runs/20260904-120000/
   GenreSearch/FANZA__digital__videoa-43__hits-500__offset-000401.json
   ActressSearch/all__sort--birthday__hits-100__offset-000065.json
   Articles/FANZA__digital__videoa-43__article-actress-1234__hits-100__offset-000001.json
+  MonoStock/FANZA__mono__dvd-74__mono_stock-stock__hits-100__offset-000001.json
   Errors/invalid-api-id.json
   manifest.jsonl   1 リクエスト 1 行。条件・URI・件数・検証結果・DTO が知らないキー
   run.json         実行条件と集計
@@ -103,7 +108,7 @@ tools/live-probe/runs/20260904-120000/
 
 ### レポート
 
-`failures.md` は 5 節に分かれている。
+`failures.md` は 6 節に分かれている。
 
 | 節 | 内容 | 実行を失敗させるか |
 | --- | --- | --- |
@@ -112,6 +117,7 @@ tools/live-probe/runs/20260904-120000/
 | API errors | API がエラーを返したリクエスト | しない |
 | Transport errors | レスポンスを受け取れなかったリクエスト | する |
 | Article filters | `article` を指定した結果が、実際に絞り込めていたか | しない |
+| Stock filters | `mono_stock` を指定した結果が、実際に絞り込めていたか | しない |
 
 前の 2 節は、DTO のフィールド（配列の添字を `*` に均したパス）で束ねてある。同じ食い違いが数百件出ても
 1 つの見出しにまとまり、直すべき箇所の数がそのまま見出しの数になる。見出しごとに、実際に来ていた値と、
@@ -143,8 +149,8 @@ DTO が知らないキーがあっても 1 にしない。DTO がそれを無視
 わざとエラーを引く対象が成功してしまった場合（`unexpected-ok`）は 1 にする。検証の失敗として、
 `*outcome*` というパスで報告する。
 
-`article` が効かなかった場合は 1 にしない。ドキュメントに無い分類が使えないのは発見であって、
-ライブラリの不具合ではないため。
+`article` や `mono_stock` が効かなかった場合は 1 にしない。指定できると思っていた値が使えないのは
+発見であって、ライブラリの不具合ではないため。
 
 ## 備考
 

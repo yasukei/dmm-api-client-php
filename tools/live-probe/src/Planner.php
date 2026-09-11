@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DmmApiClient\LiveProbe;
 
+use DmmApiClient\Api\MonoStock;
 use DmmApiClient\Api\Request\ActressSearchRequest;
 use DmmApiClient\Api\Request\ActressSearchSort;
 use DmmApiClient\Api\Request\ArticleFilter;
@@ -52,6 +53,16 @@ final class Planner
      * 数えて決めるので、絞り込んだレスポンスが同じ場所にあると、それも数に入ってしまう。
      */
     public const string ARTICLES = 'Articles';
+
+    /**
+     * `mono_stock` を指定して叩き直した分の保存先。
+     *
+     * `--endpoint` には並べない。`article` と同じく `ItemList` の一部として走る。
+     */
+    public const string MONO_STOCK = 'MonoStock';
+
+    /** `mono_stock` を受け付けるサービスコード。ドキュメントに「通販サービスのみ指定可能」とある。 */
+    private const string MONO_SERVICE = 'mono';
 
     /**
      * わざとエラーを引くための対象をまとめた、擬似的なエンドポイント名。
@@ -273,6 +284,52 @@ final class Planner
             'hits' => (string) $hits,
             'offset' => (string) $offset,
         ]);
+    }
+
+    /**
+     * `mono_stock` の値を順に指定して、同じフロアを叩き直す対象。
+     *
+     * 通販（mono）のフロアだけが対象。ドキュメントが「通販サービスのみ指定可能」としており、
+     * `stock` を返すのもそのフロアだけなので、他へ送っても確かめようがない。
+     *
+     * `article` と同じく、見たいのは「指定した値で絞り込めるか」なので先頭ページだけを取る。
+     * 値は {@see MonoStock} の全種。絞り込みに使えないと分かっているものも含めて送る。
+     * そう書いてあるだけで、全フロアで裏を取ったわけではないため。
+     *
+     * @return list<Target>
+     */
+    public static function monoStockTargets(FloorRef $floor, Options $options): array
+    {
+        if ($floor->serviceCode !== self::MONO_SERVICE) {
+            return [];
+        }
+
+        $hits = $options->hitsFor(ItemListRequest::HITS_MAX);
+        $targets = [];
+
+        foreach (MonoStock::cases() as $stock) {
+            $targets[] = new Target(
+                group: self::MONO_STOCK,
+                endpoint: ItemListRequest::ENDPOINT,
+                responseClass: ItemListResponse::class,
+                key: $floor->key() . '__mono_stock-' . Target::sanitize($stock->value),
+                sort: null,
+                hits: $hits,
+                offsetMax: ItemListRequest::OFFSET_MAX,
+                context: $floor->context() + ['mono_stock' => $stock->value],
+                build: static fn (int $offset): Request => new ItemListRequest(
+                    site: $floor->site,
+                    service: $floor->serviceCode,
+                    floor: $floor->floorCode,
+                    monoStock: $stock,
+                    hits: $hits,
+                    offset: $offset,
+                ),
+                firstPageOnly: true,
+            );
+        }
+
+        return $targets;
     }
 
     /**

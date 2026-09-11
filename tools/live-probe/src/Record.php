@@ -121,6 +121,10 @@ final readonly class Record
             $parts[] = sprintf('article=%s:%s', $this->context['article'], $this->context['article_id']);
         }
 
+        if (isset($this->context['mono_stock'])) {
+            $parts[] = 'mono_stock=' . $this->context['mono_stock'];
+        }
+
         if ($this->sort !== null) {
             $parts[] = 'sort=' . $this->sort;
         }

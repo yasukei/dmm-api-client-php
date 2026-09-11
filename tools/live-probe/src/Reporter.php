@@ -10,7 +10,7 @@ namespace DmmApiClient\LiveProbe;
  * 同じ食い違いは何百件も出るので、DTO のどのフィールドで起きたかで束ねる。
  * 直すべき箇所の数が一目で分かるようにするため。
  *
- * @phpstan-type ArticleFilterRow array{floor: string, floorId: string, article: string, id: string, verdict: string, returned: int, matching: int, totalCount: int|null, unfiltered: int|null, file: string|null, label: string, message: string|null}
+ * @phpstan-type FilterRow array{floor: string, floorId: string, name: string, value: string, verdict: string, returned: int, matching: int, totalCount: int|null, unfiltered: int|null, file: string|null, label: string, message: string|null}
  */
 final readonly class Reporter
 {
@@ -22,6 +22,15 @@ final readonly class Reporter
 
     /** 実例に載せる、実際の値の最大文字数。 */
     private const int VALUE_LIMIT = 300;
+
+    private const string ARTICLE_INTRO =
+        'Each floor is swept again with the most frequent id of every article the floor\'s items actually '
+        . 'carry. An id that draws nothing is retried once with the next most frequent one, and the attempt '
+        . 'it replaces reads as retried.';
+
+    private const string STOCK_INTRO =
+        'Every mono floor is swept again once per mono_stock value, including the values the enum says '
+        . 'cannot be used to filter — that was read off a handful of responses, never checked floor by floor.';
 
     /** @param list<Record> $records */
     public function __construct(
@@ -147,25 +156,27 @@ final readonly class Reporter
             }
         }
 
-        $articles = self::articleGroups($this->articleFilters());
+        foreach ([
+            'article filters' => $this->articleFilters(),
+            'mono_stock filters' => $this->stockFilters(),
+        ] as $heading => $filters) {
+            $groups = self::filterGroups($filters);
 
-        if ($articles !== []) {
+            if ($groups === []) {
+                continue;
+            }
+
             $lines[] = '';
-            $lines[] = sprintf('article filters (%d kinds):', count($articles));
+            $lines[] = sprintf('%s (%d kinds):', $heading, count($groups));
 
-            foreach ($articles as $group) {
+            foreach ($groups as $group) {
                 $verdicts = [];
 
                 foreach ($group['verdicts'] as $verdict => $count) {
                     $verdicts[] = sprintf('%s %d', $verdict, $count);
                 }
 
-                $lines[] = sprintf(
-                    '  %-20s %5d  %s',
-                    $group['article'],
-                    $group['requests'],
-                    implode('  ', $verdicts),
-                );
+                $lines[] = sprintf('  %-20s %5d  %s', $group['name'], $group['requests'], implode('  ', $verdicts));
             }
         }
 
@@ -185,6 +196,7 @@ final readonly class Reporter
         $apiErrors = $this->apiErrorGroups();
         $transportErrors = $this->transportErrors();
         $articleFilters = $this->articleFilters();
+        $stockFilters = $this->stockFilters();
 
         $this->run->writeRun([
             'summary' => $this->counts(),
@@ -197,11 +209,12 @@ final readonly class Reporter
             'apiErrors' => $apiErrors,
             'transportErrors' => $transportErrors,
             'articleFilters' => $articleFilters,
+            'monoStockFilters' => $stockFilters,
         ]) . PHP_EOL);
 
         file_put_contents(
             $this->run->file('failures.md'),
-            $this->markdown($groups, $unknownKeys, $apiErrors, $transportErrors, $articleFilters),
+            $this->markdown($groups, $unknownKeys, $apiErrors, $transportErrors, $articleFilters, $stockFilters),
         );
     }
 
@@ -210,7 +223,8 @@ final readonly class Reporter
      * @param list<array{path: string, requests: int, messages: list<array{message: string, count: int}>, samples: list<array{file: string|null, label: string, uri: string, path: string, message: string, value: string}>}> $unknownKeys
      * @param list<array{requests: int, message: string, status: int|null, samples: list<string>}>                                                                                                                          $apiErrors
      * @param list<array{label: string, uri: string, message: string}>                                                                                                                                                      $transportErrors
-     * @param list<ArticleFilterRow>                                                                                                                                                                                        $articleFilters
+     * @param list<FilterRow>                                                                                                                                                                                        $articleFilters
+     * @param list<FilterRow>                                                                                                                                                                                        $stockFilters
      */
     private function markdown(
         array $groups,
@@ -218,6 +232,7 @@ final readonly class Reporter
         array $apiErrors,
         array $transportErrors,
         array $articleFilters,
+        array $stockFilters,
     ): string {
         $counts = $this->counts();
         $lines = [
@@ -333,7 +348,13 @@ final readonly class Reporter
             $lines[] = sprintf('  - %s', $error['message']);
         }
 
-        return implode(PHP_EOL, [...$lines, '', ...self::articleMarkdown($articleFilters)]) . PHP_EOL;
+        return implode(PHP_EOL, [
+            ...$lines,
+            '',
+            ...self::filterMarkdown('Article filters', self::ARTICLE_INTRO, 'article', 'article_id', $articleFilters),
+            '',
+            ...self::filterMarkdown('Stock filters', self::STOCK_INTRO, 'mono_stock', null, $stockFilters),
+        ]) . PHP_EOL;
     }
 
     /**
@@ -593,7 +614,7 @@ final readonly class Reporter
      *
      * 絞り込み無しの件数は、同じフロアの通常の `ItemList` から借りる。追加のリクエストは要らない。
      *
-     * @return list<ArticleFilterRow>
+     * @return list<FilterRow>
      */
     private function articleFilters(): array
     {
@@ -624,8 +645,8 @@ final readonly class Reporter
             $filters[] = [
                 'floor' => $record->context['floor'] ?? '',
                 'floorId' => $record->context['floor_id'] ?? '',
-                'article' => $article,
-                'id' => $id,
+                'name' => $article,
+                'value' => $id,
                 'verdict' => self::verdict($record, count($items), $matching),
                 'returned' => count($items),
                 'matching' => $matching,
@@ -641,6 +662,62 @@ final readonly class Reporter
     }
 
     /**
+     * `mono_stock` を指定した対象について、その値で絞り込めたかを判定する。
+     *
+     * 見方は `article` と同じで、件数ではなく中身を見る。商品が持つ `stock` が、指定した値と
+     * 一致しているかを数える。`article` と違って引き直しは無い。値は enum の全種を送るので、
+     * 次に試すものが残らないため。
+     *
+     * 束ねる単位は指定した値そのもの。`article` では分類の名前（genre、label）で束ねるが、
+     * こちらは分類が 1 つしかなく、値ごとに効くかどうかが変わる。
+     *
+     * @return list<FilterRow>
+     */
+    private function stockFilters(): array
+    {
+        $unfiltered = $this->unfilteredTotals();
+        $filters = [];
+
+        foreach ($this->records as $record) {
+            if ($record->group !== Planner::MONO_STOCK) {
+                continue;
+            }
+
+            $stock = $record->context['mono_stock'] ?? null;
+
+            if ($stock === null) {
+                continue;
+            }
+
+            $items = ArticleTally::itemsOf($this->decoded($record));
+            $matching = 0;
+
+            foreach ($items as $item) {
+                if (($item['stock'] ?? null) === $stock) {
+                    $matching++;
+                }
+            }
+
+            $filters[] = [
+                'floor' => $record->context['floor'] ?? '',
+                'floorId' => $record->context['floor_id'] ?? '',
+                'name' => $stock,
+                'value' => $stock,
+                'verdict' => self::verdict($record, count($items), $matching),
+                'returned' => count($items),
+                'matching' => $matching,
+                'totalCount' => $record->totalCount,
+                'unfiltered' => $unfiltered[$record->context['floor_id'] ?? ''] ?? null,
+                'file' => $record->file,
+                'label' => $record->label(),
+                'message' => $record->message,
+            ];
+        }
+
+        return $filters;
+    }
+
+    /**
      * 引き直された試行に印を付ける。
      *
      * 0 件だった試行は別の ID で引き直される。その 1 本目を `empty` のまま数えると、
@@ -649,17 +726,17 @@ final readonly class Reporter
      *
      * 同じ分類・同じフロアで、あとに別の ID の試行があるものだけを対象にする。
      *
-     * @param list<ArticleFilterRow> $filters
+     * @param list<FilterRow> $filters
      *
-     * @return list<ArticleFilterRow>
+     * @return list<FilterRow>
      */
     private static function markRetried(array $filters): array
     {
         foreach ($filters as $at => $filter) {
             foreach (array_slice($filters, $at + 1) as $later) {
                 if ($later['floorId'] === $filter['floorId']
-                    && $later['article'] === $filter['article']
-                    && $later['id'] !== $filter['id']
+                    && $later['name'] === $filter['name']
+                    && $later['value'] !== $filter['value']
                 ) {
                     $filters[$at]['verdict'] = 'retried';
 
@@ -716,30 +793,30 @@ final readonly class Reporter
     /**
      * 分類ごとに、判定の内訳を数える。
      *
-     * @param list<ArticleFilterRow> $filters
+     * @param list<FilterRow> $filters
      *
-     * @return list<array{article: string, requests: int, verdicts: array<string, int>}>
+     * @return list<array{name: string, requests: int, verdicts: array<string, int>}>
      */
-    private static function articleGroups(array $filters): array
+    private static function filterGroups(array $filters): array
     {
         /** @var array<string, array{requests: int, verdicts: array<string, int>}> $grouped */
         $grouped = [];
 
         foreach ($filters as $filter) {
-            $grouped[$filter['article']] ??= ['requests' => 0, 'verdicts' => []];
-            $grouped[$filter['article']]['requests']++;
+            $grouped[$filter['name']] ??= ['requests' => 0, 'verdicts' => []];
+            $grouped[$filter['name']]['requests']++;
             $verdict = $filter['verdict'];
-            $grouped[$filter['article']]['verdicts'][$verdict] =
-                ($grouped[$filter['article']]['verdicts'][$verdict] ?? 0) + 1;
+            $grouped[$filter['name']]['verdicts'][$verdict] =
+                ($grouped[$filter['name']]['verdicts'][$verdict] ?? 0) + 1;
         }
 
         uasort($grouped, static fn (array $a, array $b): int => $b['requests'] <=> $a['requests']);
 
         $groups = [];
 
-        foreach ($grouped as $article => $group) {
+        foreach ($grouped as $name => $group) {
             arsort($group['verdicts']);
-            $groups[] = ['article' => $article, 'requests' => $group['requests'], 'verdicts' => $group['verdicts']];
+            $groups[] = ['name' => $name, 'requests' => $group['requests'], 'verdicts' => $group['verdicts']];
         }
 
         return $groups;
@@ -762,23 +839,28 @@ final readonly class Reporter
     }
 
     /**
-     * `article` の判定結果を、分類ごとの内訳と 1 行 1 リクエストの表にする。
+     * 絞り込みの判定結果を、指定した値ごとの内訳と 1 行 1 リクエストの表にする。
      *
-     * 公式ドキュメントに無い分類が `honored` で並んでいれば、それは API に載っていないだけで
-     * 実際には使える、ということになる。`rejected` と `empty` の違いも読めるようにしておく。
+     * 判定が何を意味するかは {@see self::verdict()} にある。`honored` が並べば絞り込めており、
+     * `ignored` なら指定が読み捨てられている。`rejected` と `empty` の違いも読めるようにしておく。
      * 前者は指定そのものを受け付けず、後者は受け付けたうえで該当が無い。
      *
-     * @param list<ArticleFilterRow> $filters
+     * @param string          $nameHeader  束ねる単位の見出し（例: article）
+     * @param string|null      $valueHeader 指定した値の見出し（例: article_id）。束ねる単位と同じなら null
+     * @param list<FilterRow> $filters
      *
      * @return list<string>
      */
-    private static function articleMarkdown(array $filters): array
-    {
-        $lines = ['## Article filters', ''];
-        $lines[] = 'Each floor is swept again with the most frequent id of every article the floor\'s items '
-            . 'actually carry. A response counts as honored only when every item it returns carries that id — '
-            . 'a filter the API quietly drops would still answer with items. An id that draws nothing is '
-            . 'retried once with the next most frequent one, and the attempt it replaces reads as retried.';
+    private static function filterMarkdown(
+        string $title,
+        string $intro,
+        string $nameHeader,
+        ?string $valueHeader,
+        array $filters,
+    ): array {
+        $lines = ['## ' . $title, '', $intro, ''];
+        $lines[] = 'A response counts as honored only when every item it returns matches what was asked for — '
+            . 'a filter the API quietly drops would still answer with items.';
         $lines[] = '';
 
         if ($filters === []) {
@@ -787,36 +869,39 @@ final readonly class Reporter
             return $lines;
         }
 
-        $lines[] = '| article | requests | verdicts |';
+        $lines[] = sprintf('| %s | requests | verdicts |', $nameHeader);
         $lines[] = '| --- | --- | --- |';
 
-        foreach (self::articleGroups($filters) as $group) {
+        foreach (self::filterGroups($filters) as $group) {
             $verdicts = [];
 
             foreach ($group['verdicts'] as $verdict => $count) {
                 $verdicts[] = sprintf('%s %d', $verdict, $count);
             }
 
-            $lines[] = sprintf('| `%s` | %d | %s |', $group['article'], $group['requests'], implode(', ', $verdicts));
+            $lines[] = sprintf('| `%s` | %d | %s |', $group['name'], $group['requests'], implode(', ', $verdicts));
         }
 
+        $columns = ['floor', $nameHeader, ...($valueHeader === null ? [] : [$valueHeader]),
+            'verdict', 'items', 'matching', 'total_count', 'unfiltered'];
+
         $lines[] = '';
-        $lines[] = '| floor | article | article_id | verdict | items | carrying | total_count | unfiltered |';
-        $lines[] = '| --- | --- | --- | --- | --- | --- | --- | --- |';
+        $lines[] = '| ' . implode(' | ', $columns) . ' |';
+        $lines[] = '| ' . implode(' | ', array_fill(0, count($columns), '---')) . ' |';
 
         foreach ($filters as $filter) {
-            $lines[] = sprintf(
-                '| %s (%s) | `%s` | `%s` | %s | %d | %d | %s | %s |',
-                $filter['floor'],
-                $filter['floorId'],
-                $filter['article'],
-                $filter['id'],
+            $cells = [
+                sprintf('%s (%s)', $filter['floor'], $filter['floorId']),
+                sprintf('`%s`', $filter['name']),
+                ...($valueHeader === null ? [] : [sprintf('`%s`', $filter['value'])]),
                 $filter['verdict'],
-                $filter['returned'],
-                $filter['matching'],
+                (string) $filter['returned'],
+                (string) $filter['matching'],
                 $filter['totalCount'] === null ? '-' : (string) $filter['totalCount'],
                 $filter['unfiltered'] === null ? '-' : (string) $filter['unfiltered'],
-            );
+            ];
+
+            $lines[] = '| ' . implode(' | ', $cells) . ' |';
         }
 
         return $lines;
