@@ -126,7 +126,7 @@ abstract class ApiCommand implements Command
     final public function execute(Input $input, Environment $environment, Output $output): int
     {
         $unchecked = $input->flag('no-validate-request');
-        $credentials = $this->resolveCredentials($environment);
+        $credentials = $environment->credentials();
 
         // 認証情報はエコーバックにも affiliateURL にも埋め込まれて返ってくる。
         // 出力を保存したときに漏れないよう、既定で伏せ字にする。
@@ -332,39 +332,6 @@ abstract class ApiCommand implements Command
                 $exception->getMessage(),
             ));
         }
-    }
-
-    /**
-     * 認証情報を環境変数か `.env` から読み出す。
-     *
-     * コマンドライン引数からは受け取らない。引数は ps などから他のユーザーにも見え、
-     * シェルの履歴にも残るため、認証情報の渡し方として適さない。
-     *
-     * @throws UsageException 認証情報が揃わない場合
-     */
-    private function resolveCredentials(Environment $environment): Credentials
-    {
-        $apiId = $environment->get('DMM_API_ID');
-        $affiliateId = $environment->get('DMM_AFFILIATE_ID');
-
-        $missing = [];
-
-        if ($apiId === null) {
-            $missing[] = 'DMM_API_ID';
-        }
-
-        if ($affiliateId === null) {
-            $missing[] = 'DMM_AFFILIATE_ID';
-        }
-
-        if ($apiId === null || $affiliateId === null) {
-            throw new UsageException(sprintf(
-                'Missing credentials: %s. Set them as environment variables, or put them in a .env file.',
-                implode(', ', $missing),
-            ));
-        }
-
-        return new Credentials($apiId, $affiliateId);
     }
 
     /**
