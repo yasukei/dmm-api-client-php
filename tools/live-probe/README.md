@@ -16,16 +16,15 @@
 
 ## 取得するもの
 
-| API | 単位 | sort | hits | ページ |
+| API | 単位 | hits | ページ | 備考 |
 | --- | --- | --- | --- | --- |
-| `ItemList` | site + service + floor | 6 種すべて | 100 | 先頭・中間・末尾 |
-| `GenreSearch` | floor_id | なし | 500 | 先頭・中間・末尾 |
-| `MakerSearch` | floor_id | なし | 500 | 先頭・中間・末尾 |
-| `SeriesSearch` | floor_id | なし | 500 | 先頭・中間・末尾 |
-| `AuthorSearch` | floor_id | なし | 500 | 先頭・中間・末尾 |
-| `ActressSearch` | フロアに依存しない | 14 種すべて | 100 | 先頭・中間・末尾 |
-| `Articles` | site + service + floor | なし | 100 | 先頭のみ |
-| `Errors` | フロアに依存しない | なし | なし | なし（ケースごとに 1 件） |
+| `ItemList` | site + service + floor | 100 | 先頭・中間・末尾 | sort 6 種すべて。最後に article で叩き直す |
+| `GenreSearch` | floor_id | 500 | 先頭・中間・末尾 | |
+| `MakerSearch` | floor_id | 500 | 先頭・中間・末尾 | |
+| `SeriesSearch` | floor_id | 500 | 先頭・中間・末尾 | |
+| `AuthorSearch` | floor_id | 500 | 先頭・中間・末尾 | |
+| `ActressSearch` | フロアに依存しない | 100 | 先頭・中間・末尾 | sort 14 種すべて |
+| `Errors` | フロアに依存しない | なし | なし | ケースごとに 1 件 |
 
 中間と末尾のページ位置は、先頭ページの `total_count` から決める（末尾 = `total_count - hits + 1`、
 中間 = `total_count / 2`。いずれも 1〜50000 に収める）。総件数が 1 ページに収まる場合は先頭だけを取る。
@@ -34,10 +33,10 @@
 0 件で返るのが通常なので、これは失敗ではなく通常の成功として扱う。API がエラーを返した場合は
 `api-error` として記録し、エラーボディも保存したうえで `ErrorResponse` として検証する。
 
-`Articles` は、フロアの sweep が済んだあとに、そのフロアの `iteminfo` に実際に出た分類を
-`article` / `article_id` に指定して叩き直す対象。何が指定できるかはフロアの中身次第なので、
-対象は取得してみるまで決まらない。公式ドキュメントに載っていない分類（`label` や `director` など）も
-使えるかどうかを確かめる。0 件で返った ID は、次に多い ID で 1 度だけ引き直す。詳細は
+`ItemList` は最後に、フロアごとの `iteminfo` に実際に出た分類を `article` / `article_id` に指定して
+叩き直す。何が指定できるかはフロアの中身次第なので、対象は取得してみるまで決まらない。公式ドキュメントに
+載っていない分類（`label` や `director` など）も使えるかどうかを確かめる。取るのは先頭ページだけで、
+sort は指定しない。0 件で返った ID は、次に多い ID で 1 度だけ引き直す。詳細は
 [`src/ArticleTally.php`](src/ArticleTally.php) と [`src/Planner.php`](src/Planner.php) の
 `articleTarget()` にある。
 
@@ -59,7 +58,7 @@ composer probe -- --help                    # オプション一覧
 composer probe -- --endpoint=Errors
 
 # 取得済みの ItemList から、article の検証だけをやり直す
-composer probe -- --endpoint=Articles --resume
+composer probe -- --endpoint=ItemList --resume
 
 # 最初は対象を絞って様子を見る
 composer probe -- --floor=videoa --endpoint=ItemList
@@ -97,6 +96,10 @@ tools/live-probe/runs/20260904-120000/
 `manifest.jsonl` にある。
 
 `--revalidate` は同じディレクトリの `manifest.jsonl` / `failures.json` / `failures.md` を作り直す。
+
+レポートが集計するのは、その回に処理した分だけ。run ディレクトリに溜まっている過去の分は含めない。
+`manifest.jsonl` は run ディレクトリの記録なので過去の分も残るが、取得中は 1 件ずつ追記するため
+（途中で止まっても結果が残るように）`--resume` では同じレスポンスの行が並ぶ。最後に 1 行へまとめ直す。
 
 ### レポート
 

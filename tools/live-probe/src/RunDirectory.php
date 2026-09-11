@@ -156,6 +156,31 @@ final readonly class RunDirectory
     }
 
     /**
+     * 同じレスポンスについての記録を 1 件にまとめる。あとの記録を残す。
+     *
+     * 取得中は 1 件ずつ追記する。途中で止まってもそれまでの結果が残るようにするためだが、
+     * `--resume` では取得し直さなかった分も改めて記録するので、同じレスポンスの行が 2 つ並ぶ。
+     * 1 レスポンス 1 行に戻したうえで集計する。
+     *
+     * ボディを保存できなかった記録（通信エラー）はファイルを持たないので、送った URI で見分ける。
+     *
+     * @param list<Record> $records
+     *
+     * @return list<Record>
+     */
+    public static function latestPerResponse(array $records): array
+    {
+        $latest = [];
+
+        foreach ($records as $record) {
+            // 既にあるキーへ入れ直しても位置は動かない。先に現れた順序のまま、中身だけが新しくなる。
+            $latest[$record->file ?? $record->uri] = $record;
+        }
+
+        return array_values($latest);
+    }
+
+    /**
      * @param list<Record> $records
      */
     public function writeRecords(array $records): void

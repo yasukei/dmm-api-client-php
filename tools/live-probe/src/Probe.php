@@ -105,9 +105,7 @@ final readonly class Probe
 
         $console->progress(sprintf('run directory: %s', $run->path));
 
-        $records = [];
         $floorList = $runner->execute(self::floorListTarget(), 1, null);
-        $records[] = $floorList;
         $run->appendRecord($floorList);
         $console->progress(self::progressLine(1, 1, $floorList));
 
@@ -129,8 +127,8 @@ final readonly class Probe
             count(array_filter($catalog->floors, $this->options->wantsFloor(...))),
         ));
 
-        if ($this->runTargets($runner, $targets, $console, $records, $run)) {
-            $this->processArticles($runner, $catalog, $console, $records, $run);
+        if ($this->runTargets($runner, $targets, $console, $run)) {
+            $this->processArticles($runner, $catalog, $console, $run);
         }
 
         $run->writeRun([
@@ -140,14 +138,17 @@ final readonly class Probe
             'requestsSent' => $runner->sent(),
         ]);
 
-        return $this->report($records, $run, $console);
+        // 取得中は 1 件ずつ追記している。`--resume` では取得し直さなかった分も改めて記録するので、
+        // 同じレスポンスの行が並ぶことがある。最後に 1 レスポンス 1 行へまとめ直す。
+        $run->writeRecords(RunDirectory::latestPerResponse($run->records()));
+
+        return $this->report($runner->records(), $run, $console);
     }
 
     /**
      * 対象を順に処理する。
      *
      * @param list<Target> $targets
-     * @param list<Record> $records
      *
      * @return bool `--limit` に達せず最後まで回ったか
      */
@@ -155,7 +156,6 @@ final readonly class Probe
         Runner $runner,
         array $targets,
         Console $console,
-        array &$records,
         RunDirectory $run,
     ): bool {
         $index = 0;
@@ -163,7 +163,7 @@ final readonly class Probe
 
         foreach ($targets as $target) {
             $index++;
-            $this->processTarget($runner, $target, $index, $total, $console, $records, $run);
+            $this->processTarget($runner, $target, $index, $total, $console, $run);
 
             if ($this->options->limit !== null && $runner->sent() >= $this->options->limit) {
                 $console->progress(sprintf('reached --limit=%d; stopping.', $this->options->limit));
@@ -179,19 +179,19 @@ final readonly class Probe
      * フロアごとに、集まった実データから `article` に指定するものを決めて叩き直す。
      *
      * 何を指定できるかはフロアの中身次第なので、対象は sweep が済むまで決まらない。
-     * 数えるのは保存済みのレスポンスなので、`--resume` で過去の実行に足すこともできる
-     * （`--endpoint=Articles --resume` で、取得済みの `ItemList` から article だけを試せる）。
+     * `ItemList` の処理の最後に続けて行う。切り離して選べるようにはしない。単独では
+     * 何を叩けばよいかが決まらず、判定に要る「絞り込み無しの件数」も手元に無いため。
      *
-     * @param list<Record> $records
+     * 数えるのは保存済みのレスポンスなので、`--resume` なら取得は走らない
+     * （`--endpoint=ItemList --resume` で、取得済みの `ItemList` から article だけを試し直せる）。
      */
     private function processArticles(
         Runner $runner,
         FloorCatalog $catalog,
         Console $console,
-        array &$records,
         RunDirectory $run,
     ): void {
-        if (! $this->options->wantsEndpoint(Planner::ARTICLES) || ! $this->options->wantsUnsortedEndpoints()) {
+        if (! $this->options->wantsEndpoint('ItemList') || ! $this->options->wantsUnsortedEndpoints()) {
             return;
         }
 
@@ -225,7 +225,6 @@ final readonly class Probe
                 $index,
                 $total,
                 $console,
-                $records,
                 $run,
             );
 
@@ -241,7 +240,6 @@ final readonly class Probe
                     $index,
                     $total,
                     $console,
-                    $records,
                     $run,
                 );
             }
@@ -268,8 +266,6 @@ final readonly class Probe
      *
      * 総件数は先頭ページを取るまで分からないので、先頭ページは `--pages` の指定によらず必ず取得する。
      *
-     * @param list<Record> $records
-     *
      * @return Record 先頭ページの記録
      */
     private function processTarget(
@@ -278,11 +274,9 @@ final readonly class Probe
         int $index,
         int $total,
         Console $console,
-        array &$records,
         RunDirectory $run,
     ): Record {
         $first = $runner->execute($target, 1, $target->isSingle() ? null : 'first');
-        $records[] = $first;
         $run->appendRecord($first);
         $console->progress(self::progressLine($index, $total, $first));
 
@@ -299,7 +293,6 @@ final readonly class Probe
 
             $seen[$offset] = true;
             $record = $runner->execute($target, $offset, $page);
-            $records[] = $record;
             $run->appendRecord($record);
             $console->progress(self::progressLine($index, $total, $record));
         }
@@ -347,7 +340,7 @@ final readonly class Probe
         $validator = new Validator();
         $records = [];
 
-        foreach ($run->records() as $record) {
+        foreach (RunDirectory::latestPerResponse($run->records()) as $record) {
             // エラーを引くつもりで成功してしまった記録は、検証し直しても言うことが変わらない。
             // 保存されているのは成功したレスポンスで、エラー用の DTO と突き合わせても意味が無い。
             if ($record->file === null || $record->outcome === Record::OUTCOME_UNEXPECTED_OK) {
@@ -415,7 +408,8 @@ final readonly class Probe
             '%d targets planned (first page only is shown; middle/last depend on total_count).',
             count($targets),
         ));
-        $console->progress('Article filters are not listed; what they send is decided from the ItemList responses.');
+        $console->progress('The article filters ItemList ends with are not listed; '
+            . 'what they send is decided from the responses.');
 
         return self::EXIT_SUCCESS;
     }
@@ -564,9 +558,9 @@ final readonly class Probe
 
             FloorList で全フロアを取り出し、フロアごとに各 API を sort の全種別・
             先頭/中間/末尾のページで叩いて、レスポンスの保存と DTO 検証を行う。
-            続いて、フロアごとに実データへ出た分類を article / article_id に指定して
-            叩き直す（--endpoint=Articles）。最後に、わざとエラーを引くリクエスト
-            （--endpoint=Errors）を送り、エラー用の DTO も実データで検証する。
+            ItemList の最後には、フロアごとに実データへ出た分類を article / article_id に
+            指定して叩き直す。最後に、わざとエラーを引くリクエスト（--endpoint=Errors）を
+            送り、エラー用の DTO も実データで検証する。
 
             保存先:
               {$defaultOutRoot}/<日時>/
@@ -584,8 +578,7 @@ final readonly class Probe
               --revalidate      取得せず、保存済みのレスポンスを検証し直してレポートを作り直す
               --dry-run         送信せず、叩く予定の URI を並べる
               --endpoint=A,B    対象の API（既定: 全部。FloorList は常に取得する）
-                                Articles / Errors は API 名ではなく、article の検証と
-                                わざとエラーを引く対象を指す
+                                Errors は API 名ではなく、わざとエラーを引く対象を指す
               --site=CODE,...   対象のサイトコード（DMM.com, FANZA）
               --service=CODE,.. 対象のサービスコード（digital, mono, ...）
               --floor=CODE,...  対象のフロアコード（videoa, dvd, ...）
@@ -603,7 +596,7 @@ final readonly class Probe
             Examples:
               php tools/live-probe/probe.php --floor=videoa --endpoint=ItemList --pages=first
               php tools/live-probe/probe.php --endpoint=Errors
-              php tools/live-probe/probe.php --endpoint=Articles --resume  # 取得済みの ItemList から
+              php tools/live-probe/probe.php --endpoint=ItemList --resume  # article だけ試し直す
               php tools/live-probe/probe.php --revalidate
               php tools/live-probe/probe.php --revalidate --run={$defaultOutRoot}/20260904-120000
 

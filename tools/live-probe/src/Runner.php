@@ -38,6 +38,9 @@ final class Runner
     /** 実際に送ったリクエストの本数。 */
     private int $sent = 0;
 
+    /** @var list<Record> この実行で処理した記録。 */
+    private array $records = [];
+
     /**
      * @param array<string, Record> $previous `--resume` のときに引き継ぐ、前回の記録（ファイルの相対パスをキーにする）
      */
@@ -57,11 +60,35 @@ final class Runner
     }
 
     /**
+     * この実行で処理した記録。
+     *
+     * レポートはこれを集計する。run ディレクトリには過去の実行の分も溜まっているが、
+     * 1 回の実行が報告するのは、その回に処理した分だけにする。
+     *
+     * @return list<Record>
+     */
+    public function records(): array
+    {
+        return $this->records;
+    }
+
+    /**
+     * 1 本のリクエストを処理し、結果を控える。
+     */
+    public function execute(Target $target, int $offset, ?string $page): Record
+    {
+        $record = $this->fetch($target, $offset, $page);
+        $this->records[] = $record;
+
+        return $record;
+    }
+
+    /**
      * 1 本のリクエストを処理する。
      *
      * `--resume` で既に保存済みのファイルがある場合は取得せず、保存済みのボディを検証する。
      */
-    public function execute(Target $target, int $offset, ?string $page): Record
+    private function fetch(Target $target, int $offset, ?string $page): Record
     {
         $request = $target->request($offset);
         $relative = $target->group . '/' . $target->fileName($offset);

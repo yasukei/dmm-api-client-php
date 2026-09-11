@@ -40,15 +40,16 @@ final class Planner
         'MakerSearch',
         'SeriesSearch',
         'AuthorSearch',
-        self::ARTICLES,
         self::ERRORS,
     ];
 
     /**
-     * `article` / `article_id` を指定して叩き直す対象をまとめた、擬似的なエンドポイント名。
+     * `article` / `article_id` を指定して叩き直した分の保存先。
      *
-     * 叩くのは `ItemList` だが、何を指定するかがフロアの実データ次第で決まるので、
-     * 通常の `ItemList` とは別に選び分けられるようにする。
+     * `--endpoint` には並べない。単独では成り立たない処理なので、`ItemList` の一部として走る。
+     *
+     * 通常の `ItemList` とは別のディレクトリに置く。何を指定するかは保存済みの `ItemList` を
+     * 数えて決めるので、絞り込んだレスポンスが同じ場所にあると、それも数に入ってしまう。
      */
     public const string ARTICLES = 'Articles';
 
