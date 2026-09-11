@@ -382,9 +382,8 @@ final readonly class Probe
         foreach ($catalog->floors as $floor) {
             $count = count($articles[$floor->floorId] ?? []);
             $site = $floor->site->value;
-            $previous = $best[$site] ?? null;
 
-            if ($count >= 2 && ($previous === null || $count > $previous[0])) {
+            if ($count >= 2 && self::beats($count, $floor, $best[$site] ?? null)) {
                 $best[$site] = [$count, $floor];
             }
         }
@@ -392,6 +391,37 @@ final readonly class Probe
         ksort($best);
 
         return array_values(array_map(static fn (array $pair): FloorRef => $pair[1], $best));
+    }
+
+    /**
+     * そのフロアが、今のところ選ばれているものより相応しいか。
+     *
+     * 分類の多い方を選ぶ。同数なら floor_id の小さい方にする。`FloorList` に現れた順に任せると、
+     * DMM 側の並びが変わっただけで選ばれるフロアが動いてしまう。
+     *
+     * @param array{int, FloorRef}|null $current
+     */
+    private static function beats(int $count, FloorRef $floor, ?array $current): bool
+    {
+        if ($current === null) {
+            return true;
+        }
+
+        [$bestCount, $best] = $current;
+
+        return $count > $bestCount
+            || ($count === $bestCount && self::floorOrder($floor) < self::floorOrder($best));
+    }
+
+    /**
+     * floor_id を並べ替えのための値にする。
+     *
+     * 数値で返ってくるが型は文字列なので、数として比べる。数にならない値が現れたら、
+     * 他のどれよりうしろに置いて、選択が壊れないようにする。
+     */
+    private static function floorOrder(FloorRef $floor): int
+    {
+        return preg_match('/^\d+$/', $floor->floorId) === 1 ? (int) $floor->floorId : PHP_INT_MAX;
     }
 
     /**
