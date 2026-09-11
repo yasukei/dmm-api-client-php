@@ -5,7 +5,6 @@ declare(strict_types=1);
 use DmmApiClient\Console\Application;
 use Http\Discovery\ClassDiscovery;
 use Tests\Support\CapturingOutput;
-use Tests\Support\StubHttpClient;
 
 /**
  * @param list<string> $arguments
@@ -14,24 +13,8 @@ use Tests\Support\StubHttpClient;
  */
 function runApplication(array $arguments): array
 {
-    $captured = new CapturingOutput();
-    $http = StubHttpClient::respondingWith(200, '{}');
-    $code = (new Application($http, $captured->output))->run(['dmm-api-client', ...$arguments]);
-
-    return ['code' => $code, 'stdout' => $captured->stdout(), 'stderr' => $captured->stderr()];
+    return runCommand(null, $arguments);
 }
-
-beforeEach(function (): void {
-    // 環境変数は .env より優先される。開発環境に置かれた .env を
-    // 拾って結果が変わらないよう、テスト用の値を明示的に置く。
-    putenv('DMM_API_ID=MY_API_ID');
-    putenv('DMM_AFFILIATE_ID=myaffiliateid-999');
-});
-
-afterEach(function (): void {
-    putenv('DMM_API_ID');
-    putenv('DMM_AFFILIATE_ID');
-});
 
 test('引数が無ければコマンド一覧を出す', function (): void {
     $result = runApplication([]);

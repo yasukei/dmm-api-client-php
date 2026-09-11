@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use DmmApiClient\Console\Application;
-use Tests\Support\CapturingOutput;
 use Tests\Support\Fixture;
 use Tests\Support\StubHttpClient;
 
@@ -16,10 +15,7 @@ use Tests\Support\StubHttpClient;
  */
 function runFloorList(StubHttpClient $http, array $arguments = []): array
 {
-    $captured = new CapturingOutput();
-    $code = (new Application($http, $captured->output))->run(['dmm-api-client', 'floor-list', ...$arguments]);
-
-    return ['code' => $code, 'stdout' => $captured->stdout(), 'stderr' => $captured->stderr()];
+    return runCommand('floor-list', $arguments, $http);
 }
 
 /**
@@ -37,16 +33,6 @@ function withoutCredentials(): array
 
     return ['--env-file=' . $path];
 }
-
-beforeEach(function (): void {
-    putenv('DMM_API_ID=MY_API_ID');
-    putenv('DMM_AFFILIATE_ID=myaffiliateid-999');
-});
-
-afterEach(function (): void {
-    putenv('DMM_API_ID');
-    putenv('DMM_AFFILIATE_ID');
-});
 
 test('レスポンスを整形して標準出力へ書き出す', function (): void {
     $result = runFloorList(StubHttpClient::respondingWithFixture('floor-list'));

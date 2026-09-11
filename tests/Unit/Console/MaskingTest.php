@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use DmmApiClient\Api\CredentialMasker;
 use DmmApiClient\Console\Application;
-use Tests\Support\CapturingOutput;
 use Tests\Support\Fixture;
 use Tests\Support\StubHttpClient;
 
@@ -15,23 +14,12 @@ use Tests\Support\StubHttpClient;
  */
 function runMasked(array $arguments, ?StubHttpClient $http = null): array
 {
-    $captured = new CapturingOutput();
-    $http ??= StubHttpClient::respondingWithFixture('item-list');
-    $code = (new Application($http, $captured->output))->run(['dmm-api-client', 'item-list', '--site=FANZA', ...$arguments]);
-
-    return ['code' => $code, 'stdout' => $captured->stdout(), 'stderr' => $captured->stderr()];
+    return runCommand(
+        'item-list',
+        ['--site=FANZA', ...$arguments],
+        $http ?? StubHttpClient::respondingWithFixture('item-list'),
+    );
 }
-
-beforeEach(function (): void {
-    // fixture の中に現れる値と同じものを設定し、伏せ字になることを確かめられるようにする。
-    putenv('DMM_API_ID=MY_API_ID');
-    putenv('DMM_AFFILIATE_ID=myaffiliateid-999');
-});
-
-afterEach(function (): void {
-    putenv('DMM_API_ID');
-    putenv('DMM_AFFILIATE_ID');
-});
 
 test('既定でレスポンス中の認証情報を伏せ字にする', function (): void {
     $result = runMasked([]);
