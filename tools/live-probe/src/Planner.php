@@ -65,6 +65,15 @@ final class Planner
     private const string MONO_SERVICE = 'mono';
 
     /**
+     * フロアごとに最初に叩く sort。
+     *
+     * 総件数が 1 ページに収まるフロアでは、これ 1 本で打ち切る（{@see Probe}）。sort を変えても
+     * 同じ商品が並び替わるだけで、検証に使える形は増えないため。最初に叩くものを決めておけば、
+     * 1 ページに収まると分かった時点で残りを止められる。
+     */
+    private const ItemListSort FIRST_SORT = ItemListSort::Date;
+
+    /**
      * わざとエラーを引くための対象をまとめた、擬似的なエンドポイント名。
      *
      * API の名前ではないが、`--endpoint` で他と同じように選び分けられるようにする。
@@ -340,7 +349,7 @@ final class Planner
         $hits = $options->hitsFor(ItemListRequest::HITS_MAX);
         $targets = [];
 
-        foreach (ItemListSort::cases() as $sort) {
+        foreach (self::sorts() as $sort) {
             if (! $options->wantsSort($sort->value)) {
                 continue;
             }
@@ -366,6 +375,19 @@ final class Planner
         }
 
         return $targets;
+    }
+
+    /**
+     * {@see self::FIRST_SORT} を先頭にした sort の並び。
+     *
+     * @return list<ItemListSort>
+     */
+    private static function sorts(): array
+    {
+        return [self::FIRST_SORT, ...array_values(array_filter(
+            ItemListSort::cases(),
+            static fn (ItemListSort $sort): bool => $sort !== self::FIRST_SORT,
+        ))];
     }
 
     /**

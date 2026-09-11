@@ -162,10 +162,26 @@ final readonly class Probe
     ): bool {
         $index = 0;
         $total = count($targets);
+        /** @var array<string, true> $onePage 総件数が 1 ページに収まると分かったフロア */
+        $onePage = [];
 
         foreach ($targets as $target) {
             $index++;
-            $this->processTarget($runner, $target, $index, $total, $console, $run);
+
+            if (self::sortAddsNothing($target, $onePage)) {
+                continue;
+            }
+
+            $record = $this->processTarget($runner, $target, $index, $total, $console, $run);
+
+            if (self::fitsOnOnePage($target, $record)) {
+                $onePage[$target->context['floor_id'] ?? ''] = true;
+                $console->progress(sprintf(
+                    '%s holds %d items; the other sorts would only reorder them.',
+                    $target->key,
+                    $record->totalCount ?? 0,
+                ));
+            }
 
             if ($this->options->limit !== null && $runner->sent() >= $this->options->limit) {
                 $console->progress(sprintf('reached --limit=%d; stopping.', $this->options->limit));
@@ -175,6 +191,34 @@ final readonly class Probe
         }
 
         return true;
+    }
+
+    /**
+     * その対象を叩いても、検証の材料が増えないか。
+     *
+     * 1 ページに収まるフロアでは、sort を変えても同じ商品が並び替わって返るだけで、
+     * DTO に通す形は変わらない。総件数の多いフロアで sort ごとの違いは見られているので、
+     * ここで打ち切っても見落としにはならない。
+     *
+     * @param array<string, true> $onePage
+     */
+    private static function sortAddsNothing(Target $target, array $onePage): bool
+    {
+        return $target->group === 'ItemList'
+            && $target->sort !== null
+            && isset($onePage[$target->context['floor_id'] ?? '']);
+    }
+
+    /**
+     * そのフロアの総件数が、1 ページに収まったか。
+     */
+    private static function fitsOnOnePage(Target $target, Record $record): bool
+    {
+        return $target->group === 'ItemList'
+            && $target->sort !== null
+            && $target->hits !== null
+            && $record->totalCount !== null
+            && $record->totalCount <= $target->hits;
     }
 
     /**

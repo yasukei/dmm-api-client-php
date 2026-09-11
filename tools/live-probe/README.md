@@ -18,7 +18,7 @@
 
 | API | 単位 | hits | ページ | 備考 |
 | --- | --- | --- | --- | --- |
-| `ItemList` | site + service + floor | 100 | 先頭・中間・末尾 | sort 6 種すべて。最後に article と mono_stock で叩き直す |
+| `ItemList` | site + service + floor | 100 | 先頭・中間・末尾 | sort 6 種すべて（1 ページに収まるフロアは date だけ）。最後に article と mono_stock で叩き直す |
 | `GenreSearch` | floor_id | 500 | 先頭・中間・末尾 | |
 | `MakerSearch` | floor_id | 500 | 先頭・中間・末尾 | |
 | `SeriesSearch` | floor_id | 500 | 先頭・中間・末尾 | |
@@ -28,6 +28,10 @@
 
 中間と末尾のページ位置は、先頭ページの `total_count` から決める（末尾 = `total_count - hits + 1`、
 中間 = `total_count / 2`。いずれも 1〜50000 に収める）。総件数が 1 ページに収まる場合は先頭だけを取る。
+
+そうしたフロアでは sort も振らない。ページを振れないので、sort を変えても同じ商品が並び替わって返るだけで、
+DTO に通す形は増えない。`sort=date` を 1 本叩いて次のフロアへ移る。sort ごとの違いは総件数の多いフロアで
+見られている。
 
 フロア × API の中には、そのフロアには存在しない組み合わせ（動画フロアの `AuthorSearch` など）も含まれる。
 0 件で返るのが通常なので、これは失敗ではなく通常の成功として扱う。API がエラーを返した場合は
