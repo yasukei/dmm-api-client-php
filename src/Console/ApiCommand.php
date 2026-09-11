@@ -52,13 +52,14 @@ abstract class ApiCommand implements Command
      */
     public const string DATETIME_PLACEHOLDER = 'DATETIME';
 
-    private readonly ResponseMapper $responseMapper;
-
+    /**
+     * @param ClientInterface|null $httpClient     PSR-18 クライアント。null なら自動検出する
+     * @param ResponseMapper|null  $responseMapper レスポンスの検証担当。null なら最初に必要になった時点で組み立てる
+     */
     public function __construct(
         private readonly ?ClientInterface $httpClient = null,
-        ?ResponseMapper $responseMapper = null,
+        private ?ResponseMapper $responseMapper = null,
     ) {
-        $this->responseMapper = $responseMapper ?? new ResponseMapper();
     }
 
     /**
@@ -418,7 +419,10 @@ abstract class ApiCommand implements Command
         }
 
         try {
-            $this->responseMapper->map($this->responseClass(), $decoded);
+            // Valinor の読み込みは決して軽くない一方、`--help` や `--dry-run`、
+            // `--no-validate-response` では一度も使わない。{@see Application} は名前を引くために
+            // 全サブコマンドを生成するので、ここまで遅らせないと毎回その分だけ起動が遅くなる。
+            ($this->responseMapper ??= new ResponseMapper())->map($this->responseClass(), $decoded);
         } catch (ResponseValidationException $exception) {
             $output->error(sprintf('Response did not match %s:', $exception->targetClass));
 

@@ -41,7 +41,7 @@ function scenario(string $description, Closure $closure): TestCall
 
 function responseMapper(): ResponseMapper
 {
-    return new ResponseMapper();
+    return Tests\TestCase::responseMapper();
 }
 
 function credentials(): Credentials
