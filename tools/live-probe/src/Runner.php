@@ -59,6 +59,18 @@ final class Runner
     }
 
     /**
+     * `--limit` に達したか。
+     *
+     * 送信数と上限の両方を持っているのはここだけなので、判断もここに置く。
+     * 打ち切りは各フェーズのループが対象と対象の境目で見る。途中の対象は
+     * ページを取り切ってから止まる（{@see Probe} の使い方の説明を参照）。
+     */
+    public function limitReached(): bool
+    {
+        return $this->options->limit !== null && $this->sent >= $this->options->limit;
+    }
+
+    /**
      * この実行で処理した記録。
      *
      * レポートはこれを集計する。run ディレクトリには過去の実行の分も溜まっているが、

@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace DmmApiClient\LiveProbe;
 
+use Closure;
+
 /**
  * 実行結果を集計して、標準出力向けのサマリと失敗一覧のファイルを作る。
  *
  * 同じ食い違いは何百件も出るので、DTO のどのフィールドで起きたかで束ねる。
  * 直すべき箇所の数が一目で分かるようにするため。
  *
+ * @phpstan-type Sample array{file: string|null, label: string, uri: string, path: string, message: string, value: string}
+ * @phpstan-type FailureGroup array{path: string, requests: int, messages: list<array{message: string, count: int}>, samples: list<Sample>}
  * @phpstan-type FilterRow array{floor: string, floorId: string, name: string, value: string, verdict: string, returned: int, matching: int, totalCount: int|null, unfiltered: int|null, file: string|null, label: string, message: string|null}
  */
 final readonly class Reporter
@@ -224,8 +228,8 @@ final readonly class Reporter
     }
 
     /**
-     * @param list<array{path: string, requests: int, messages: list<array{message: string, count: int}>, samples: list<array{file: string|null, label: string, uri: string, path: string, message: string, value: string}>}> $groups
-     * @param list<array{path: string, requests: int, messages: list<array{message: string, count: int}>, samples: list<array{file: string|null, label: string, uri: string, path: string, message: string, value: string}>}> $unknownKeys
+     * @param list<FailureGroup> $groups
+     * @param list<FailureGroup> $unknownKeys
      * @param list<array{requests: int, message: string, status: int|null, samples: list<string>}>                                                                                                                          $apiErrors
      * @param list<array{label: string, uri: string, message: string}>                                                                                                                                                      $transportErrors
      * @param list<FilterRow>                                                                                                                                                                                        $articleFilters
@@ -366,7 +370,7 @@ final readonly class Reporter
     /**
      * 検証エラーを、DTO のフィールド（配列の添字を `*` に均したパス）で束ねる。
      *
-     * @return list<array{path: string, requests: int, messages: list<array{message: string, count: int}>, samples: list<array{file: string|null, label: string, uri: string, path: string, message: string, value: string}>}>
+     * @return list<FailureGroup>
      */
     private function failureGroups(): array
     {
@@ -378,7 +382,7 @@ final readonly class Reporter
     /**
      * DTO が知らないキーを、同じ要領でパスごとに束ねる。
      *
-     * @return list<array{path: string, requests: int, messages: list<array{message: string, count: int}>, samples: list<array{file: string|null, label: string, uri: string, path: string, message: string, value: string}>}>
+     * @return list<FailureGroup>
      */
     private function unknownKeyGroups(): array
     {
@@ -388,7 +392,7 @@ final readonly class Reporter
     /**
      * @param callable(Record): list<array{path: string, message: string}> $select
      *
-     * @return list<array{path: string, requests: int, messages: list<array{message: string, count: int}>, samples: list<array{file: string|null, label: string, uri: string, path: string, message: string, value: string}>}>
+     * @return list<FailureGroup>
      */
     private function groups(callable $select): array
     {
@@ -440,7 +444,7 @@ final readonly class Reporter
     /**
      * @param list<array{Record, array{path: string, message: string}}> $records
      *
-     * @return list<array{file: string|null, label: string, uri: string, path: string, message: string, value: string}>
+     * @return list<Sample>
      */
     private function samples(array $records): array
     {
@@ -624,19 +628,12 @@ final readonly class Reporter
      */
     private function articleFilters(): array
     {
-        $unfiltered = $this->unfilteredTotals();
-        $filters = [];
-
-        foreach ($this->records as $record) {
-            if ($record->group !== Planner::ARTICLES) {
-                continue;
-            }
-
+        return self::markRetried($this->filterRows(Planner::ARTICLES, static function (Record $record): ?array {
             $article = $record->context['article'] ?? null;
             $id = $record->context['article_id'] ?? null;
 
             if ($article === null || $id === null) {
-                continue;
+                return null;
             }
 
             // 複数指定した分は、分類名と ID がカンマで連なっている。1 つだけの場合も同じ形で扱える。
@@ -644,35 +641,11 @@ final readonly class Reporter
             $ids = explode(',', $id);
 
             if (count($names) !== count($ids)) {
-                continue;
+                return null;
             }
 
-            $items = ArticleTally::itemsOf($this->decoded($record));
-            $matching = 0;
-
-            foreach ($items as $item) {
-                if (self::carriesAll($item, $names, $ids)) {
-                    $matching++;
-                }
-            }
-
-            $filters[] = [
-                'floor' => $record->context['floor'] ?? '',
-                'floorId' => $record->context['floor_id'] ?? '',
-                'name' => $article,
-                'value' => $id,
-                'verdict' => self::verdict($record, count($items), $matching),
-                'returned' => count($items),
-                'matching' => $matching,
-                'totalCount' => $record->totalCount,
-                'unfiltered' => $unfiltered[$record->context['floor_id'] ?? ''] ?? null,
-                'file' => $record->file,
-                'label' => $record->label(),
-                'message' => $record->message,
-            ];
-        }
-
-        return self::markRetried($filters);
+            return [$article, $id, static fn (array $item): bool => self::carriesAll($item, $names, $ids)];
+        }));
     }
 
     /**
@@ -689,25 +662,53 @@ final readonly class Reporter
      */
     private function stockFilters(): array
     {
+        return $this->filterRows(Planner::MONO_STOCK, static function (Record $record): ?array {
+            $stock = $record->context['mono_stock'] ?? null;
+
+            if ($stock === null) {
+                return null;
+            }
+
+            return [$stock, $stock, static fn (array $item): bool => ($item['stock'] ?? null) === $stock];
+        });
+    }
+
+    /**
+     * フィルタを指定した対象を 1 つずつ見て、実際に絞り込めたかの行を作る。
+     *
+     * 判定の仕方は `article` と `mono_stock` で違うが、違うのは「何を指定したか」の
+     * 取り出し方と「商品がその指定に合うか」の見方だけ。行の組み立て方と、
+     * 絞り込み無しの件数の借り方は同じなのでここに置く。
+     *
+     * @param Closure(Record): ?array{string, string, Closure(array<mixed>): bool} $describe
+     *        行に載せる名前と値、および商品 1 件が指定に合うかの判定を返す。
+     *        見るべきものが揃っていなければ null を返して、その対象を飛ばす
+     *
+     * @return list<FilterRow>
+     */
+    private function filterRows(string $group, Closure $describe): array
+    {
         $unfiltered = $this->unfilteredTotals();
         $filters = [];
 
         foreach ($this->records as $record) {
-            if ($record->group !== Planner::MONO_STOCK) {
+            if ($record->group !== $group) {
                 continue;
             }
 
-            $stock = $record->context['mono_stock'] ?? null;
+            $described = $describe($record);
 
-            if ($stock === null) {
+            if ($described === null) {
                 continue;
             }
+
+            [$name, $value, $matches] = $described;
 
             $items = ArticleTally::itemsOf($this->decoded($record));
             $matching = 0;
 
             foreach ($items as $item) {
-                if (($item['stock'] ?? null) === $stock) {
+                if ($matches($item)) {
                     $matching++;
                 }
             }
@@ -715,8 +716,8 @@ final readonly class Reporter
             $filters[] = [
                 'floor' => $record->context['floor'] ?? '',
                 'floorId' => $record->context['floor_id'] ?? '',
-                'name' => $stock,
-                'value' => $stock,
+                'name' => $name,
+                'value' => $value,
                 'verdict' => self::verdict($record, count($items), $matching),
                 'returned' => count($items),
                 'matching' => $matching,
@@ -799,7 +800,7 @@ final readonly class Reporter
         foreach ($this->records as $record) {
             $floorId = $record->context['floor_id'] ?? null;
 
-            if ($record->group === 'ItemList' && $floorId !== null && $record->totalCount !== null) {
+            if ($record->group === Planner::ITEM_LIST && $floorId !== null && $record->totalCount !== null) {
                 $totals[$floorId] ??= $record->totalCount;
             }
         }

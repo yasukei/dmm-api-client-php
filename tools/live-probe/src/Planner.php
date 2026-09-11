@@ -32,10 +32,19 @@ use DmmApiClient\Api\Response\SeriesSearch\SeriesSearchResponse;
  */
 final class Planner
 {
+    /**
+     * 商品情報 API の名前。
+     *
+     * エンドポイント名であると同時に、保存先のディレクトリ名でもあり、記録の group でもある。
+     * {@see self::ARTICLES} や {@see self::MONO_STOCK} は保存済みの `ItemList` を
+     * 読み直して組み立てるので、書き出す側と読む側で綴りが食い違うと黙って空振りする。
+     */
+    public const string ITEM_LIST = 'ItemList';
+
     /** `--endpoint` に指定できる名前。 */
     public const array ENDPOINTS = [
         'FloorList',
-        'ItemList',
+        self::ITEM_LIST,
         'ActressSearch',
         'GenreSearch',
         'MakerSearch',
@@ -124,7 +133,7 @@ final class Planner
                 continue;
             }
 
-            if ($options->wantsEndpoint('ItemList')) {
+            if ($options->wantsEndpoint(self::ITEM_LIST)) {
                 $targets = [...$targets, ...self::itemList($floor, $options)];
             }
 
@@ -376,7 +385,7 @@ final class Planner
             }
 
             $targets[] = new Target(
-                group: 'ItemList',
+                group: self::ITEM_LIST,
                 endpoint: ItemListRequest::ENDPOINT,
                 responseClass: ItemListResponse::class,
                 key: $floor->key(),
