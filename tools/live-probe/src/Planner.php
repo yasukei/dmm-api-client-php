@@ -258,6 +258,50 @@ final class Planner
     }
 
     /**
+     * 分類を複数まとめて指定して叩く対象。
+     *
+     * 見たいのは、複数指定したときのエコーバックが指定どおりに返るか（要素数と順序）と、
+     * 絞り込みが重ねて効くか。1 つだけ指定する場合と同じ経路で扱えるよう、
+     * 分類名と ID をそれぞれカンマで連ねて記録に残す。
+     *
+     * @param array<string, string> $articles 分類名 => ID。すべて {@see ArticleType} にあるもの
+     */
+    public static function articleComboTarget(FloorRef $floor, array $articles, Options $options): Target
+    {
+        $hits = $options->hitsFor(ItemListRequest::HITS_MAX);
+        $filters = [];
+        $parts = [];
+
+        foreach ($articles as $article => $id) {
+            $filters[] = new ArticleFilter(ArticleType::from($article), $id);
+            $parts[] = Target::sanitize($article) . '-' . Target::sanitize($id);
+        }
+
+        return new Target(
+            group: self::ARTICLES,
+            endpoint: ItemListRequest::ENDPOINT,
+            responseClass: ItemListResponse::class,
+            key: $floor->key() . '__article-' . implode('_', $parts),
+            sort: null,
+            hits: $hits,
+            offsetMax: ItemListRequest::OFFSET_MAX,
+            context: $floor->context() + [
+                'article' => implode(',', array_keys($articles)),
+                'article_id' => implode(',', array_values($articles)),
+            ],
+            build: static fn (int $offset): Request => new ItemListRequest(
+                site: $floor->site,
+                service: $floor->serviceCode,
+                floor: $floor->floorCode,
+                articles: $filters,
+                hits: $hits,
+                offset: $offset,
+            ),
+            firstPageOnly: true,
+        );
+    }
+
+    /**
      * {@see ArticleType} にある分類は {@see ItemListRequest} で組み立てる。ライブラリ自身の
      * article 組み立てを、実データで通せる唯一の経路になる。
      *

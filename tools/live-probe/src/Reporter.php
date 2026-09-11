@@ -639,11 +639,19 @@ final readonly class Reporter
                 continue;
             }
 
+            // 複数指定した分は、分類名と ID がカンマで連なっている。1 つだけの場合も同じ形で扱える。
+            $names = explode(',', $article);
+            $ids = explode(',', $id);
+
+            if (count($names) !== count($ids)) {
+                continue;
+            }
+
             $items = ArticleTally::itemsOf($this->decoded($record));
             $matching = 0;
 
             foreach ($items as $item) {
-                if (ArticleTally::carries($item, $article, $id)) {
+                if (self::carriesAll($item, $names, $ids)) {
                     $matching++;
                 }
             }
@@ -721,6 +729,26 @@ final readonly class Reporter
         }
 
         return $filters;
+    }
+
+    /**
+     * 商品が、指定された分類と ID をすべて持っているか。
+     *
+     * 複数指定は重ねた絞り込みとして扱う。1 つでも欠けていれば、その商品は条件を満たしていない。
+     *
+     * @param array<mixed>  $item
+     * @param list<string>  $names
+     * @param list<string>  $ids
+     */
+    private static function carriesAll(array $item, array $names, array $ids): bool
+    {
+        foreach ($names as $at => $name) {
+            if (! ArticleTally::carries($item, $name, $ids[$at])) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

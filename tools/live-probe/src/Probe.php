@@ -6,6 +6,7 @@ namespace DmmApiClient\LiveProbe;
 
 use DmmApiClient\Api\CredentialMasker;
 use DmmApiClient\Api\Exception\DmmApiClientException;
+use DmmApiClient\Api\Request\ArticleType;
 use DmmApiClient\Api\Request\Credentials;
 use DmmApiClient\Api\Request\FloorListRequest;
 use DmmApiClient\Api\Request\Request;
@@ -130,6 +131,7 @@ final readonly class Probe
 
         if ($this->runTargets($runner, $targets, $console, $run)
             && $this->processArticles($runner, $catalog, $console, $run)) {
+            $this->processArticleCombos($runner, $catalog, $console, $run);
             $this->processMonoStock($runner, $catalog, $console, $run);
         }
 
@@ -300,6 +302,135 @@ final readonly class Probe
         }
 
         return true;
+    }
+
+    /**
+     * サイトごとに 1 フロアだけ選び、分類を 2 つ・3 つまとめて指定して叩く。
+     *
+     * 全フロアでやる必要は無い。1 つだけ指定する場合と違って、分類ごとの可否を見るのではなく、
+     * 複数指定そのものが成り立つか（エコーバックの形と、絞り込みが重ねて効くか）を見るため。
+     *
+     * 選ぶのは、そのサイトで実データに出た分類がいちばん多いフロア。同数なら floor_id の小さい方。
+     * 複数指定が最も意味を持つ場所であり、選び方は実行のたびに変わらない。
+     */
+    private function processArticleCombos(
+        Runner $runner,
+        FloorCatalog $catalog,
+        Console $console,
+        RunDirectory $run,
+    ): void {
+        if (! $this->wantsFollowUps()) {
+            return;
+        }
+
+        $plans = [];
+
+        foreach (self::comboFloors($runner, $catalog) as $floor) {
+            $articles = self::articlesOfOneItem($run, $floor);
+
+            foreach ([2, 3] as $count) {
+                if (count($articles) >= $count) {
+                    $plans[] = Planner::articleComboTarget(
+                        $floor,
+                        array_slice($articles, 0, $count, preserve_keys: true),
+                        $this->options,
+                    );
+                }
+            }
+        }
+
+        if ($plans === []) {
+            $console->progress('no article combinations to try; no floor carries two articles on one item.');
+
+            return;
+        }
+
+        $console->progress(sprintf('planned %d article combinations', count($plans)));
+
+        $this->runTargets($runner, $plans, $console, $run);
+    }
+
+    /**
+     * サイトごとに 1 つずつ、分類の多いフロア。
+     *
+     * どの分類がそのフロアに出たかは、直前に叩いた article の記録から分かる。
+     * 保存済みのレスポンスを数え直す必要は無い。
+     *
+     * @return list<FloorRef>
+     */
+    private static function comboFloors(Runner $runner, FloorCatalog $catalog): array
+    {
+        /** @var array<string, array<string, true>> $articles フロア ID => 分類名 */
+        $articles = [];
+
+        foreach ($runner->records() as $record) {
+            $article = $record->context['article'] ?? null;
+            $floorId = $record->context['floor_id'] ?? null;
+
+            // 複数指定した分の記録は、名前がカンマで連なっている。数え直しの材料にはしない。
+            if ($record->group !== Planner::ARTICLES || $article === null || $floorId === null) {
+                continue;
+            }
+
+            if (! str_contains($article, ',') && ArticleType::tryFrom($article) !== null) {
+                $articles[$floorId][$article] = true;
+            }
+        }
+
+        $best = [];
+
+        foreach ($catalog->floors as $floor) {
+            $count = count($articles[$floor->floorId] ?? []);
+            $site = $floor->site->value;
+            $previous = $best[$site] ?? null;
+
+            if ($count >= 2 && ($previous === null || $count > $previous[0])) {
+                $best[$site] = [$count, $floor];
+            }
+        }
+
+        ksort($best);
+
+        return array_values(array_map(static fn (array $pair): FloorRef => $pair[1], $best));
+    }
+
+    /**
+     * そのフロアの商品 1 件が持つ、分類と ID。
+     *
+     * 分類ごとに最も多い ID を別々に選ぶと、重ねたときに該当なしで返りかねない。1 件の商品が
+     * 実際に持っている組み合わせを使えば、少なくともその商品は必ず当たる。
+     *
+     * 保存済みのレスポンスを順に見て、いちばん多くの分類を持つ商品を選ぶ。3 つ持つ商品が
+     * 見つかった時点で打ち切る。指定するのは最大 3 つなので、それ以上は見なくてよい。
+     *
+     * @return array<string, string> 分類名 => ID。名前順
+     */
+    private static function articlesOfOneItem(RunDirectory $run, FloorRef $floor): array
+    {
+        $best = [];
+
+        foreach ($run->bodies('ItemList', $floor->key() . '__') as $body) {
+            foreach (ArticleTally::itemsOf(Json::decode($body)) as $item) {
+                $articles = [];
+
+                foreach (ArticleTally::articlesOf($item) as $article => $ids) {
+                    if ($ids !== [] && ArticleType::tryFrom($article) !== null) {
+                        $articles[$article] = $ids[0];
+                    }
+                }
+
+                if (count($articles) > count($best)) {
+                    ksort($articles);
+                    $best = $articles;
+                }
+
+                if (count($best) >= 3) {
+                    return $best;
+                }
+            }
+        }
+
+        return $best;
     }
 
     /**

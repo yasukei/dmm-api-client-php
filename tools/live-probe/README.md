@@ -18,7 +18,7 @@
 
 | API | 単位 | hits | ページ | 備考 |
 | --- | --- | --- | --- | --- |
-| `ItemList` | site + service + floor | 100 | 先頭・中間・末尾 | sort 6 種すべて（1 ページに収まるフロアは date だけ）。最後に article と mono_stock で叩き直す |
+| `ItemList` | site + service + floor | 100 | 先頭・中間・末尾 | sort 6 種すべて（1 ページに収まるフロアは date だけ）。最後に article・複数 article・mono_stock で叩き直す |
 | `GenreSearch` | floor_id | 500 | 先頭・中間・末尾 | |
 | `MakerSearch` | floor_id | 500 | 先頭・中間・末尾 | |
 | `SeriesSearch` | floor_id | 500 | 先頭・中間・末尾 | |
@@ -43,6 +43,12 @@ DTO に通す形は増えない。`sort=date` を 1 本叩いて次のフロア�
 sort は指定しない。0 件で返った ID は、次に多い ID で 1 度だけ引き直す。詳細は
 [`src/ArticleTally.php`](src/ArticleTally.php) と [`src/Planner.php`](src/Planner.php) の
 `articleTarget()` にある。
+
+続けて、サイトごとに 1 フロアだけ選び、分類を 2 つ・3 つまとめて指定して叩く（計 4 リクエスト）。
+分類ごとの可否ではなく、複数指定そのものが成り立つか — エコーバックが指定どおり返るか、絞り込みが
+重ねて効くか — を見るため、全フロアでやる必要は無い。選ぶのはそのサイトで分類がいちばん多いフロアで、
+指定する値は、そのフロアの商品 1 件が実際に持っている組み合わせ。分類ごとに最頻出の ID を別々に
+選ぶと、重ねたときに該当なしで返りかねないため。
 
 続けて、通販（mono）のフロアを `mono_stock` の値ごとに叩き直す。`MonoStock` の全種を送る。
 絞り込みには使えないと docblock が書いている値も含めるのは、そう書いてあるだけで全フロアで裏を
