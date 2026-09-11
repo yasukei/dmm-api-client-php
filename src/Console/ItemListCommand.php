@@ -54,14 +54,8 @@ final class ItemListCommand extends ApiCommand
 
     protected function createRequest(Input $input): Request
     {
-        $site = SiteCode::tryFrom($this->requiredOption($input, 'site'))
-            ?? throw new UsageException(sprintf(
-                'Invalid value for --site. Expected one of: %s.',
-                self::allowedValues(SiteCode::class),
-            ));
-
         return new ItemListRequest(
-            site: $site,
+            site: self::toEnum($this->requiredOption($input, 'site'), 'site', SiteCode::class),
             service: $input->option('service'),
             floor: $input->option('floor'),
             keyword: $input->option('keyword'),
@@ -104,13 +98,7 @@ final class ItemListCommand extends ApiCommand
         $filters = [];
 
         foreach ($types as $index => $type) {
-            $articleType = ArticleType::tryFrom($type) ?? throw new UsageException(sprintf(
-                'Invalid value "%s" for --article. Expected one of: %s.',
-                $type,
-                self::allowedValues(ArticleType::class),
-            ));
-
-            $filters[] = new ArticleFilter($articleType, $ids[$index]);
+            $filters[] = new ArticleFilter(self::toEnum($type, 'article', ArticleType::class), $ids[$index]);
         }
 
         return $filters;

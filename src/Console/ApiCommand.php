@@ -213,10 +213,27 @@ abstract class ApiCommand implements Command
     {
         $value = $input->option($name);
 
-        if ($value === null) {
-            return null;
-        }
+        return $value === null ? null : self::toEnum($value, $name, $enum);
+    }
 
+    /**
+     * 文字列を列挙型として解釈する。
+     *
+     * 必須のオプションや、繰り返し指定できるオプションのように
+     * {@see self::enumOption()} の形に収まらない場合はこちらを直接使う。
+     * 受け付けない値のときの文言を 1 か所に保つためのもの。
+     *
+     * @template T of BackedEnum
+     *
+     * @param string          $name  文言に載せるオプション名（`--` は付けない）
+     * @param class-string<T> $enum
+     *
+     * @return T
+     *
+     * @throws UsageException 列挙型が受け付けない値の場合
+     */
+    final protected static function toEnum(string $value, string $name, string $enum): BackedEnum
+    {
         return $enum::tryFrom($value) ?? throw new UsageException(sprintf(
             'Invalid value "%s" for --%s. Expected one of: %s.',
             $value,
