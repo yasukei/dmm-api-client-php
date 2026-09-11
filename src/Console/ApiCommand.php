@@ -93,6 +93,29 @@ abstract class ApiCommand implements Command
     }
 
     /**
+     * 値の表記ごとに、受け付ける書式をヘルプで補う文言。
+     *
+     * 書式を決めているのは {@see self::dateOption()} なので、文言もここに置く。
+     * 時刻を省略したときに何時何分として読むかは `$endOfDay` の指定しだいで、
+     * それを知っているのはこのクラスだけ。並べ方は {@see Application} が決める。
+     *
+     * @return array<string, list<string>>
+     */
+    final public static function placeholderNotes(): array
+    {
+        return [
+            self::DATETIME_PLACEHOLDER => [
+                'DATETIME は 2016-04-01、2016-04-01T12:34:56、2016-04-01 12:34:56 のいずれかで指定する。',
+                '時刻を省略した場合、--gte-date は 00:00:00、--lte-date は 23:59:59 として扱う。',
+                '空白を含む形はシェルの引用符が要る。',
+            ],
+            self::DATE_PLACEHOLDER => [
+                'DATE は 1990-01-01 のように日付で指定する。時刻は送信しない。',
+            ],
+        ];
+    }
+
+    /**
      * このコマンド固有のオプション。
      *
      * @return list<OptionDefinition>
