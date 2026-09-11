@@ -84,6 +84,17 @@ final readonly class Validator
      */
     private function map(ResponseMapper $mapper, string $responseClass, string $body): array
     {
+        // DTO の名前は manifest.jsonl から読んだ文字列で、`--revalidate` のときは過去の実行が
+        // 書いたものをそのまま使う。DTO を消したり名前を変えたりしたあとの実行では、もう無い
+        // クラスを指したまま渡ってくる。マッパーはその場合パース段階で落ちるので、先に弾く。
+        if (! class_exists($responseClass)) {
+            return [[
+                'path' => '*class*',
+                'message' => sprintf('Response class "%s" does not exist.', $responseClass),
+                'code' => 'unknown_class',
+            ]];
+        }
+
         $decoded = Json::decode($body);
 
         if ($decoded === null) {
