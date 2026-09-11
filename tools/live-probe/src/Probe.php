@@ -129,11 +129,11 @@ final readonly class Probe
             count(array_filter($catalog->floors, $this->options->wantsFloor(...))),
         ));
 
-        if ($this->runTargets($runner, $targets, $console, $run)
+        // 前の段が `--limit` に達したら、その先の段は始めない。
+        $this->runTargets($runner, $targets, $console, $run)
             && $this->processArticles($runner, $catalog, $console, $run)
-            && $this->processArticleCombos($runner, $catalog, $console, $run)) {
-            $this->processMonoStock($runner, $catalog, $console, $run);
-        }
+            && $this->processArticleCombos($runner, $catalog, $console, $run)
+            && $this->processMonoStock($runner, $catalog, $console, $run);
 
         $run->writeRun([
             'startedAt' => $startedAt,
@@ -853,8 +853,8 @@ final readonly class Probe
                                 総件数を知るため、先頭ページは指定によらず必ず取得する
               --hits=N          hits の上書き（API ごとの上限で頭打ちにする）
               --rate=N          1 秒あたりのリクエスト数（既定: 1。0 で待たない）
-              --limit=N         送信するリクエストの上限（試し打ち用。対象の切れ目で見るので、
-                                最後の対象のページ分だけ超えることがある）
+              --limit=N         送信するリクエストの上限（試し打ち用。同じ条件のページは
+                                まとめて取るので、その分だけ超えることがある）
               --no-mask         認証情報を伏せ字にせず保存する
               --env-file=PATH   読み込む .env（既定: カレントディレクトリの .env）
               --base-uri=URI    API のベース URI（既定: 本番。差し替えるのは動作確認用）
