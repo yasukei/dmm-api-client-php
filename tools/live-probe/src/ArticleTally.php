@@ -14,18 +14,51 @@ namespace DmmApiClient\LiveProbe;
  * `iteminfo` はそれ以外の分類（label、director、manufacture など）も返す。それらが `article` に
  * 使えるかはドキュメントからは分からない。使えるなら利用者にとっては素直に便利なので、実際に試す。
  *
+ * ID は出現数の多い順に並べて持つ。最も多いものが「該当なし」を表す枠のことがあり、それで
+ * 引くと 0 件になって、その分類が使えるのかどうかが分からないまま終わる。そうした値を
+ * 名指しで避けるのではなく、空振りしたら次点で引き直せるようにする（{@see self::next()}）。
+ *
  * 判定に使う「その商品がこの ID を持つか」も、同じ読み取りで済むのでここに置く。
  */
 final readonly class ArticleTally
 {
     /**
-     * @param array<string, string> $articles 分類名 => そのフロアで最も多く出現した ID
-     * @param array<string, int>    $counts   分類名 => その ID を持っていた商品の数
+     * @param array<string, list<string>> $candidates 分類名 => 出現数の多い順に並べた ID
      */
     private function __construct(
-        public array $articles,
-        public array $counts,
+        public array $candidates,
     ) {
+    }
+
+    /**
+     * 分類ごとに、まず試す ID。
+     *
+     * @return array<string, string>
+     */
+    public function articles(): array
+    {
+        $articles = [];
+
+        foreach ($this->candidates as $article => $ids) {
+            if ($ids !== []) {
+                $articles[$article] = $ids[0];
+            }
+        }
+
+        return $articles;
+    }
+
+    /**
+     * その ID の次に多かった ID。無ければ null。
+     *
+     * 空振りしたときに引き直すためのもの。
+     */
+    public function next(string $article, string $afterId): ?string
+    {
+        $ids = $this->candidates[$article] ?? [];
+        $at = array_search($afterId, $ids, true);
+
+        return $at === false ? null : ($ids[$at + 1] ?? null);
     }
 
     /**
@@ -46,19 +79,15 @@ final readonly class ArticleTally
             }
         }
 
-        $articles = [];
-        $counts = [];
+        $candidates = [];
 
         foreach ($counted as $article => $ids) {
-            [$id, $count] = self::mostFrequent($ids);
-            $articles[$article] = $id;
-            $counts[$article] = $count;
+            $candidates[$article] = self::ranked($ids);
         }
 
-        ksort($articles);
-        ksort($counts);
+        ksort($candidates);
 
-        return new self($articles, $counts);
+        return new self($candidates);
     }
 
     /**
@@ -135,29 +164,28 @@ final readonly class ArticleTally
     }
 
     /**
-     * 最も多く出現した ID。
+     * 出現数の多い順に並べた ID。
      *
-     * 同数で並んだ場合は ID の小さい方を採る。実行のたびに試す ID が変わると、
+     * 同数で並んだ場合は ID の小さい方を先にする。実行のたびに試す ID が変わると、
      * 前回の結果と突き合わせられなくなるため。
      *
      * @param array<string, int> $ids
      *
-     * @return array{string, int}
+     * @return list<string>
      */
-    private static function mostFrequent(array $ids): array
+    private static function ranked(array $ids): array
     {
-        $bestId = '';
-        $bestCount = -1;
+        $pairs = [];
 
         foreach ($ids as $id => $count) {
-            $id = (string) $id;
-
-            if ($count > $bestCount || ($count === $bestCount && strcmp($id, $bestId) < 0)) {
-                $bestId = $id;
-                $bestCount = $count;
-            }
+            $pairs[] = [(string) $id, $count];
         }
 
-        return [$bestId, max($bestCount, 0)];
+        usort(
+            $pairs,
+            static fn (array $a, array $b): int => $b[1] <=> $a[1] ?: strcmp($a[0], $b[0]),
+        );
+
+        return array_map(static fn (array $pair): string => $pair[0], $pairs);
     }
 }

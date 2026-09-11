@@ -9,6 +9,8 @@ namespace DmmApiClient\LiveProbe;
  *
  * 同じ食い違いは何百件も出るので、DTO のどのフィールドで起きたかで束ねる。
  * 直すべき箇所の数が一目で分かるようにするため。
+ *
+ * @phpstan-type ArticleFilterRow array{floor: string, floorId: string, article: string, id: string, verdict: string, returned: int, matching: int, totalCount: int|null, unfiltered: int|null, file: string|null, label: string, message: string|null}
  */
 final readonly class Reporter
 {
@@ -208,7 +210,7 @@ final readonly class Reporter
      * @param list<array{path: string, requests: int, messages: list<array{message: string, count: int}>, samples: list<array{file: string|null, label: string, uri: string, path: string, message: string, value: string}>}> $unknownKeys
      * @param list<array{requests: int, message: string, status: int|null, samples: list<string>}>                                                                                                                          $apiErrors
      * @param list<array{label: string, uri: string, message: string}>                                                                                                                                                      $transportErrors
-     * @param list<array{floor: string, article: string, id: string, verdict: string, returned: int, matching: int, totalCount: int|null, unfiltered: int|null, file: string|null, label: string, message: string|null}>      $articleFilters
+     * @param list<ArticleFilterRow>                                                                                                                                                                                        $articleFilters
      */
     private function markdown(
         array $groups,
@@ -591,7 +593,7 @@ final readonly class Reporter
      *
      * 絞り込み無しの件数は、同じフロアの通常の `ItemList` から借りる。追加のリクエストは要らない。
      *
-     * @return list<array{floor: string, article: string, id: string, verdict: string, returned: int, matching: int, totalCount: int|null, unfiltered: int|null, file: string|null, label: string, message: string|null}>
+     * @return list<ArticleFilterRow>
      */
     private function articleFilters(): array
     {
@@ -621,6 +623,7 @@ final readonly class Reporter
 
             $filters[] = [
                 'floor' => $record->context['floor'] ?? '',
+                'floorId' => $record->context['floor_id'] ?? '',
                 'article' => $article,
                 'id' => $id,
                 'verdict' => self::verdict($record, count($items), $matching),
@@ -632,6 +635,37 @@ final readonly class Reporter
                 'label' => $record->label(),
                 'message' => $record->message,
             ];
+        }
+
+        return self::markRetried($filters);
+    }
+
+    /**
+     * 引き直された試行に印を付ける。
+     *
+     * 0 件だった試行は別の ID で引き直される。その 1 本目を `empty` のまま数えると、
+     * 同じ分類が「半分は効かなかった」ように見えてしまう。結論は後から引いた方に載るので、
+     * 先に引いた方は `retried` として分ける。
+     *
+     * 同じ分類・同じフロアで、あとに別の ID の試行があるものだけを対象にする。
+     *
+     * @param list<ArticleFilterRow> $filters
+     *
+     * @return list<ArticleFilterRow>
+     */
+    private static function markRetried(array $filters): array
+    {
+        foreach ($filters as $at => $filter) {
+            foreach (array_slice($filters, $at + 1) as $later) {
+                if ($later['floorId'] === $filter['floorId']
+                    && $later['article'] === $filter['article']
+                    && $later['id'] !== $filter['id']
+                ) {
+                    $filters[$at]['verdict'] = 'retried';
+
+                    break;
+                }
+            }
         }
 
         return $filters;
@@ -665,6 +699,8 @@ final readonly class Reporter
      * - `honored`: 返った商品がすべてその ID を持つ。絞り込めている
      * - `ignored`: どの商品もその ID を持たない。`article` が読み捨てられている
      * - `partial`: 一部だけが持つ。上の 3 つのどれとも言えず、実物を見る必要がある
+     *
+     * このあと {@see self::markRetried()} が、引き直された試行を `retried` に振り替える。
      */
     private static function verdict(Record $record, int $returned, int $matching): string
     {
@@ -680,7 +716,7 @@ final readonly class Reporter
     /**
      * 分類ごとに、判定の内訳を数える。
      *
-     * @param list<array{article: string, verdict: string, ...}> $filters
+     * @param list<ArticleFilterRow> $filters
      *
      * @return list<array{article: string, requests: int, verdicts: array<string, int>}>
      */
@@ -732,7 +768,7 @@ final readonly class Reporter
      * 実際には使える、ということになる。`rejected` と `empty` の違いも読めるようにしておく。
      * 前者は指定そのものを受け付けず、後者は受け付けたうえで該当が無い。
      *
-     * @param list<array{floor: string, article: string, id: string, verdict: string, returned: int, matching: int, totalCount: int|null, unfiltered: int|null, file: string|null, label: string, message: string|null}> $filters
+     * @param list<ArticleFilterRow> $filters
      *
      * @return list<string>
      */
@@ -741,7 +777,8 @@ final readonly class Reporter
         $lines = ['## Article filters', ''];
         $lines[] = 'Each floor is swept again with the most frequent id of every article the floor\'s items '
             . 'actually carry. A response counts as honored only when every item it returns carries that id — '
-            . 'a filter the API quietly drops would still answer with items.';
+            . 'a filter the API quietly drops would still answer with items. An id that draws nothing is '
+            . 'retried once with the next most frequent one, and the attempt it replaces reads as retried.';
         $lines[] = '';
 
         if ($filters === []) {
@@ -769,8 +806,9 @@ final readonly class Reporter
 
         foreach ($filters as $filter) {
             $lines[] = sprintf(
-                '| %s | `%s` | `%s` | %s | %d | %d | %s | %s |',
+                '| %s (%s) | `%s` | `%s` | %s | %d | %d | %s | %s |',
                 $filter['floor'],
+                $filter['floorId'],
                 $filter['article'],
                 $filter['id'],
                 $filter['verdict'],

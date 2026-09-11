@@ -37,8 +37,9 @@
 `Articles` は、フロアの sweep が済んだあとに、そのフロアの `iteminfo` に実際に出た分類を
 `article` / `article_id` に指定して叩き直す対象。何が指定できるかはフロアの中身次第なので、
 対象は取得してみるまで決まらない。公式ドキュメントに載っていない分類（`label` や `director` など）も
-使えるかどうかを確かめる。詳細は [`src/ArticleTally.php`](src/ArticleTally.php) と
-[`src/Planner.php`](src/Planner.php) の `articleTargets()` にある。
+使えるかどうかを確かめる。0 件で返った ID は、次に多い ID で 1 度だけ引き直す。詳細は
+[`src/ArticleTally.php`](src/ArticleTally.php) と [`src/Planner.php`](src/Planner.php) の
+`articleTarget()` にある。
 
 `Errors` は、確実にエラーになるリクエストを送って `ErrorResponse` を検証するための対象。何をどう誤らせて
 いるかは [`src/Planner.php`](src/Planner.php) の `errorCases()` にある。

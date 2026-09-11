@@ -196,26 +196,71 @@ final readonly class Probe
         }
 
         $floors = array_values(array_filter($catalog->floors, $this->options->wantsFloor(...)));
-        $targets = [];
+        $plans = [];
 
         foreach ($floors as $floor) {
             $tally = ArticleTally::fromBodies($run->bodies('ItemList', $floor->key() . '__'));
-            $targets = [...$targets, ...Planner::articleTargets($floor, $tally, $this->options)];
+
+            foreach ($tally->articles() as $article => $id) {
+                $plans[] = [$floor, $tally, $article, $id];
+            }
         }
 
-        if ($targets === []) {
+        if ($plans === []) {
             $console->progress('no article filters to try; no saved ItemList response carries iteminfo.');
 
             return;
         }
 
-        $console->progress(sprintf(
-            'planned %d article filters over %d floors',
-            count($targets),
-            count($floors),
-        ));
+        $console->progress(sprintf('planned %d article filters over %d floors', count($plans), count($floors)));
 
-        $this->runTargets($runner, $targets, $console, $records, $run);
+        $index = 0;
+        $total = count($plans);
+
+        foreach ($plans as [$floor, $tally, $article, $id]) {
+            $index++;
+            $record = $this->processTarget(
+                $runner,
+                Planner::articleTarget($floor, $article, $id, $this->options),
+                $index,
+                $total,
+                $console,
+                $records,
+                $run,
+            );
+
+            // 0 件で返ったら、次に多い ID で 1 度だけ引き直す。最も多い ID が「該当なし」を
+            // 表す枠だと、その分類が使えるかどうかが分からないまま終わってしまうため。
+            // 2 つ続けて 0 件なら、それはその分類で絞り込めていないという結果として扱える。
+            $next = self::drewNothing($record) ? $tally->next($article, $id) : null;
+
+            if ($next !== null) {
+                $this->processTarget(
+                    $runner,
+                    Planner::articleTarget($floor, $article, $next, $this->options),
+                    $index,
+                    $total,
+                    $console,
+                    $records,
+                    $run,
+                );
+            }
+
+            if ($this->options->limit !== null && $runner->sent() >= $this->options->limit) {
+                $console->progress(sprintf('reached --limit=%d; stopping.', $this->options->limit));
+
+                break;
+            }
+        }
+    }
+
+    /**
+     * 取得できたが 1 件も返らなかったか。
+     */
+    private static function drewNothing(Record $record): bool
+    {
+        return $record->outcome === Record::OUTCOME_OK
+            && ($record->resultCount === 0 || $record->totalCount === 0);
     }
 
     /**
@@ -224,6 +269,8 @@ final readonly class Probe
      * 総件数は先頭ページを取るまで分からないので、先頭ページは `--pages` の指定によらず必ず取得する。
      *
      * @param list<Record> $records
+     *
+     * @return Record 先頭ページの記録
      */
     private function processTarget(
         Runner $runner,
@@ -233,14 +280,14 @@ final readonly class Probe
         Console $console,
         array &$records,
         RunDirectory $run,
-    ): void {
+    ): Record {
         $first = $runner->execute($target, 1, $target->isSingle() ? null : 'first');
         $records[] = $first;
         $run->appendRecord($first);
         $console->progress(self::progressLine($index, $total, $first));
 
         if ($target->isSingle()) {
-            return;
+            return $first;
         }
 
         $seen = [1 => true];
@@ -256,6 +303,8 @@ final readonly class Probe
             $run->appendRecord($record);
             $console->progress(self::progressLine($index, $total, $record));
         }
+
+        return $first;
     }
 
     /**

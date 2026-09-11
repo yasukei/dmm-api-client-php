@@ -204,25 +204,36 @@ final class Planner
      */
     public static function articleTargets(FloorRef $floor, ArticleTally $tally, Options $options): array
     {
-        $hits = $options->hitsFor(ItemListRequest::HITS_MAX);
         $targets = [];
 
-        foreach ($tally->articles as $article => $id) {
-            $targets[] = new Target(
-                group: self::ARTICLES,
-                endpoint: ItemListRequest::ENDPOINT,
-                responseClass: ItemListResponse::class,
-                key: $floor->key() . '__article-' . Target::sanitize($article) . '-' . Target::sanitize($id),
-                sort: null,
-                hits: $hits,
-                offsetMax: ItemListRequest::OFFSET_MAX,
-                context: $floor->context() + ['article' => $article, 'article_id' => $id],
-                build: static fn (int $offset): Request => self::articleRequest($floor, $article, $id, $hits, $offset),
-                firstPageOnly: true,
-            );
+        foreach ($tally->articles() as $article => $id) {
+            $targets[] = self::articleTarget($floor, $article, $id, $options);
         }
 
         return $targets;
+    }
+
+    /**
+     * 分類と ID を 1 つ指定して叩く対象。
+     *
+     * 空振りしたときに別の ID で組み直せるよう、1 件ずつ作れる形にしてある。
+     */
+    public static function articleTarget(FloorRef $floor, string $article, string $id, Options $options): Target
+    {
+        $hits = $options->hitsFor(ItemListRequest::HITS_MAX);
+
+        return new Target(
+            group: self::ARTICLES,
+            endpoint: ItemListRequest::ENDPOINT,
+            responseClass: ItemListResponse::class,
+            key: $floor->key() . '__article-' . Target::sanitize($article) . '-' . Target::sanitize($id),
+            sort: null,
+            hits: $hits,
+            offsetMax: ItemListRequest::OFFSET_MAX,
+            context: $floor->context() + ['article' => $article, 'article_id' => $id],
+            build: static fn (int $offset): Request => self::articleRequest($floor, $article, $id, $hits, $offset),
+            firstPageOnly: true,
+        );
     }
 
     /**
