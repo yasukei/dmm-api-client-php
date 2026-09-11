@@ -15,6 +15,7 @@ use DmmApiClient\Api\Request\Credentials;
 use DmmApiClient\Api\Request\RawRequest;
 use DmmApiClient\Api\Request\Request;
 use DmmApiClient\Api\Response\ResponseMapper;
+use Http\Discovery\Exception\NotFoundException;
 use JsonException;
 use Psr\Http\Client\ClientInterface;
 
@@ -134,7 +135,7 @@ abstract class ApiCommand implements Command
             ? CredentialMasker::disabled()
             : CredentialMasker::forCredentials($credentials));
 
-        $client = new DmmApiClient($credentials, $this->httpClient);
+        $client = $this->createClient($credentials);
         $request = $unchecked ? $this->createUncheckedRequest($input) : $this->createRequest($input);
 
         if ($input->flag('dry-run')) {
@@ -292,6 +293,28 @@ abstract class ApiCommand implements Command
             ),
             $value,
         ) ?? $value;
+    }
+
+    /**
+     * クライアントを組み立てる。
+     *
+     * PSR-18 / PSR-17 の実装は自動検出に任せている。composer.json が要求するのはインタフェースだけで、
+     * 実装は利用者が選ぶものなので、このパッケージを依存に入れただけの環境には実装が無いことがある。
+     * 検出に失敗したら、認証情報が揃わない場合と同じく実行環境の問題として扱う。素通しすると
+     * {@see Application::run()} のどの catch にも当たらず、スタックトレースのまま終わってしまう。
+     *
+     * @throws UsageException 実装が見つからない場合
+     */
+    private function createClient(Credentials $credentials): DmmApiClient
+    {
+        try {
+            return new DmmApiClient($credentials, $this->httpClient);
+        } catch (NotFoundException $exception) {
+            throw new UsageException(sprintf(
+                '%s Example: composer require guzzlehttp/guzzle.',
+                $exception->getMessage(),
+            ));
+        }
     }
 
     /**

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use DmmApiClient\Console\Application;
+use Http\Discovery\ClassDiscovery;
 use Tests\Support\CapturingOutput;
 use Tests\Support\StubHttpClient;
 
@@ -92,4 +93,23 @@ test('知らないコマンドは使い方の誤りとして扱う', function ()
     expect($result['code'])->toBe(Application::EXIT_USAGE)
         ->and($result['stderr'])->toContain('Unknown command "bogus"')
         ->and($result['stdout'])->toContain('floor-list');
+});
+
+test('PSR-18 の実装が見つからなければ使い方のエラーにする', function (): void {
+    // 実装の自動検出は、インストール済みのパッケージを探す戦略に任せている。
+    // 戦略を空にすると、実装を入れていない環境と同じ状態になる。
+    $strategies = ClassDiscovery::getStrategies();
+    ClassDiscovery::setStrategies([]);
+
+    try {
+        $captured = new CapturingOutput();
+        // 自動検出を通したいので、スタブのクライアントは渡さない。
+        $code = (new Application(null, $captured->output))->run(['dmm-api-client', 'floor-list']);
+    } finally {
+        ClassDiscovery::setStrategies(iterator_to_array($strategies));
+    }
+
+    expect($code)->toBe(Application::EXIT_USAGE)
+        ->and($captured->stderr())->toContain('No PSR-18 clients found')
+        ->and($captured->stderr())->toContain('composer require guzzlehttp/guzzle');
 });
