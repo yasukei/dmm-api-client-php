@@ -97,6 +97,7 @@ final readonly class Probe
         $previous = $this->options->resume ? self::index($run) : [];
         $runner = new Runner($clients, $masker, new Validator(), $run, $this->options, $previous);
         $startedAt = date('c');
+        $clock = microtime(true);
 
         $run->writeRun([
             'startedAt' => $startedAt,
@@ -143,7 +144,7 @@ final readonly class Probe
         // 同じレスポンスの行が並ぶことがある。最後に 1 レスポンス 1 行へまとめ直す。
         $run->writeRecords(RunDirectory::latestPerResponse($run->records()));
 
-        return $this->report($runner->records(), $run, $console);
+        return $this->report($runner->records(), $run, $console, microtime(true) - $clock);
     }
 
     /**
@@ -388,6 +389,7 @@ final readonly class Probe
      */
     private function revalidate(): int
     {
+        $clock = microtime(true);
         $run = $this->openRunDirectory(create: false);
         $validator = new Validator();
         $records = [];
@@ -424,7 +426,7 @@ final readonly class Probe
         $run->writeRecords($records);
         $this->console->progress(sprintf('revalidated %d saved responses in %s', count($records), $run->path));
 
-        return $this->report($records, $run, $this->console);
+        return $this->report($records, $run, $this->console, microtime(true) - $clock);
     }
 
     /**
@@ -480,10 +482,11 @@ final readonly class Probe
 
     /**
      * @param list<Record> $records
+     * @param float        $elapsed この実行にかかった秒数
      */
-    private function report(array $records, RunDirectory $run, Console $console): int
+    private function report(array $records, RunDirectory $run, Console $console, float $elapsed): int
     {
-        $reporter = new Reporter($records, $run);
+        $reporter = new Reporter($records, $run, $elapsed);
         $reporter->writeFailures();
         $console->report($reporter->summary());
 
@@ -592,11 +595,13 @@ final readonly class Probe
     private static function progressLine(int $index, int $total, Record $record): string
     {
         return sprintf(
-            '[%d/%d] %-70s %-16s %s',
+            '[%d/%d] %-70s %-16s %9s  %s',
             $index,
             $total,
             $record->label(),
             $record->outcome,
+            // 取得していない対象に所要時間は無い。0.0 sec と出すと速かったように読めてしまう。
+            $record->cached ? '-' : sprintf('%.1f sec', $record->durationMs / 1000),
             $record->validation === Record::VALIDATION_FAILED
                 ? sprintf('VALIDATION FAILED (%d)', count($record->errors))
                 : sprintf('total=%s', $record->totalCount === null ? '-' : (string) $record->totalCount),

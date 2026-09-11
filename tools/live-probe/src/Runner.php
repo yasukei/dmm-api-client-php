@@ -99,15 +99,20 @@ final class Runner
             return $this->cached($target, $offset, $page, $relative, $uri);
         }
 
-        $startedAt = microtime(true);
+        // 測るのは送受信にかかった時間だけ。レート制御や再試行の待ち時間は含めない。
+        // 待っているのはこちらの都合で、API がどれだけ待たせたかとは関係が無い。
+        // 再試行した場合は、各回にかかった時間の合計になる。
+        $spent = 0;
         $attempt = 1;
 
         while (true) {
             $this->throttle();
             $this->sent++;
+            $attemptAt = microtime(true);
 
             try {
                 $body = $client->fetchRaw($request);
+                $spent += self::elapsed($attemptAt);
 
                 // エラーを引くつもりの対象が通ってしまった場合。API の挙動が変わったか、
                 // 壊したはずの認証情報が受け入れられたかで、いずれにせよ前提が崩れている。
@@ -123,9 +128,11 @@ final class Runner
                     $unexpected ? Record::OUTCOME_UNEXPECTED_OK : Record::OUTCOME_OK,
                     200,
                     $unexpected ? self::UNEXPECTED_OK_MESSAGE : null,
-                    self::elapsed($startedAt),
+                    $spent,
                 );
             } catch (ApiErrorException $exception) {
+                $spent += self::elapsed($attemptAt);
+
                 if ($attempt < self::MAX_ATTEMPTS && self::isRetryable($exception->httpStatusCode)) {
                     $this->wait($attempt++);
 
@@ -144,10 +151,12 @@ final class Runner
                     Record::OUTCOME_API_ERROR,
                     $exception->httpStatusCode,
                     $exception->getMessage(),
-                    self::elapsed($startedAt),
+                    $spent,
                     ErrorResponse::class,
                 );
             } catch (TransportException $exception) {
+                $spent += self::elapsed($attemptAt);
+
                 if ($attempt < self::MAX_ATTEMPTS) {
                     $this->wait($attempt++);
 
@@ -164,7 +173,7 @@ final class Runner
                     Record::OUTCOME_TRANSPORT_ERROR,
                     null,
                     $exception->getMessage(),
-                    self::elapsed($startedAt),
+                    $spent,
                 );
             }
         }

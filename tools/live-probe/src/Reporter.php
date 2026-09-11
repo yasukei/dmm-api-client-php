@@ -32,10 +32,14 @@ final readonly class Reporter
         'Every mono floor is swept again once per mono_stock value, including the values the enum says '
         . 'cannot be used to filter — that was read off a handful of responses, never checked floor by floor.';
 
-    /** @param list<Record> $records */
+    /**
+     * @param list<Record> $records
+     * @param float        $elapsed この実行にかかった秒数
+     */
     public function __construct(
         private array $records,
         private RunDirectory $run,
+        private float $elapsed,
     ) {
     }
 
@@ -104,6 +108,7 @@ final readonly class Reporter
                 $counts['cached'],
             ),
             ...self::unexpectedOk($counts),
+            sprintf('elapsed: %s', self::duration($this->elapsed)),
             sprintf(
                 'validation  ok: %d   failed: %d   skipped: %d',
                 $counts['validation-ok'],
@@ -248,6 +253,7 @@ final readonly class Reporter
                 $counts['cached'],
             ),
             ...array_map(static fn (string $line): string => '- ' . $line, self::unexpectedOk($counts)),
+            sprintf('- elapsed: %s', self::duration($this->elapsed)),
             sprintf(
                 '- validation: ok %d / failed %d / skipped %d',
                 $counts['validation-ok'],
@@ -905,6 +911,25 @@ final readonly class Reporter
         }
 
         return $lines;
+    }
+
+    /**
+     * 読める長さに丸めた所要時間。
+     *
+     * 秒だけで出すと、数十分の実行が 2648.4 sec のようになって桁を数えることになる。
+     */
+    private static function duration(float $seconds): string
+    {
+        if ($seconds < 60) {
+            return sprintf('%.1f sec', $seconds);
+        }
+
+        $minutes = intdiv((int) $seconds, 60);
+        $rest = (int) $seconds % 60;
+
+        return $minutes < 60
+            ? sprintf('%dm %02ds', $minutes, $rest)
+            : sprintf('%dh %02dm %02ds', intdiv($minutes, 60), $minutes % 60, $rest);
     }
 
     private static function truncate(string $value, int $limit): string
