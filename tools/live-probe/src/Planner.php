@@ -91,7 +91,7 @@ final class Planner
     /**
      * offset の上限。API が返す検索結果は 50000 件までなので、それ以上は指定しない。
      */
-    public const int OFFSET_MAX = 50000;
+    private const int OFFSET_MAX = 50000;
 
     /**
      * フロア ID で絞り込む 4 つの API。いずれもパラメータの形が同じ。
@@ -209,29 +209,6 @@ final class Planner
             credentials: $credentials,
             expectsError: true,
         );
-    }
-
-    /**
-     * 実データに出た分類を `article` / `article_id` に指定して、同じフロアをもう一度叩く対象。
-     *
-     * 何を指定できるかはフロアごとに違い、そのフロアの `ItemList` を集めてみるまで分からない。
-     * だから対象は、フロアの sweep が済んだあとに {@see ArticleTally} から組み立てる。
-     *
-     * 取るのは先頭ページだけ。見たいのは「指定した分類で絞り込めるか」であって、
-     * その分類の商品を集めることではない。ページを振っても分かることは増えず、
-     * 取得するデータだけが増える。
-     *
-     * @return list<Target>
-     */
-    public static function articleTargets(FloorRef $floor, ArticleTally $tally, Options $options): array
-    {
-        $targets = [];
-
-        foreach ($tally->articles() as $article => $id) {
-            $targets[] = self::articleTarget($floor, $article, $id, $options);
-        }
-
-        return $targets;
     }
 
     /**

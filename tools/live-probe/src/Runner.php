@@ -7,7 +7,6 @@ namespace DmmApiClient\LiveProbe;
 use DmmApiClient\Api\CredentialMasker;
 use DmmApiClient\Api\Exception\ApiErrorException;
 use DmmApiClient\Api\Exception\TransportException;
-use DmmApiClient\Api\Request\Request;
 use DmmApiClient\Api\Response\Error\ErrorResponse;
 
 /**
@@ -177,14 +176,6 @@ final class Runner
                 );
             }
         }
-    }
-
-    /**
-     * 送信せずに URI だけを見たい場合（`--dry-run`）に使う。
-     */
-    public function uri(Request $request): string
-    {
-        return $this->masker->mask($this->clients->primary()->buildUri($request));
     }
 
     /**
