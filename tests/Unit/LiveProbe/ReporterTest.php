@@ -61,7 +61,7 @@ function reporterFilterLine(Reporter $reporter, string $name): string
     return '';
 }
 
-test('届かなかった article の試行は unreachable として数える', function (): void {
+test('通信に失敗した article の試行は unreachable として数える', function (): void {
     $reporter = new Reporter(
         [reporterRecord(Planner::ARTICLES, ['article' => 'genre', 'article_id' => '1031'], Record::OUTCOME_TRANSPORT_ERROR)],
         reporterRun(),
@@ -71,7 +71,7 @@ test('届かなかった article の試行は unreachable として数える', f
     expect(reporterFilterLine($reporter, 'genre'))->toBe('genre                    1  unreachable 1');
 });
 
-test('届かなかった mono_stock の試行は unreachable として数える', function (): void {
+test('通信に失敗した mono_stock の試行は unreachable として数える', function (): void {
     $reporter = new Reporter(
         [reporterRecord(Planner::MONO_STOCK, ['mono_stock' => 'stock'], Record::OUTCOME_TRANSPORT_ERROR)],
         reporterRun(),
@@ -81,7 +81,7 @@ test('届かなかった mono_stock の試行は unreachable として数える'
     expect(reporterFilterLine($reporter, 'stock'))->toBe('stock                    1  unreachable 1');
 });
 
-test('届かなかった試行は引き直しとして振り替えない', function (): void {
+test('通信に失敗した試行は引き直しとして振り替えない', function (): void {
     $reporter = new Reporter(
         [
             reporterRecord(Planner::ARTICLES, ['article' => 'genre', 'article_id' => '1031'], Record::OUTCOME_TRANSPORT_ERROR),
