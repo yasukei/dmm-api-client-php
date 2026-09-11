@@ -767,6 +767,11 @@ final readonly class Reporter
     private static function markRetried(array $filters): array
     {
         foreach ($filters as $at => $filter) {
+            // 届かなかった試行は引き直しの対象ではない。`retried` に振り替えると失敗が見えなくなる。
+            if ($filter['verdict'] === 'unreachable') {
+                continue;
+            }
+
             foreach (array_slice($filters, $at + 1) as $later) {
                 if ($later['floorId'] === $filter['floorId']
                     && $later['name'] === $filter['name']
@@ -806,6 +811,7 @@ final readonly class Reporter
      * 商品が実際にその分類を持っているかで判定する。
      *
      * - `rejected`: API がエラーを返した。その分類は `article` に指定できない
+     * - `unreachable`: 送信そのものが失敗した。指定が通るかどうかは分からない
      * - `empty`: 0 件で返った。指定は通ったが該当が無い（無視されたのではない）
      * - `honored`: 返った商品がすべてその ID を持つ。絞り込めている
      * - `ignored`: どの商品もその ID を持たない。`article` が読み捨てられている
@@ -817,6 +823,9 @@ final readonly class Reporter
     {
         return match (true) {
             $record->outcome === Record::OUTCOME_API_ERROR => 'rejected',
+            // 届かなかった試行はボディが無く、そのままでは 0 件と区別が付かない。
+            // `empty` に混ぜると「指定は通った」と読めてしまうので、先に分ける。
+            $record->outcome === Record::OUTCOME_TRANSPORT_ERROR => 'unreachable',
             $returned === 0 => 'empty',
             $matching === $returned => 'honored',
             $matching === 0 => 'ignored',
@@ -877,7 +886,8 @@ final readonly class Reporter
      *
      * 判定が何を意味するかは {@see self::verdict()} にある。`honored` が並べば絞り込めており、
      * `ignored` なら指定が読み捨てられている。`rejected` と `empty` の違いも読めるようにしておく。
-     * 前者は指定そのものを受け付けず、後者は受け付けたうえで該当が無い。
+     * 前者は指定そのものを受け付けず、後者は受け付けたうえで該当が無い。`unreachable` は
+     * 送信が届かなかったもので、指定の可否は判断できていない。
      *
      * @param string          $nameHeader  束ねる単位の見出し（例: article）
      * @param string|null      $valueHeader 指定した値の見出し（例: article_id）。束ねる単位と同じなら null
