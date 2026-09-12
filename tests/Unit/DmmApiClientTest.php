@@ -229,3 +229,46 @@ test('PSR-18 の実装を渡さなくても自動検出する', function (): voi
     expect((new DmmApiClient(credentials()))->buildUri(new FloorListRequest()))
         ->toStartWith('https://api.dmm.com/affiliate/v3/FloorList?');
 });
+
+test('型付きメソッドを呼んだあとでも生ボディを参照できる', function (): void {
+    $body = Tests\Support\Fixture::json('floor-list');
+    $client = new DmmApiClient(credentials(), StubHttpClient::respondingWith(200, $body));
+
+    $response = $client->floorList();
+
+    expect($response)->toBeInstanceOf(FloorListResponse::class)
+        ->and($client->lastResponseBody())->toBe($body);
+});
+
+test('DTO が知らないキーも生ボディには残る', function (): void {
+    // 既定のマッパーは知らないキーを捨てるため、DTO 経由では辿れない。
+    $body = '{"result":{"site":[{"name":"DMM.com","code":"DMM.com","service":[],"new_field":"x"}]}}';
+    $client = new DmmApiClient(credentials(), StubHttpClient::respondingWith(200, $body));
+
+    $client->floorList();
+
+    expect($client->lastResponseBody())->toContain('new_field');
+});
+
+test('1 度も呼び出していなければ生ボディは null', function (): void {
+    $client = new DmmApiClient(credentials(), StubHttpClient::respondingWith(200, '{}'));
+
+    expect($client->lastResponseBody())->toBeNull();
+});
+
+test('buildUri は送信しないので生ボディを更新しない', function (): void {
+    $client = new DmmApiClient(credentials(), StubHttpClient::respondingWith(200, '{"result":{}}'));
+
+    $client->buildUri(new FloorListRequest());
+
+    expect($client->lastResponseBody())->toBeNull();
+});
+
+test('生ボディは最後の呼び出しで上書きされる', function (): void {
+    $client = new DmmApiClient(credentials(), StubHttpClient::respondingWith(400, '{"result":{"status":400}}'));
+
+    expect(fn (): mixed => $client->floorList())->toThrow(ApiErrorException::class);
+
+    // エラーで終わった場合も、そのレスポンスの生ボディが残る。
+    expect($client->lastResponseBody())->toBe('{"result":{"status":400}}');
+});

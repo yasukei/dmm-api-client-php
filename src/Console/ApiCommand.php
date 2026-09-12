@@ -168,19 +168,21 @@ abstract class ApiCommand implements Command
         }
 
         try {
-            $body = $client->fetchRaw($request);
+            $client->fetchRaw($request);
         } catch (ApiErrorException $exception) {
             // エラーの中身こそ見たいので、ボディは通常どおり標準出力へ流す。
-            $output->write($this->format($exception->responseBody, $input, $output));
+            $output->write($this->format($client->lastResponseBody() ?? '', $input, $output));
             $output->error($exception->getMessage());
 
             return Application::EXIT_FAILURE;
         } catch (TransportException $exception) {
+            // レスポンスそのものが届いていないので、書き出す本文も無い。
             $output->error($exception->getMessage());
 
             return Application::EXIT_FAILURE;
         }
 
+        $body = $client->lastResponseBody() ?? '';
         $output->write($this->format($body, $input, $output));
 
         if ($input->flag('no-validate-response')) {
