@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace DmmApiClient\Console;
 
+use DmmApiClient\Api\Request\Credentials;
+
 /**
  * 環境変数と `.env` ファイルから設定値を読み出す。
  *
@@ -50,6 +52,58 @@ final readonly class Environment
         }
 
         return new self(self::parse($contents));
+    }
+
+    /**
+     * `--env-file` の指定に従って読み込む。
+     *
+     * 指定があればそのファイルを読み、無ければエラーにする。指定が無ければカレント
+     * ディレクトリの `.env` を、あれば読む。置いていないことは普通なので、無くても通す。
+     *
+     * @throws UsageException 明示的に指定されたファイルが読めない場合
+     */
+    public static function loadFor(?string $path): self
+    {
+        if ($path !== null) {
+            return self::load($path, required: true);
+        }
+
+        $workingDirectory = getcwd();
+
+        return self::load($workingDirectory === false ? null : $workingDirectory . '/.env');
+    }
+
+    /**
+     * 認証情報を環境変数か `.env` から読み出す。
+     *
+     * コマンドライン引数からは受け取らない。引数は ps などから他のユーザーにも見え、
+     * シェルの履歴にも残るため、認証情報の渡し方として適さない。
+     *
+     * @throws UsageException 認証情報が揃わない場合
+     */
+    public function credentials(): Credentials
+    {
+        $apiId = $this->get('DMM_API_ID');
+        $affiliateId = $this->get('DMM_AFFILIATE_ID');
+
+        $missing = [];
+
+        if ($apiId === null) {
+            $missing[] = 'DMM_API_ID';
+        }
+
+        if ($affiliateId === null) {
+            $missing[] = 'DMM_AFFILIATE_ID';
+        }
+
+        if ($apiId === null || $affiliateId === null) {
+            throw new UsageException(sprintf(
+                'Missing credentials: %s. Set them as environment variables, or put them in a .env file.',
+                implode(', ', $missing),
+            ));
+        }
+
+        return new Credentials($apiId, $affiliateId);
     }
 
     /**

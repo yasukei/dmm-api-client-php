@@ -93,6 +93,29 @@ abstract class ApiCommand implements Command
     }
 
     /**
+     * 値の表記ごとに、受け付ける書式をヘルプで補う文言。
+     *
+     * 書式を決めているのは {@see self::dateOption()} なので、文言もここに置く。
+     * 時刻を省略したときに何時何分として読むかは `$endOfDay` の指定しだいで、
+     * それを知っているのはこのクラスだけ。並べ方は {@see Application} が決める。
+     *
+     * @return array<string, list<string>>
+     */
+    final public static function placeholderNotes(): array
+    {
+        return [
+            self::DATETIME_PLACEHOLDER => [
+                'DATETIME は 2016-04-01、2016-04-01T12:34:56、2016-04-01 12:34:56 のいずれかで指定する。',
+                '時刻を省略した場合、--gte-date は 00:00:00、--lte-date は 23:59:59 として扱う。',
+                '空白を含む形はシェルの引用符が要る。',
+            ],
+            self::DATE_PLACEHOLDER => [
+                'DATE は 1990-01-01 のように日付で指定する。時刻は送信しない。',
+            ],
+        ];
+    }
+
+    /**
      * このコマンド固有のオプション。
      *
      * @return list<OptionDefinition>
@@ -126,7 +149,7 @@ abstract class ApiCommand implements Command
     final public function execute(Input $input, Environment $environment, Output $output): int
     {
         $unchecked = $input->flag('no-validate-request');
-        $credentials = $this->resolveCredentials($environment);
+        $credentials = $environment->credentials();
 
         // 認証情報はエコーバックにも affiliateURL にも埋め込まれて返ってくる。
         // 出力を保存したときに漏れないよう、既定で伏せ字にする。
@@ -213,10 +236,27 @@ abstract class ApiCommand implements Command
     {
         $value = $input->option($name);
 
-        if ($value === null) {
-            return null;
-        }
+        return $value === null ? null : self::toEnum($value, $name, $enum);
+    }
 
+    /**
+     * 文字列を列挙型として解釈する。
+     *
+     * 必須のオプションや、繰り返し指定できるオプションのように
+     * {@see self::enumOption()} の形に収まらない場合はこちらを直接使う。
+     * 受け付けない値のときの文言を 1 か所に保つためのもの。
+     *
+     * @template T of BackedEnum
+     *
+     * @param string          $name  文言に載せるオプション名（`--` は付けない）
+     * @param class-string<T> $enum
+     *
+     * @return T
+     *
+     * @throws UsageException 列挙型が受け付けない値の場合
+     */
+    final protected static function toEnum(string $value, string $name, string $enum): BackedEnum
+    {
         return $enum::tryFrom($value) ?? throw new UsageException(sprintf(
             'Invalid value "%s" for --%s. Expected one of: %s.',
             $value,
@@ -315,39 +355,6 @@ abstract class ApiCommand implements Command
                 $exception->getMessage(),
             ));
         }
-    }
-
-    /**
-     * 認証情報を環境変数か `.env` から読み出す。
-     *
-     * コマンドライン引数からは受け取らない。引数は ps などから他のユーザーにも見え、
-     * シェルの履歴にも残るため、認証情報の渡し方として適さない。
-     *
-     * @throws UsageException 認証情報が揃わない場合
-     */
-    private function resolveCredentials(Environment $environment): Credentials
-    {
-        $apiId = $environment->get('DMM_API_ID');
-        $affiliateId = $environment->get('DMM_AFFILIATE_ID');
-
-        $missing = [];
-
-        if ($apiId === null) {
-            $missing[] = 'DMM_API_ID';
-        }
-
-        if ($affiliateId === null) {
-            $missing[] = 'DMM_AFFILIATE_ID';
-        }
-
-        if ($apiId === null || $affiliateId === null) {
-            throw new UsageException(sprintf(
-                'Missing credentials: %s. Set them as environment variables, or put them in a .env file.',
-                implode(', ', $missing),
-            ));
-        }
-
-        return new Credentials($apiId, $affiliateId);
     }
 
     /**

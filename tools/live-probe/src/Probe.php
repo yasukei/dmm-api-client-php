@@ -85,7 +85,7 @@ final readonly class Probe
             return $this->revalidate();
         }
 
-        $credentials = $this->credentials();
+        $credentials = Environment::loadFor($this->options->envFile)->credentials();
         $masker = $this->options->mask ? CredentialMasker::forCredentials($credentials) : CredentialMasker::disabled();
         $console = new Console((new Output())->masked($masker));
         $clients = new Clients($credentials, self::httpClient(), $this->options->baseUri);
@@ -750,28 +750,6 @@ final readonly class Probe
         }
 
         return $index;
-    }
-
-    /**
-     * @throws UsageException 認証情報が揃わない場合
-     */
-    private function credentials(): Credentials
-    {
-        $environment = Environment::load(
-            $this->options->envFile ?? getcwd() . '/.env',
-            required: $this->options->envFile !== null,
-        );
-
-        $apiId = $environment->get('DMM_API_ID');
-        $affiliateId = $environment->get('DMM_AFFILIATE_ID');
-
-        if ($apiId === null || $affiliateId === null) {
-            throw new UsageException(
-                'Missing credentials. Set DMM_API_ID and DMM_AFFILIATE_ID as environment variables, or put them in .env.',
-            );
-        }
-
-        return new Credentials($apiId, $affiliateId);
     }
 
     /**
