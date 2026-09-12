@@ -30,6 +30,10 @@ final class CapturingHttpClient implements ClientInterface
 
     public function sendRequest(RequestInterface $request): ResponseInterface
     {
+        // 送信に失敗したときに前回の生ボディが残っていると、別のレスポンスを
+        // 失敗した送信のものと取り違える。送る前に捨てておく。
+        $this->body = null;
+
         $response = $this->inner->sendRequest($request);
         $body = (string) $response->getBody();
         $this->body = $body;
@@ -40,7 +44,8 @@ final class CapturingHttpClient implements ClientInterface
     }
 
     /**
-     * 最後にキャプチャした生ボディ。レスポンスを 1 度も受け取っていなければ null。
+     * 直前の送信でキャプチャした生ボディ。まだ送信していない場合と、直前の送信で
+     * レスポンスを受け取れなかった場合は null。
      */
     public function body(): ?string
     {

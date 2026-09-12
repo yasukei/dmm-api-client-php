@@ -32,6 +32,7 @@ use JsonException;
 use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
+use Psr\Http\Message\StreamFactoryInterface;
 
 /**
  * DMM ウェブサービス API v3 のクライアント。
@@ -56,6 +57,7 @@ final readonly class DmmApiClient
      * @param RequestFactoryInterface|null $requestFactory PSR-17 リクエストファクトリ。null なら自動検出する
      * @param ResponseMapper|null          $responseMapper レスポンスの検証・マッピング担当。null なら既定の設定で生成する
      * @param string                       $baseUri        API のベース URI。末尾のスラッシュは不要
+     * @param StreamFactoryInterface|null  $streamFactory  PSR-17 ストリームファクトリ。生ボディのキャプチャに使う。null ならリクエストファクトリが兼ねていればそれを使い、兼ねていなければ自動検出する
      */
     public function __construct(
         private Credentials $credentials,
@@ -63,18 +65,25 @@ final readonly class DmmApiClient
         ?RequestFactoryInterface $requestFactory = null,
         ?ResponseMapper $responseMapper = null,
         private string $baseUri = self::DEFAULT_BASE_URI,
+        ?StreamFactoryInterface $streamFactory = null,
     ) {
-        // 生ボディをキャプチャするため、必ず包んでから使う（{@see self::lastResponseBody()}）。
-        $this->httpClient = new CapturingHttpClient(
-            $httpClient ?? Psr18ClientDiscovery::find(),
-            Psr17FactoryDiscovery::findStreamFactory(),
-        );
+        $httpClient ??= Psr18ClientDiscovery::find();
         $this->requestFactory = $requestFactory ?? Psr17FactoryDiscovery::findRequestFactory();
+
+        // PSR-17 の実装はリクエストとストリームのファクトリを 1 クラスで兼ねることが多い。
+        // 兼ねていればそれを使い、依存をすべて渡された場合には自動検出を走らせない。
+        $streamFactory ??= $this->requestFactory instanceof StreamFactoryInterface
+            ? $this->requestFactory
+            : Psr17FactoryDiscovery::findStreamFactory();
+
+        // 生ボディをキャプチャするため、必ず包んでから使う（{@see self::lastResponseBody()}）。
+        $this->httpClient = new CapturingHttpClient($httpClient, $streamFactory);
         $this->responseMapper = $responseMapper ?? new ResponseMapper();
     }
 
     /**
-     * 最後に受け取ったレスポンスの生ボディ。まだ 1 度も受け取っていなければ null。
+     * 直前の呼び出しで受け取ったレスポンスの生ボディ。まだ呼び出していない場合と、
+     * 直前の呼び出しが通信に失敗してレスポンスを受け取れなかった場合は null。
      *
      * 型付きメソッドは DTO を返すため、DTO が知らないキーは落ちる。DMM が実際に何を
      * 返しているかを確かめたい場合や、レスポンスをそのまま保存したい場合に使う。
