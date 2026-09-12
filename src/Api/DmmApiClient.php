@@ -44,7 +44,7 @@ final readonly class DmmApiClient
     /** API のベース URI。 */
     public const string DEFAULT_BASE_URI = 'https://api.dmm.com/affiliate/v3';
 
-    private ClientInterface $httpClient;
+    private CapturingHttpClient $httpClient;
 
     private RequestFactoryInterface $requestFactory;
 
@@ -64,9 +64,33 @@ final readonly class DmmApiClient
         ?ResponseMapper $responseMapper = null,
         private string $baseUri = self::DEFAULT_BASE_URI,
     ) {
-        $this->httpClient = $httpClient ?? Psr18ClientDiscovery::find();
+        // 生ボディを控えるため、必ず包んでから使う（{@see self::lastResponseBody()}）。
+        $this->httpClient = new CapturingHttpClient(
+            $httpClient ?? Psr18ClientDiscovery::find(),
+            Psr17FactoryDiscovery::findStreamFactory(),
+        );
         $this->requestFactory = $requestFactory ?? Psr17FactoryDiscovery::findRequestFactory();
         $this->responseMapper = $responseMapper ?? new ResponseMapper();
+    }
+
+    /**
+     * 最後に受け取ったレスポンスの生ボディ。まだ 1 度も受け取っていなければ null。
+     *
+     * 型付きメソッドは DTO を返すため、DTO が知らないキーは落ちる。DMM が実際に何を
+     * 返しているかを確かめたい場合や、レスポンスをそのまま保存したい場合に使う。
+     *
+     * ```php
+     * $response = $client->floorList();
+     * $raw = $client->lastResponseBody();
+     * ```
+     *
+     * 保持するのは直前の 1 件だけで、次の呼び出しで上書きされる。{@see self::buildUri()}
+     * は送信しないので、値は変わらない。複数の呼び出しを並行させる場合は、
+     * 呼び出しごとにインスタンスを分けること。
+     */
+    public function lastResponseBody(): ?string
+    {
+        return $this->httpClient->body();
     }
 
     /**

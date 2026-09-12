@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use DmmApiClient\Console\CapturingHttpClient;
+use DmmApiClient\Api\CapturingHttpClient;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7\Request;
 use Nyholm\Psr7\Response;
@@ -34,10 +34,10 @@ test('控えたあとも、返したレスポンスから本文を先頭から�
     expect($response->getBody()->getContents())->toBe('{"result":{}}');
 });
 
-test('応答を受け取っていなければ空文字を返す', function (): void {
+test('応答を受け取っていなければ null を返す', function (): void {
     $client = capturingClient(StubHttpClient::respondingWith(200, '{}'));
 
-    expect($client->body())->toBe('');
+    expect($client->body())->toBeNull();
 });
 
 test('控えるのは最後に通したレスポンスの本文', function (): void {
@@ -57,11 +57,11 @@ test('控えるのは最後に通したレスポンスの本文', function (): v
     expect($client->body())->toBe('{"call":2}');
 });
 
-test('通信に失敗した場合は本文を控えない', function (): void {
+test('通信に失敗した場合は生ボディを控えない', function (): void {
     $client = capturingClient(StubHttpClient::failingWith('connection refused'));
 
     expect(fn (): mixed => $client->sendRequest(new Request('GET', 'https://api.dmm.com/')))
         ->toThrow(NetworkFailure::class);
 
-    expect($client->body())->toBe('');
+    expect($client->body())->toBeNull();
 });

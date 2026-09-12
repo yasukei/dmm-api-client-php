@@ -16,8 +16,6 @@ use DmmApiClient\Api\Request\RawRequest;
 use DmmApiClient\Api\Request\Request;
 use DmmApiClient\Api\Response\ResponseMapper;
 use Http\Discovery\Exception\NotFoundException;
-use Http\Discovery\Psr17FactoryDiscovery;
-use Http\Discovery\Psr18ClientDiscovery;
 use JsonException;
 use Psr\Http\Client\ClientInterface;
 
@@ -160,8 +158,7 @@ abstract class ApiCommand implements Command
             ? CredentialMasker::disabled()
             : CredentialMasker::forCredentials($credentials));
 
-        $capture = $this->createCapturingClient();
-        $client = $this->createClient($credentials, $capture);
+        $client = $this->createClient($credentials);
         $request = $unchecked ? $this->createUncheckedRequest($input) : $this->createRequest($input);
 
         if ($input->flag('dry-run')) {
@@ -174,7 +171,7 @@ abstract class ApiCommand implements Command
             $client->fetchRaw($request);
         } catch (ApiErrorException $exception) {
             // エラーの中身こそ見たいので、ボディは通常どおり標準出力へ流す。
-            $output->write($this->format($capture->body(), $input, $output));
+            $output->write($this->format($client->lastResponseBody() ?? '', $input, $output));
             $output->error($exception->getMessage());
 
             return Application::EXIT_FAILURE;
@@ -185,7 +182,7 @@ abstract class ApiCommand implements Command
             return Application::EXIT_FAILURE;
         }
 
-        $body = $capture->body();
+        $body = $client->lastResponseBody() ?? '';
         $output->write($this->format($body, $input, $output));
 
         if ($input->flag('no-validate-response')) {
@@ -350,33 +347,10 @@ abstract class ApiCommand implements Command
      *
      * @throws UsageException 実装が見つからない場合
      */
-    private function createClient(Credentials $credentials, ClientInterface $httpClient): DmmApiClient
+    private function createClient(Credentials $credentials): DmmApiClient
     {
         try {
-            return new DmmApiClient($credentials, $httpClient);
-        } catch (NotFoundException $exception) {
-            throw new UsageException(sprintf(
-                '%s Example: composer require guzzlehttp/guzzle.',
-                $exception->getMessage(),
-            ));
-        }
-    }
-
-    /**
-     * 本文を控えるようにした HTTP クライアント。
-     *
-     * PSR-18 の検出を先に行う。実装がまったく無い環境では PSR-17 の検出も失敗するため、
-     * 順序を入れ替えるとストリームファクトリの話から先に報告してしまう。
-     *
-     * @throws UsageException 実装が見つからない場合
-     */
-    private function createCapturingClient(): CapturingHttpClient
-    {
-        try {
-            return new CapturingHttpClient(
-                $this->httpClient ?? Psr18ClientDiscovery::find(),
-                Psr17FactoryDiscovery::findStreamFactory(),
-            );
+            return new DmmApiClient($credentials, $this->httpClient);
         } catch (NotFoundException $exception) {
             throw new UsageException(sprintf(
                 '%s Example: composer require guzzlehttp/guzzle.',

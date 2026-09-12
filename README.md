@@ -75,6 +75,26 @@ DMM API を使ったサイトやアプリケーションには [クレジット�
 | `/SeriesSearch` | `seriesSearch()` | `SeriesSearchRequest` |
 | `/AuthorSearch` | `authorSearch()` | `AuthorSearchRequest` |
 
+## 生のレスポンス
+
+型付きメソッドは DTO を返すため、DTO が知らないキーは落ちる。DMM が実際に何を返しているかを
+確かめたい場合や、レスポンスをそのまま保存したい場合は `lastResponseBody()` を使う。
+
+```php
+$response = $client->floorList();
+
+file_put_contents('floor-list.json', $client->lastResponseBody());
+```
+
+保持するのは直前の 1 件だけで、次の呼び出しで上書きされる。エラーで終わった場合も、その応答の
+生ボディが残る。複数の呼び出しを並行させる場合は、呼び出しごとにインスタンスを分けること。
+
+DTO を介さず生の JSON だけが欲しい場合は `fetchRaw()` を使う。検証もマッピングも行わない。
+
+```php
+$json = $client->fetchRaw(new FloorListRequest());
+```
+
 ## エラー処理
 
 ライブラリが投げる例外は、すべて `DmmApiClient\Api\Exception\DmmApiClientException` を実装している。
