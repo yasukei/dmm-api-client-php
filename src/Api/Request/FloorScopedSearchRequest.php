@@ -52,8 +52,6 @@ abstract readonly class FloorScopedSearchRequest implements Request
                 sprintf('offset must be %d or greater, %d given.', static::OFFSET_MIN, $offset),
             );
         }
-            );
-        }
     }
 
     /**
