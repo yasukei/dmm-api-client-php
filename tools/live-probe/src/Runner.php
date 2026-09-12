@@ -7,7 +7,6 @@ namespace DmmApiClient\LiveProbe;
 use DmmApiClient\Api\CredentialMasker;
 use DmmApiClient\Api\Exception\ApiErrorException;
 use DmmApiClient\Api\Exception\TransportException;
-use DmmApiClient\Api\Request\Request;
 use DmmApiClient\Api\Response\Error\ErrorResponse;
 
 /**
@@ -57,6 +56,18 @@ final class Runner
     public function sent(): int
     {
         return $this->sent;
+    }
+
+    /**
+     * `--limit` に達したか。
+     *
+     * 送信数と上限の両方を持っているのはここだけなので、判断もここに置く。
+     * 打ち切りは各フェーズのループが対象と対象の境目で見る。途中の対象は
+     * ページを取り切ってから止まる（{@see Probe} の使い方の説明を参照）。
+     */
+    public function limitReached(): bool
+    {
+        return $this->options->limit !== null && $this->sent >= $this->options->limit;
     }
 
     /**
@@ -177,14 +188,6 @@ final class Runner
                 );
             }
         }
-    }
-
-    /**
-     * 送信せずに URI だけを見たい場合（`--dry-run`）に使う。
-     */
-    public function uri(Request $request): string
-    {
-        return $this->masker->mask($this->clients->primary()->buildUri($request));
     }
 
     /**

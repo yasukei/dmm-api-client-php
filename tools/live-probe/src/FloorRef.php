@@ -13,12 +13,9 @@ final readonly class FloorRef
 {
     public function __construct(
         public SiteCode $site,
-        public string $siteName,
         public string $serviceCode,
-        public string $serviceName,
         public string $floorId,
         public string $floorCode,
-        public string $floorName,
     ) {
     }
 

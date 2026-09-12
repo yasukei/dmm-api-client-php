@@ -112,12 +112,9 @@ final readonly class FloorCatalog
 
                     $floors[] = new FloorRef(
                         site: $siteCode,
-                        siteName: self::string($site, 'name') ?? '',
                         serviceCode: $serviceCode,
-                        serviceName: self::string($service, 'name') ?? '',
                         floorId: $id,
                         floorCode: $code,
-                        floorName: self::string($floor, 'name') ?? '',
                     );
                 }
             }
