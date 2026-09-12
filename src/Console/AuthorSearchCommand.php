@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace DmmApiClient\Console;
 
+use DmmApiClient\Api\DmmApiClient;
 use DmmApiClient\Api\Request\AuthorSearchRequest;
-use DmmApiClient\Api\Request\Request;
-use DmmApiClient\Api\Response\AuthorSearch\AuthorSearchResponse;
 
 /**
  * 作者検索 API (`/AuthorSearch`) を呼び出す。
+ *
+ * @extends FloorScopedSearchCommand<AuthorSearchRequest>
  */
 final class AuthorSearchCommand extends FloorScopedSearchCommand
 {
@@ -38,12 +39,12 @@ final class AuthorSearchCommand extends FloorScopedSearchCommand
         ?string $initial,
         ?int $hits,
         ?int $offset,
-    ): Request {
+    ): AuthorSearchRequest {
         return new AuthorSearchRequest($floorId, $initial, $hits, $offset);
     }
 
-    protected function responseClass(): string
+    protected function invoke(DmmApiClient $client, Input $input): object
     {
-        return AuthorSearchResponse::class;
+        return $client->authorSearch($this->createRequest($input));
     }
 }

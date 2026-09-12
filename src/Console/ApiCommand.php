@@ -9,12 +9,12 @@ use DateTimeImmutable;
 use DmmApiClient\Api\CredentialMasker;
 use DmmApiClient\Api\DmmApiClient;
 use DmmApiClient\Api\Exception\ApiErrorException;
+use DmmApiClient\Api\Exception\MalformedResponseException;
 use DmmApiClient\Api\Exception\ResponseValidationException;
 use DmmApiClient\Api\Exception\TransportException;
 use DmmApiClient\Api\Request\Credentials;
 use DmmApiClient\Api\Request\RawRequest;
 use DmmApiClient\Api\Request\Request;
-use DmmApiClient\Api\Response\ResponseMapper;
 use Http\Discovery\Exception\NotFoundException;
 use JsonException;
 use Psr\Http\Client\ClientInterface;
@@ -52,13 +52,9 @@ abstract class ApiCommand implements Command
      */
     public const string DATETIME_PLACEHOLDER = 'DATETIME';
 
-    private readonly ResponseMapper $responseMapper;
-
     public function __construct(
         private readonly ?ClientInterface $httpClient = null,
-        ?ResponseMapper $responseMapper = null,
     ) {
-        $this->responseMapper = $responseMapper ?? new ResponseMapper();
     }
 
     /**
@@ -72,8 +68,7 @@ abstract class ApiCommand implements Command
             new OptionDefinition('env-file', '読み込む .env のパス（既定: カレントディレクトリの .env）', 'PATH'),
             new OptionDefinition('dry-run', '送信せずに、組み立てた URI だけを表示する'),
             new OptionDefinition('raw', 'レスポンスを整形せず、受け取ったまま出力する'),
-            new OptionDefinition('no-validate-request', 'パラメータを検証せず、指定した値をそのまま送る'),
-            new OptionDefinition('no-validate-response', 'レスポンスの DTO 検証を行わない'),
+            new OptionDefinition('no-validate', 'パラメータもレスポンスも検証しない（指定した値をそのまま送り、返ってきた JSON をそのまま出す）'),
             new OptionDefinition('no-mask', '認証情報を伏せ字にせず、そのまま出力する'),
             new OptionDefinition('help', 'このコマンドの使い方を表示する'),
         ];
@@ -135,11 +130,15 @@ abstract class ApiCommand implements Command
     abstract protected function createRequest(Input $input): Request;
 
     /**
-     * レスポンスの検証に使う DTO。
+     * 組み立てたリクエストで API を呼び出す。
      *
-     * @return class-string
+     * 呼ぶのは {@see DmmApiClient} の型付きメソッドで、検証もマッピングもそちらが行う。
+     * 戻り値の DTO はコンソールでは使わない（出力は生ボディから作る）が、
+     * 型付きメソッドを通すこと自体が検証を意味する。
+     *
+     * @throws UsageException オプションの値が不正な場合
      */
-    abstract protected function responseClass(): string;
+    abstract protected function invoke(DmmApiClient $client, Input $input): object;
 
     final public function options(): array
     {
@@ -148,7 +147,7 @@ abstract class ApiCommand implements Command
 
     final public function execute(Input $input, Environment $environment, Output $output): int
     {
-        $unchecked = $input->flag('no-validate-request');
+        $unchecked = $input->flag('no-validate');
         $credentials = $environment->credentials();
 
         // 認証情報はエコーバックにも affiliateURL にも埋め込まれて返ってくる。
@@ -159,38 +158,54 @@ abstract class ApiCommand implements Command
             : CredentialMasker::forCredentials($credentials));
 
         $client = $this->createClient($credentials);
-        $request = $unchecked ? $this->createUncheckedRequest($input) : $this->createRequest($input);
 
         if ($input->flag('dry-run')) {
+            $request = $unchecked ? $this->createUncheckedRequest($input) : $this->createRequest($input);
             $output->line($client->buildUri($request));
 
             return Application::EXIT_SUCCESS;
         }
 
         try {
-            $client->fetchRaw($request);
-        } catch (ApiErrorException $exception) {
-            // エラーの中身こそ見たいので、ボディは通常どおり標準出力へ流す。
-            $output->write($this->format($client->lastResponseBody() ?? '', $input, $output));
-            $output->error($exception->getMessage());
-
-            return Application::EXIT_FAILURE;
+            if ($unchecked) {
+                // 型付きメソッドは通せない。RawRequest は itemList() などが要求する
+                // 具体型ではないうえ、検証を外すのが --no-validate の目的でもある。
+                $client->fetchRaw($this->createUncheckedRequest($input));
+            } else {
+                $this->invoke($client, $input);
+            }
         } catch (TransportException $exception) {
             // レスポンスそのものが届いていないので、書き出す本文も無い。
             $output->error($exception->getMessage());
 
             return Application::EXIT_FAILURE;
+        } catch (ApiErrorException | MalformedResponseException $exception) {
+            // エラーの中身こそ見たいので、ボディは通常どおり標準出力へ流す。
+            $this->writeBody($client, $input, $output);
+            $output->error($exception->getMessage());
+
+            return Application::EXIT_FAILURE;
+        } catch (ResponseValidationException $exception) {
+            $this->writeBody($client, $input, $output);
+            $this->reportValidationErrors($exception, $output);
+
+            return Application::EXIT_FAILURE;
         }
 
-        $body = $client->lastResponseBody() ?? '';
-        $output->write($this->format($body, $input, $output));
+        $this->writeBody($client, $input, $output);
 
-        if ($input->flag('no-validate-response')) {
-            return Application::EXIT_SUCCESS;
-        }
+        return Application::EXIT_SUCCESS;
+    }
 
-        // 検証は、伏せ字にする前の実際のレスポンスに対して行う。
-        return $this->validate($body, $output);
+    /**
+     * 受け取った生ボディを標準出力へ書き出す。
+     *
+     * 成功しても失敗しても、返ってきたものは見せる。DTO ではなく生ボディを出すのは、
+     * DTO が知らないキーを落とさずに、API が返したとおりを見せるため。
+     */
+    private function writeBody(DmmApiClient $client, Input $input, Output $output): void
+    {
+        $output->write($this->format($client->lastResponseBody() ?? '', $input, $output));
     }
 
     /**
@@ -411,33 +426,20 @@ abstract class ApiCommand implements Command
     }
 
     /**
-     * レスポンスが DTO と一致するか確かめ、食い違いを標準エラー出力へ書き出す。
+     * レスポンスが DTO と食い違った内容を標準エラー出力へ書き出す。
+     *
+     * 検証そのものは {@see DmmApiClient} が行う。ここが受け持つのは、その結果を
+     * コンソールの形に整えることだけ。
      *
      * 検証エラーには、型が合わなかった値そのものが含まれる。認証情報を含む値であっても
      * 伏せ字は {@see Output} 側で適用されるため、ここでは何もしない。
      */
-    private function validate(string $body, Output $output): int
+    private function reportValidationErrors(ResponseValidationException $exception, Output $output): void
     {
-        try {
-            $decoded = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
-        } catch (JsonException $exception) {
-            $output->error('Response is not valid JSON: ' . $exception->getMessage());
+        $output->error(sprintf('Response did not match %s:', $exception->targetClass));
 
-            return Application::EXIT_FAILURE;
+        foreach ($exception->errors as $error) {
+            $output->error(sprintf('  %s: %s', $error['path'], $error['message']));
         }
-
-        try {
-            $this->responseMapper->map($this->responseClass(), $decoded);
-        } catch (ResponseValidationException $exception) {
-            $output->error(sprintf('Response did not match %s:', $exception->targetClass));
-
-            foreach ($exception->errors as $error) {
-                $output->error(sprintf('  %s: %s', $error['path'], $error['message']));
-            }
-
-            return Application::EXIT_FAILURE;
-        }
-
-        return Application::EXIT_SUCCESS;
     }
 }

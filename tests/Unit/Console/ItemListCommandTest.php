@@ -189,12 +189,12 @@ test('レスポンスを取得して検証する', function (): void {
         ->and($result['stderr'])->toBe('');
 });
 
-test('--no-validate-request なら、通常は弾かれる値もそのまま送る', function (): void {
+test('--no-validate なら、通常は弾かれる値もそのまま送る', function (): void {
     $result = runItemList([
         '--site=BOGUS',
         '--sort=nonexistent',
         '--hits=9999',
-        '--no-validate-request',
+        '--no-validate',
         '--dry-run',
     ]);
 
@@ -209,19 +209,19 @@ test('--no-validate-request なら、通常は弾かれる値もそのまま送�
     ]);
 });
 
-test('--no-validate-request なら必須オプションも要求しない', function (): void {
-    $result = runItemList(['--no-validate-request', '--dry-run']);
+test('--no-validate なら必須オプションも要求しない', function (): void {
+    $result = runItemList(['--no-validate', '--dry-run']);
 
     expect($result['code'])->toBe(Application::EXIT_SUCCESS)
         ->and($result['stdout'])->not->toContain('site=');
 });
 
-test('--no-validate-request でも複数指定はそのまま送る', function (): void {
+test('--no-validate でも複数指定はそのまま送る', function (): void {
     $result = runItemList([
         '--article=whatever',
         '--article=another',
         '--article-id=1',
-        '--no-validate-request',
+        '--no-validate',
         '--dry-run',
     ]);
 
