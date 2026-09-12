@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use DmmApiClient\Console\Application;
-use Tests\Support\CapturingOutput;
 use Tests\Support\StubHttpClient;
 
 /**
@@ -13,29 +12,17 @@ use Tests\Support\StubHttpClient;
  */
 function runItemList(array $arguments, ?StubHttpClient $http = null): array
 {
-    $captured = new CapturingOutput();
-    $http ??= StubHttpClient::respondingWithFixture('item-list');
-    $code = (new Application($http, $captured->output))->run(['dmm-api-client', 'item-list', ...$arguments]);
-
-    return ['code' => $code, 'stdout' => $captured->stdout(), 'stderr' => $captured->stderr()];
+    return runCommand('item-list', $arguments, $http ?? StubHttpClient::respondingWithFixture('item-list'));
 }
 
 /**
- * --dry-run で組み立てられた URI のクエリを、デコード済みの配列で返す。
- *
  * @param list<string> $arguments
  *
  * @return array<int|string, array<mixed>|string>
  */
 function itemListQuery(array $arguments): array
 {
-    $result = runItemList([...$arguments, '--dry-run']);
-
-    expect($result['code'])->toBe(Application::EXIT_SUCCESS);
-
-    parse_str((string) parse_url(trim($result['stdout']), PHP_URL_QUERY), $query);
-
-    return $query;
+    return dryRunQuery('item-list', $arguments);
 }
 
 beforeEach(function (): void {
@@ -190,17 +177,12 @@ test('レスポンスを取得して検証する', function (): void {
 });
 
 test('--no-validate-request なら、通常は弾かれる値もそのまま送る', function (): void {
-    $result = runItemList([
+    $query = itemListQuery([
         '--site=BOGUS',
         '--sort=nonexistent',
         '--hits=9999',
         '--no-validate-request',
-        '--dry-run',
     ]);
-
-    expect($result['code'])->toBe(Application::EXIT_SUCCESS);
-
-    parse_str((string) parse_url(trim($result['stdout']), PHP_URL_QUERY), $query);
 
     expect($query)->toMatchArray([
         'site' => 'BOGUS',
@@ -217,15 +199,12 @@ test('--no-validate-request なら必須オプションも要求しない', func
 });
 
 test('--no-validate-request でも複数指定はそのまま送る', function (): void {
-    $result = runItemList([
+    $query = itemListQuery([
         '--article=whatever',
         '--article=another',
         '--article-id=1',
         '--no-validate-request',
-        '--dry-run',
     ]);
-
-    parse_str((string) parse_url(trim($result['stdout']), PHP_URL_QUERY), $query);
 
     expect($query)->toMatchArray([
         'article' => ['whatever', 'another'],

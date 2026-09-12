@@ -3,34 +3,7 @@
 declare(strict_types=1);
 
 use DmmApiClient\Console\Application;
-use Tests\Support\CapturingOutput;
 use Tests\Support\StubHttpClient;
-
-/**
- * 1 コマンドを実行し、終了コードと出力を返す。
- *
- * @param list<string> $arguments
- *
- * @return array{code: int, stdout: string, stderr: string}
- */
-function runCommand(string $command, array $arguments, ?StubHttpClient $http = null): array
-{
-    $captured = new CapturingOutput();
-    $http ??= StubHttpClient::respondingWith(200, '{}');
-    $code = (new Application($http, $captured->output))->run(['dmm-api-client', $command, ...$arguments]);
-
-    return ['code' => $code, 'stdout' => $captured->stdout(), 'stderr' => $captured->stderr()];
-}
-
-beforeEach(function (): void {
-    putenv('DMM_API_ID=MY_API_ID');
-    putenv('DMM_AFFILIATE_ID=myaffiliateid-999');
-});
-
-afterEach(function (): void {
-    putenv('DMM_API_ID');
-    putenv('DMM_AFFILIATE_ID');
-});
 
 scenario('各コマンドがレスポンスを取得して DTO 検証を通す', function (string $command, string $arguments, string $fixture, string $marker): void {
     $result = runCommand($command, splitArguments($arguments), StubHttpClient::respondingWithFixture($fixture));
@@ -71,11 +44,7 @@ scenario('フロア指定の検索は floor-id を必須にする', function (st
 })->with([['genre-search'], ['maker-search'], ['series-search'], ['author-search']]);
 
 scenario('フロア指定の検索は同じパラメータを受け付ける', function (string $command): void {
-    $result = runCommand($command, ['--floor-id=43', '--initial=あ', '--hits=500', '--offset=101', '--dry-run']);
-
-    expect($result['code'])->toBe(Application::EXIT_SUCCESS);
-
-    parse_str((string) parse_url(trim($result['stdout']), PHP_URL_QUERY), $query);
+    $query = dryRunQuery($command, ['--floor-id=43', '--initial=あ', '--hits=500', '--offset=101']);
 
     expect($query)->toMatchArray([
         'floor_id' => '43',
@@ -93,7 +62,7 @@ scenario('フロア指定の検索は 501 件以上を拒否する', function (s
 })->with([['genre-search'], ['maker-search'], ['series-search'], ['author-search']]);
 
 test('女優検索のオプションをクエリパラメータに変換する', function (): void {
-    $result = runCommand('actress-search', [
+    $query = dryRunQuery('actress-search', [
         '--initial=あ',
         '--actress-id=1078970',
         '--keyword=あさみ',
@@ -110,12 +79,7 @@ test('女優検索のオプションをクエリパラメータに変換する',
         '--sort=-bust',
         '--hits=100',
         '--offset=21',
-        '--dry-run',
     ]);
-
-    expect($result['code'])->toBe(Application::EXIT_SUCCESS);
-
-    parse_str((string) parse_url(trim($result['stdout']), PHP_URL_QUERY), $query);
 
     expect($query)->toMatchArray([
         'initial' => 'あ',
@@ -143,11 +107,7 @@ test('女優検索の offset に上限はない', function (): void {
 });
 
 scenario('--initial は 1 文字でも 2 文字以上でもそのまま送る', function (string $command, string $arguments, string $initial): void {
-    $result = runCommand($command, [...splitArguments($arguments), '--initial=' . $initial, '--dry-run']);
-
-    expect($result['code'])->toBe(Application::EXIT_SUCCESS);
-
-    parse_str((string) parse_url(trim($result['stdout']), PHP_URL_QUERY), $query);
+    $query = dryRunQuery($command, [...splitArguments($arguments), '--initial=' . $initial]);
 
     expect($query)->toHaveKey('initial', $initial);
 })->with([
