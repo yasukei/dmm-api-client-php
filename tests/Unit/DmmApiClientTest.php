@@ -269,6 +269,6 @@ test('生ボディは最後の呼び出しで上書きされる', function (): v
 
     expect(fn (): mixed => $client->floorList())->toThrow(ApiErrorException::class);
 
-    // エラーで終わった場合も、その応答の生ボディが残る。
+    // エラーで終わった場合も、そのレスポンスの生ボディが残る。
     expect($client->lastResponseBody())->toBe('{"result":{"status":400}}');
 });

@@ -176,7 +176,7 @@ abstract class ApiCommand implements Command
 
             return Application::EXIT_FAILURE;
         } catch (TransportException $exception) {
-            // 応答そのものが届いていないので、書き出す本文も無い。
+            // レスポンスそのものが届いていないので、書き出す本文も無い。
             $output->error($exception->getMessage());
 
             return Application::EXIT_FAILURE;

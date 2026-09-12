@@ -64,7 +64,7 @@ final readonly class DmmApiClient
         ?ResponseMapper $responseMapper = null,
         private string $baseUri = self::DEFAULT_BASE_URI,
     ) {
-        // 生ボディを控えるため、必ず包んでから使う（{@see self::lastResponseBody()}）。
+        // 生ボディをキャプチャするため、必ず包んでから使う（{@see self::lastResponseBody()}）。
         $this->httpClient = new CapturingHttpClient(
             $httpClient ?? Psr18ClientDiscovery::find(),
             Psr17FactoryDiscovery::findStreamFactory(),

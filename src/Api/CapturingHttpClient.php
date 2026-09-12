@@ -13,7 +13,7 @@ use Psr\Http\Message\StreamFactoryInterface;
  * レスポンスの生ボディをキャプチャする PSR-18 クライアント。
  *
  * {@see DmmApiClient} の型付きメソッドは DTO を返すため、生ボディを受け取る口が無い。
- * HTTP のところで控えておけば、呼び出し方に関わらず同じ生ボディが手に入る。
+ * HTTP のところでキャプチャしておけば、呼び出し方に関わらず同じ生ボディが手に入る。
  * {@see DmmApiClient::lastResponseBody()} がこれを読む。
  *
  * @internal {@see DmmApiClient} が内部で使うためのもので、単体で使うことは想定していない。
@@ -40,7 +40,7 @@ final class CapturingHttpClient implements ClientInterface
     }
 
     /**
-     * 最後にキャプチャした生ボディ。応答を 1 度も受け取っていなければ null。
+     * 最後にキャプチャした生ボディ。レスポンスを 1 度も受け取っていなければ null。
      */
     public function body(): ?string
     {
