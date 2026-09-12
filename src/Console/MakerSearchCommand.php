@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace DmmApiClient\Console;
 
+use DmmApiClient\Api\DmmApiClient;
 use DmmApiClient\Api\Request\MakerSearchRequest;
-use DmmApiClient\Api\Request\Request;
-use DmmApiClient\Api\Response\MakerSearch\MakerSearchResponse;
 
 /**
  * メーカー検索 API (`/MakerSearch`) を呼び出す。
+ *
+ * @extends FloorScopedSearchCommand<MakerSearchRequest>
  */
 final class MakerSearchCommand extends FloorScopedSearchCommand
 {
@@ -38,12 +39,12 @@ final class MakerSearchCommand extends FloorScopedSearchCommand
         ?string $initial,
         ?int $hits,
         ?int $offset,
-    ): Request {
+    ): MakerSearchRequest {
         return new MakerSearchRequest($floorId, $initial, $hits, $offset);
     }
 
-    protected function responseClass(): string
+    protected function invoke(DmmApiClient $client, Input $input): object
     {
-        return MakerSearchResponse::class;
+        return $client->makerSearch($this->createRequest($input));
     }
 }

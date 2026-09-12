@@ -50,7 +50,7 @@ scenario('各コマンドがレスポンスを取得して DTO 検証を通す',
 
 scenario('各コマンドが正しいエンドポイントを呼ぶ', function (string $command, string $arguments, string $endpoint): void {
     $http = StubHttpClient::respondingWith(200, '{}');
-    runCommand($command, [...splitArguments($arguments), '--no-validate-response'], $http);
+    runCommand($command, [...splitArguments($arguments), '--no-validate'], $http);
 
     expect($http->lastRequest()->getUri()->getPath())->toBe('/affiliate/v3' . $endpoint);
 })->with([

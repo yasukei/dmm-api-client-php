@@ -105,11 +105,19 @@ test('仕様と食い違うレスポンスは、本文を出したうえで失�
         ->and($result['stderr'])->toContain('result.site.0.code');
 });
 
-test('--no-validate-response なら食い違いがあっても成功にする', function (): void {
+test('--no-validate なら JSON として読めなくても成功にする', function (): void {
+    // 検証を通さない経路は本文をそのまま流すだけなので、JSON かどうかも問わない。
+    $result = runFloorList(StubHttpClient::respondingWith(200, 'not json at all'), ['--no-validate']);
+
+    expect($result['code'])->toBe(Application::EXIT_SUCCESS)
+        ->and($result['stdout'])->toContain('not json at all');
+});
+
+test('--no-validate なら食い違いがあっても成功にする', function (): void {
     $payload = Fixture::decodedWith('floor-list', ['result', 'site', 0, 'code'], 'NEWSITE');
     $http = StubHttpClient::respondingWith(200, (string) json_encode($payload));
 
-    $result = runFloorList($http, ['--no-validate-response']);
+    $result = runFloorList($http, ['--no-validate']);
 
     expect($result['code'])->toBe(Application::EXIT_SUCCESS)
         ->and($result['stderr'])->toBe('');
@@ -136,7 +144,9 @@ test('JSON でないボディは、そのまま出したうえで失敗にする
 
     expect($result['code'])->toBe(Application::EXIT_FAILURE)
         ->and($result['stdout'])->toContain('not json')
-        ->and($result['stderr'])->toContain('Could not pretty-print');
+        ->and($result['stderr'])->toContain('Could not pretty-print')
+        // 読めなかったことの報告はクライアントから上がる。どの API かも添えられる。
+        ->and($result['stderr'])->toContain('Response from /FloorList is not valid JSON');
 });
 
 test('認証情報が無ければ使い方の誤りとして扱う', function (): void {
@@ -189,11 +199,11 @@ test('環境変数が .env より優先される', function (): void {
     expect($result['stdout'])->toContain('api_id=MY_API_ID');
 });
 
-test('--no-validate-request でもリクエストの組み立て方は変わらない', function (): void {
+test('--no-validate でもリクエストの組み立て方は変わらない', function (): void {
     // /FloorList は固有のパラメータを持たないため、検証を飛ばしても送信内容は同じになる。
     $result = runFloorList(
         StubHttpClient::respondingWithFixture('floor-list'),
-        ['--no-validate-request', '--dry-run', '--no-mask'],
+        ['--no-validate', '--dry-run', '--no-mask'],
     );
 
     expect($result['code'])->toBe(Application::EXIT_SUCCESS)
