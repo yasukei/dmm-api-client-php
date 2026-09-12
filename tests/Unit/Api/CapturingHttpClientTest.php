@@ -65,3 +65,26 @@ test('通信に失敗した場合は生ボディをキャプチャしない', fu
 
     expect($client->body())->toBeNull();
 });
+
+test('通信に失敗したら、前の送信でキャプチャした生ボディも残さない', function (): void {
+    $inner = new class () implements ClientInterface {
+        private int $calls = 0;
+
+        public function sendRequest(RequestInterface $request): ResponseInterface
+        {
+            if (++$this->calls > 1) {
+                throw new NetworkFailure('connection refused');
+            }
+
+            return new Response(200, [], '{"call":1}');
+        }
+    };
+    $client = capturingClient($inner);
+
+    $client->sendRequest(new Request('GET', 'https://api.dmm.com/'));
+
+    expect(fn (): mixed => $client->sendRequest(new Request('GET', 'https://api.dmm.com/')))
+        ->toThrow(NetworkFailure::class);
+
+    expect($client->body())->toBeNull();
+});
