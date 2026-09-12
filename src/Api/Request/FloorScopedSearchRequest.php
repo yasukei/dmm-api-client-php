@@ -41,15 +41,17 @@ abstract readonly class FloorScopedSearchRequest implements Request
             throw new InvalidArgumentException('floor_id must not be empty.');
         }
 
-        if ($hits !== null && ($hits < self::HITS_MIN || $hits > self::HITS_MAX)) {
+        if ($hits !== null && ($hits < static::HITS_MIN || $hits > static::HITS_MAX)) {
             throw new InvalidArgumentException(
-                sprintf('hits must be between %d and %d, %d given.', self::HITS_MIN, self::HITS_MAX, $hits),
+                sprintf('hits must be between %d and %d, %d given.', static::HITS_MIN, static::HITS_MAX, $hits),
             );
         }
 
-        if ($offset !== null && $offset < self::OFFSET_MIN) {
+        if ($offset !== null && $offset < static::OFFSET_MIN) {
             throw new InvalidArgumentException(
-                sprintf('offset must be %d or greater, %d given.', self::OFFSET_MIN, $offset),
+                sprintf('offset must be %d or greater, %d given.', static::OFFSET_MIN, $offset),
+            );
+        }
             );
         }
     }
