@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace DmmApiClient\LiveProbe;
 
-use DmmApiClient\Api\SiteCode;
-
 /**
  * `FloorList` のレスポンスから、フロアの一覧を取り出す。
  *
@@ -46,15 +44,10 @@ final readonly class FloorCatalog
                 continue;
             }
 
-            $siteCodeValue = self::string($site, 'code');
-            $siteCode = $siteCodeValue === null ? null : SiteCode::tryFrom($siteCodeValue);
+            $siteCode = self::string($site, 'code');
 
             if ($siteCode === null) {
-                $warnings[] = sprintf(
-                    'result.site.%s has an unknown site code "%s"; its floors are skipped.',
-                    (string) $siteIndex,
-                    $siteCodeValue ?? '',
-                );
+                $warnings[] = sprintf('result.site.%s.code is missing.', (string) $siteIndex);
 
                 continue;
             }

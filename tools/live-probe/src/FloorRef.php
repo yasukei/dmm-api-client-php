@@ -4,15 +4,13 @@ declare(strict_types=1);
 
 namespace DmmApiClient\LiveProbe;
 
-use DmmApiClient\Api\SiteCode;
-
 /**
  * `FloorList` から取り出した、1 つのフロアを指す座標。
  */
 final readonly class FloorRef
 {
     public function __construct(
-        public SiteCode $site,
+        public string $site,
         public string $serviceCode,
         public string $floorId,
         public string $floorCode,
@@ -26,7 +24,7 @@ final readonly class FloorRef
      */
     public function key(): string
     {
-        return Target::sanitize($this->site->value)
+        return Target::sanitize($this->site)
             . '__' . Target::sanitize($this->serviceCode)
             . '__' . Target::sanitize($this->floorCode) . '-' . Target::sanitize($this->floorId);
     }
@@ -39,7 +37,7 @@ final readonly class FloorRef
     public function context(): array
     {
         return [
-            'site' => $this->site->value,
+            'site' => $this->site,
             'service' => $this->serviceCode,
             'floor' => $this->floorCode,
             'floor_id' => $this->floorId,

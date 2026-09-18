@@ -383,7 +383,7 @@ final readonly class Probe
 
         foreach ($catalog->floors as $floor) {
             $count = count($articles[$floor->floorId] ?? []);
-            $site = $floor->site->value;
+            $site = $floor->site;
 
             if ($count >= 2 && self::beats($count, $floor, $best[$site] ?? null)) {
                 $best[$site] = [$count, $floor];

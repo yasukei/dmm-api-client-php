@@ -15,7 +15,6 @@ use DmmApiClient\Api\Response\ItemList\ItemListResponse;
 use DmmApiClient\Api\Response\MakerSearch\MakerSearchResponse;
 use DmmApiClient\Api\Response\ResponseMapper;
 use DmmApiClient\Api\Response\SeriesSearch\SeriesSearchResponse;
-use DmmApiClient\Api\SiteCode;
 use Tests\Support\Fixture;
 
 /**
@@ -486,13 +485,13 @@ test('フロア構成のレスポンスをマッピングする', function (): v
 
     expect($response)->toBeInstanceOf(FloorListResponse::class)
         ->and($response->result->site)->toHaveCount(2)
-        ->and($response->result->site[0]->code)->toBe(SiteCode::DmmCom)
+        ->and($response->result->site[0]->code)->toBe('DMM.com')
         ->and($response->result->site[0]->service)->toHaveCount(2)
         ->and($response->result->site[0]->service[0]->code)->toBe('digital')
         ->and($response->result->site[0]->service[0]->floor)->toHaveCount(2)
         ->and($response->result->site[0]->service[0]->floor[0]->id)->toBe('40')
         ->and($response->result->site[0]->service[0]->floor[0]->code)->toBe('videoc')
-        ->and($response->result->site[1]->code)->toBe(SiteCode::Fanza);
+        ->and($response->result->site[1]->code)->toBe('FANZA');
 });
 
 test('女優検索のレスポンスをマッピングする', function (): void {
@@ -539,7 +538,7 @@ test('ジャンル検索のレスポンスをマッピングする', function ()
         ->and($response->result->status)->toBe('200')
         ->and($response->result->totalCount)->toBe('87')
         ->and($response->result->firstPosition)->toBe(1)
-        ->and($response->result->siteCode)->toBe(SiteCode::Fanza)
+        ->and($response->result->siteCode)->toBe('FANZA')
         ->and($response->result->siteName)->toBe('FANZA（アダルト）')
         ->and($response->result->serviceCode)->toBe('digital')
         ->and($response->result->floorId)->toBe('43')
@@ -718,12 +717,5 @@ test('必須項目が欠けていれば検証エラーにする', function (): v
     $payload = Fixture::decodedWithout('item-list', ['result', 'items', 0, 'content_id']);
 
     expect(fn (): ItemListResponse => responseMapper()->itemList($payload))
-        ->toThrow(ResponseValidationException::class);
-});
-
-test('未知のサイトコードは検証エラーにする', function (): void {
-    $payload = Fixture::decodedWith('floor-list', ['result', 'site', 0, 'code'], 'NEWSITE');
-
-    expect(fn (): FloorListResponse => responseMapper()->floorList($payload))
         ->toThrow(ResponseValidationException::class);
 });

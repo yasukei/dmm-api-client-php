@@ -97,7 +97,6 @@ scenario('不正な値を、受け付ける値とともに拒否する', functio
     expect($result['code'])->toBe(Application::EXIT_USAGE)
         ->and($result['stderr'])->toContain($expected);
 })->with([
-    'site' => ['--site=BOGUS', 'Expected one of: DMM.com, FANZA.'],
     'sort' => ['--sort=nope', 'Expected one of: rank, price, -price, date, review, match.'],
     'mono-stock' => ['--mono-stock=nope', 'Expected one of: stock, reserve, reserve_empty, empty, mono, order.'],
     'article' => [

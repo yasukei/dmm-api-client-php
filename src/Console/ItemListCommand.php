@@ -10,7 +10,6 @@ use DmmApiClient\Api\Request\ArticleFilter;
 use DmmApiClient\Api\Request\ArticleType;
 use DmmApiClient\Api\Request\ItemListRequest;
 use DmmApiClient\Api\Request\ItemListSort;
-use DmmApiClient\Api\SiteCode;
 
 /**
  * 商品情報 API (`/ItemList`) を呼び出す。
@@ -30,7 +29,7 @@ final class ItemListCommand extends ApiCommand
     protected function requestOptions(): array
     {
         return [
-            new OptionDefinition('site', '検索対象サイト（必須。' . self::allowedValues(SiteCode::class) . '）', 'CODE'),
+            new OptionDefinition('site', '検索対象サイト（必須。例: DMM.com、FANZA）', 'CODE'),
             new OptionDefinition('service', 'サービスコードで絞り込む（例: digital）', 'CODE'),
             new OptionDefinition('floor', 'フロアコードで絞り込む（例: videoa）', 'CODE'),
             new OptionDefinition('keyword', '検索キーワード', 'WORD'),
@@ -49,7 +48,7 @@ final class ItemListCommand extends ApiCommand
     protected function createRequest(Input $input): ItemListRequest
     {
         return new ItemListRequest(
-            site: self::toEnum($this->requiredOption($input, 'site'), 'site', SiteCode::class),
+            site: $this->requiredOption($input, 'site'),
             service: $input->option('service'),
             floor: $input->option('floor'),
             keyword: $input->option('keyword'),

@@ -154,7 +154,7 @@ final readonly class Options
 
     public function wantsFloor(FloorRef $floor): bool
     {
-        return self::matches($this->sites, $floor->site->value)
+        return self::matches($this->sites, $floor->site)
             && self::matches($this->services, $floor->serviceCode)
             && self::matches($this->floors, $floor->floorCode);
     }

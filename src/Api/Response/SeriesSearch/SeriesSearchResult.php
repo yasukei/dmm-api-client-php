@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace DmmApiClient\Api\Response\SeriesSearch;
 
 use CuyZ\Valinor\Mapper\Configurator\MapFromKey;
-use DmmApiClient\Api\SiteCode;
 
 /**
  * シリーズ検索 API のレスポンスの `result` 部。
@@ -21,7 +20,7 @@ final readonly class SeriesSearchResult
      * @param int|string   $totalCount    検索結果の総件数（0 件のときだけ数値）
      * @param int          $firstPosition 検索開始位置（1 始まり）
      * @param string       $siteName      サイト名（例: DMM.com（一般））
-     * @param SiteCode     $siteCode      サイトコード
+     * @param string       $siteCode      サイトコード（例: DMM.com、FANZA）
      * @param string       $serviceName   サービス名（例: 動画）
      * @param string       $serviceCode   サービスコード（例: digital）
      * @param string       $floorId       フロア ID（例: "43"）
@@ -40,7 +39,7 @@ final readonly class SeriesSearchResult
         #[MapFromKey('site_name')]
         public string $siteName,
         #[MapFromKey('site_code')]
-        public SiteCode $siteCode,
+        public string $siteCode,
         #[MapFromKey('service_name')]
         public string $serviceName,
         #[MapFromKey('service_code')]

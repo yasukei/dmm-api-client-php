@@ -7,7 +7,6 @@ namespace DmmApiClient\Api\Request;
 use DateTimeImmutable;
 use DmmApiClient\Api\Exception\InvalidArgumentException;
 use DmmApiClient\Api\MonoStock;
-use DmmApiClient\Api\SiteCode;
 
 /**
  * 商品情報 API (`/ItemList`) のリクエスト。
@@ -30,7 +29,7 @@ final readonly class ItemListRequest implements Request
     public const int OFFSET_MAX = 50000;
 
     /**
-     * @param SiteCode             $site      検索対象サイト
+     * @param string               $site      検索対象サイト（例: DMM.com、FANZA）
      * @param string|null          $service   サービスコードによる絞り込み（例: digital、mono）
      * @param string|null          $floor     フロアコードによる絞り込み（例: videoa、books）
      * @param string|null          $keyword   検索キーワード（URL エンコードは不要）
@@ -46,7 +45,7 @@ final readonly class ItemListRequest implements Request
      * @throws InvalidArgumentException $hits / $offset が範囲外の場合
      */
     public function __construct(
-        public SiteCode $site,
+        public string $site,
         public ?string $service = null,
         public ?string $floor = null,
         public ?string $keyword = null,
@@ -84,7 +83,7 @@ final readonly class ItemListRequest implements Request
     {
         $parameters = array_filter(
             [
-                'site' => $this->site->value,
+                'site' => $this->site,
                 'service' => $this->service,
                 'floor' => $this->floor,
                 'keyword' => $this->keyword,

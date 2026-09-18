@@ -315,7 +315,7 @@ final class Planner
         }
 
         return new RawRequest(ItemListRequest::ENDPOINT, [
-            'site' => $floor->site->value,
+            'site' => $floor->site,
             'service' => $floor->serviceCode,
             'floor' => $floor->floorCode,
             'article' => [$article],

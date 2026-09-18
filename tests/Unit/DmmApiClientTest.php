@@ -24,7 +24,6 @@ use DmmApiClient\Api\Response\GenreSearch\GenreSearchResponse;
 use DmmApiClient\Api\Response\ItemList\ItemListResponse;
 use DmmApiClient\Api\Response\MakerSearch\MakerSearchResponse;
 use DmmApiClient\Api\Response\SeriesSearch\SeriesSearchResponse;
-use DmmApiClient\Api\SiteCode;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7\Response;
 use Psr\Http\Client\ClientInterface;
@@ -38,7 +37,7 @@ test('認証情報・リクエストパラメータ・output を載せた URI �
     $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::respondingWith(200, '{}'));
 
     $uri = $client->buildUri(new ItemListRequest(
-        site: SiteCode::Fanza,
+        site: 'FANZA',
         floor: 'videoa',
         sort: ItemListSort::Date,
         hits: 20,
@@ -54,7 +53,7 @@ test('複数 article をインデックス付きのクエリに展開する', fu
     $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::respondingWith(200, '{}'));
 
     $uri = $client->buildUri(new ItemListRequest(
-        site: SiteCode::Fanza,
+        site: 'FANZA',
         articles: [
             new ArticleFilter(ArticleType::Genre, '6533'),
             new ArticleFilter(ArticleType::Actress, '1078970'),
@@ -79,7 +78,7 @@ test('ベース URI を差し替えられる', function (): void {
 test('Accept ヘッダ付きの GET を送る', function (): void {
     $http = StubHttpClient::respondingWithFixture('item-list');
 
-    (new DmmApiClient(credentials(), httpClient: $http))->itemList(new ItemListRequest(site: SiteCode::Fanza));
+    (new DmmApiClient(credentials(), httpClient: $http))->itemList(new ItemListRequest(site: 'FANZA'));
 
     expect($http->requests)->toHaveCount(1)
         ->and($http->lastRequest()->getMethod())->toBe('GET')
@@ -103,7 +102,7 @@ scenario('各エンドポイントが対応する DTO を返す', function (stri
         ->and($http->lastRequest()->getUri()->getPath())->toBe('/affiliate/v3' . $endpoint);
 })->with([
     'itemList' => ['item-list', '/ItemList',
-        fn (DmmApiClient $client): ItemListResponse => $client->itemList(new ItemListRequest(site: SiteCode::Fanza))],
+        fn (DmmApiClient $client): ItemListResponse => $client->itemList(new ItemListRequest(site: 'FANZA'))],
     'floorList' => ['floor-list', '/FloorList',
         fn (DmmApiClient $client): FloorListResponse => $client->floorList(new FloorListRequest())],
     'actressSearch' => ['actress-search', '/ActressSearch',
@@ -129,7 +128,7 @@ test('取得したレスポンスを DTO に変換する', function (): void {
     $http = StubHttpClient::respondingWithFixture('item-list');
 
     $response = (new DmmApiClient(credentials(), httpClient: $http))
-        ->itemList(new ItemListRequest(site: SiteCode::Fanza));
+        ->itemList(new ItemListRequest(site: 'FANZA'));
 
     expect($response->result->totalCount)->toBe(12450)
         ->and($response->result->items[0]->title)->toBe('サンプル動画作品');
@@ -140,7 +139,7 @@ test('API がエラーを返したら ApiErrorException にする', function ():
     $client = new DmmApiClient(credentials(), httpClient: $http);
 
     try {
-        $client->itemList(new ItemListRequest(site: SiteCode::Fanza));
+        $client->itemList(new ItemListRequest(site: 'FANZA'));
         $this->fail('ApiErrorException が送出されませんでした。');
     } catch (ApiErrorException $exception) {
         expect($exception->httpStatusCode)->toBe(400)
@@ -157,7 +156,7 @@ test('エラーボディを解釈できなくても ApiErrorException にする'
     $client = new DmmApiClient(credentials(), httpClient: $http);
 
     try {
-        $client->itemList(new ItemListRequest(site: SiteCode::Fanza));
+        $client->itemList(new ItemListRequest(site: 'FANZA'));
         $this->fail('ApiErrorException が送出されませんでした。');
     } catch (ApiErrorException $exception) {
         expect($exception->httpStatusCode)->toBe(503)
@@ -171,7 +170,7 @@ test('ボディが JSON でなければ MalformedResponseException にする', f
     $client = new DmmApiClient(credentials(), httpClient: $http);
 
     try {
-        $client->itemList(new ItemListRequest(site: SiteCode::Fanza));
+        $client->itemList(new ItemListRequest(site: 'FANZA'));
         $this->fail('MalformedResponseException が送出されませんでした。');
     } catch (MalformedResponseException $exception) {
         expect($exception->endpoint)->toBe('/ItemList')
@@ -183,7 +182,7 @@ test('ボディが JSON オブジェクトでなければ MalformedResponseExcep
     $http = StubHttpClient::respondingWith(200, '"just a string"');
 
     expect(fn (): ItemListResponse => (new DmmApiClient(credentials(), httpClient: $http))
-        ->itemList(new ItemListRequest(site: SiteCode::Fanza)))
+        ->itemList(new ItemListRequest(site: 'FANZA')))
         ->toThrow(MalformedResponseException::class, 'not a JSON object');
 });
 
@@ -193,7 +192,7 @@ test('構造が仕様と合わなければ ResponseValidationException にする
     ]));
 
     expect(fn (): ItemListResponse => (new DmmApiClient(credentials(), httpClient: $http))
-        ->itemList(new ItemListRequest(site: SiteCode::Fanza)))
+        ->itemList(new ItemListRequest(site: 'FANZA')))
         ->toThrow(ResponseValidationException::class);
 });
 
@@ -202,7 +201,7 @@ test('通信に失敗したら TransportException にする', function (): void 
     $client = new DmmApiClient(credentials(), httpClient: $http);
 
     try {
-        $client->itemList(new ItemListRequest(site: SiteCode::Fanza));
+        $client->itemList(new ItemListRequest(site: 'FANZA'));
         $this->fail('TransportException が送出されませんでした。');
     } catch (TransportException $exception) {
         expect($exception->endpoint)->toBe('/ItemList')
@@ -222,7 +221,7 @@ test('通信エラーのメッセージから認証情報を伏せ字にする',
     $client = new DmmApiClient(credentials(), httpClient: $http);
 
     try {
-        $client->itemList(new ItemListRequest(site: SiteCode::Fanza));
+        $client->itemList(new ItemListRequest(site: 'FANZA'));
         $this->fail('TransportException が送出されませんでした。');
     } catch (TransportException $exception) {
         expect($exception->getMessage())->toContain('Could not resolve host')
