@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace DmmApiClient\LiveProbe;
 
+use JsonException;
+
 /**
  * 1 回の実行分の出力をまとめるディレクトリ。
  *
@@ -60,7 +62,9 @@ final readonly class RunDirectory
 
         $candidates = [];
 
-        foreach (scandir($root) ?: [] as $entry) {
+        $entries = scandir($root);
+
+        foreach ($entries !== false ? $entries : [] as $entry) {
             if ($entry !== '.' && $entry !== '..' && is_dir($root . '/' . $entry)) {
                 $candidates[] = $entry;
             }
@@ -134,7 +138,9 @@ final readonly class RunDirectory
      */
     public function bodies(string $group, string $prefix): iterable
     {
-        foreach (glob($this->file($group . '/' . $prefix . '*.json')) ?: [] as $path) {
+        $paths = glob($this->file($group . '/' . $prefix . '*.json'));
+
+        foreach ($paths !== false ? $paths : [] as $path) {
             $contents = @file_get_contents($path);
 
             if ($contents !== false) {
@@ -145,6 +151,8 @@ final readonly class RunDirectory
 
     /**
      * 1 件ずつ追記する。途中で止まっても、それまでの結果が残るようにするため。
+     *
+     * @throws JsonException 記録を JSON にできなかった場合
      */
     public function appendRecord(Record $record): void
     {
@@ -182,6 +190,8 @@ final readonly class RunDirectory
 
     /**
      * @param list<Record> $records
+     *
+     * @throws JsonException 記録を JSON にできなかった場合
      */
     public function writeRecords(array $records): void
     {
@@ -226,6 +236,8 @@ final readonly class RunDirectory
 
     /**
      * @param array<string, mixed> $data
+     *
+     * @throws JsonException 内容を JSON にできなかった場合
      */
     public function writeRun(array $data): void
     {

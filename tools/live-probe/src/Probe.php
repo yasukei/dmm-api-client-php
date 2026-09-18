@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace DmmApiClient\LiveProbe;
 
 use DmmApiClient\Api\CredentialMasker;
+use DmmApiClient\Api\Exception\ApiErrorException;
 use DmmApiClient\Api\Exception\DmmApiClientException;
+use DmmApiClient\Api\Exception\InvalidArgumentException;
+use DmmApiClient\Api\Exception\TransportException;
 use DmmApiClient\Api\Request\ArticleType;
 use DmmApiClient\Api\Request\Credentials;
 use DmmApiClient\Api\Request\FloorListRequest;
@@ -15,6 +18,8 @@ use DmmApiClient\Console\Environment;
 use DmmApiClient\Console\Output;
 use DmmApiClient\Console\UsageException;
 use GuzzleHttp\Client as GuzzleClient;
+use Http\Discovery\Exception\NotFoundException;
+use JsonException;
 use Psr\Http\Client\ClientInterface;
 
 /**
@@ -40,6 +45,9 @@ final readonly class Probe
 
     /**
      * @param list<string> $argv
+     *
+     * @throws NotFoundException PSR-18 / PSR-17 の実装が見つからない場合
+     * @throws JsonException     記録を JSON にできなかった場合
      */
     public static function main(array $argv, string $defaultOutRoot): int
     {
@@ -78,6 +86,8 @@ final readonly class Probe
 
     /**
      * @throws ProbeException|UsageException|DmmApiClientException
+     * @throws NotFoundException PSR-18 / PSR-17 の実装が見つからない場合
+     * @throws JsonException     記録を JSON にできなかった場合
      */
     private function run(): int
     {
@@ -155,6 +165,10 @@ final readonly class Probe
      * @param list<Target> $targets
      *
      * @return bool `--limit` に達せず最後まで回ったか
+     *
+     * @throws NotFoundException PSR-18 / PSR-17 の実装が見つからない場合
+     * @throws ProbeException    レスポンスを保存できなかった場合
+     * @throws JsonException     記録を JSON にできなかった場合
      */
     private function runTargets(
         Runner $runner,
@@ -234,6 +248,10 @@ final readonly class Probe
      * （`--endpoint=ItemList --resume` で、取得済みの `ItemList` から article だけを試し直せる）。
      *
      * @return bool `--limit` に達せず最後まで回ったか
+     *
+     * @throws NotFoundException PSR-18 / PSR-17 の実装が見つからない場合
+     * @throws ProbeException    レスポンスを保存できなかった場合
+     * @throws JsonException     記録を JSON にできなかった場合
      */
     private function processArticles(
         Runner $runner,
@@ -314,6 +332,11 @@ final readonly class Probe
      * 複数指定が最も意味を持つ場所であり、選び方は実行のたびに変わらない。
      *
      * @return bool `--limit` に達せず最後まで回ったか
+     *
+     * @throws NotFoundException        PSR-18 / PSR-17 の実装が見つからない場合
+     * @throws ProbeException           レスポンスを保存できなかった場合
+     * @throws InvalidArgumentException リクエストが受け付けない値だった場合
+     * @throws JsonException            記録を JSON にできなかった場合
      */
     private function processArticleCombos(
         Runner $runner,
@@ -473,6 +496,10 @@ final readonly class Probe
      * 全フロアで裏を取ったわけではないため。
      *
      * @return bool `--limit` に達せず最後まで回ったか
+     *
+     * @throws NotFoundException PSR-18 / PSR-17 の実装が見つからない場合
+     * @throws ProbeException    レスポンスを保存できなかった場合
+     * @throws JsonException     記録を JSON にできなかった場合
      */
     private function processMonoStock(
         Runner $runner,
@@ -529,6 +556,10 @@ final readonly class Probe
      * 総件数は先頭ページを取るまで分からないので、先頭ページは `--pages` の指定によらず必ず取得する。
      *
      * @return Record 先頭ページの記録
+     *
+     * @throws NotFoundException PSR-18 / PSR-17 の実装が見つからない場合
+     * @throws ProbeException    レスポンスを保存できなかった場合
+     * @throws JsonException     記録を JSON にできなかった場合
      */
     private function processTarget(
         Runner $runner,
@@ -594,7 +625,8 @@ final readonly class Probe
     /**
      * 保存済みのレスポンスを検証し直し、レポートだけを作り直す。
      *
-     * @throws ProbeException
+     * @throws ProbeException 保存済みの実行を読めなかった場合
+     * @throws JsonException  記録を JSON にできなかった場合
      */
     private function revalidate(): int
     {
@@ -643,7 +675,11 @@ final readonly class Probe
      *
      * フロアの一覧が要るので、過去の実行が残っていればそれを読み、無ければ `FloorList` だけ 1 回叩く。
      *
-     * @throws ProbeException
+     * @throws ProbeException            保存済みの実行を読めなかった場合
+     * @throws NotFoundException         PSR-18 / PSR-17 の実装が見つからない場合
+     * @throws InvalidArgumentException  リクエストが受け付けない値だった場合
+     * @throws TransportException        HTTP 通信に失敗した場合
+     * @throws ApiErrorException         API がエラーを返した場合
      */
     private function dryRun(
         Clients $clients,
@@ -679,6 +715,8 @@ final readonly class Probe
 
     /**
      * 過去の実行から `FloorList` のレスポンスを読む。
+     *
+     * @throws ProbeException 実行ディレクトリを開けなかった場合
      */
     private function savedFloorList(): ?string
     {
@@ -692,6 +730,8 @@ final readonly class Probe
     /**
      * @param list<Record> $records
      * @param float        $elapsed この実行にかかった秒数
+     *
+     * @throws JsonException 記録を JSON にできなかった場合
      */
     private function report(array $records, RunDirectory $run, Console $console, float $elapsed): int
     {
@@ -734,6 +774,8 @@ final readonly class Probe
      * 保存済みのファイルから、前回の記録を引ける形にする。
      *
      * @return array<string, Record>
+     *
+     * @throws ProbeException 記録を読めなかった場合
      */
     private static function index(RunDirectory $run): array
     {
