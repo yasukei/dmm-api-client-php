@@ -54,6 +54,11 @@ jobs:
           php-version: '8.3'
           coverage: none
 
+      # Packagist への公開を見据えて、composer.json の不備（警告を含む）と
+      # composer.lock の追従漏れをここで落とす。
+      - name: Validate composer.json and composer.lock
+        run: composer validate --strict
+
       - name: Install dependencies
         run: composer install --no-interaction --no-progress
 
