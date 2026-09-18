@@ -27,11 +27,6 @@ final class FloorListCommand extends ApiCommand
         return [];
     }
 
-    protected function endpoint(): string
-    {
-        return FloorListRequest::ENDPOINT;
-    }
-
     protected function createRequest(Input $input): FloorListRequest
     {
         return new FloorListRequest();

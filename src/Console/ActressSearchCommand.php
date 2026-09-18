@@ -45,11 +45,6 @@ final class ActressSearchCommand extends ApiCommand
         ];
     }
 
-    protected function endpoint(): string
-    {
-        return ActressSearchRequest::ENDPOINT;
-    }
-
     protected function createRequest(Input $input): ActressSearchRequest
     {
         return new ActressSearchRequest(

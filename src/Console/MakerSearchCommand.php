@@ -29,11 +29,6 @@ final class MakerSearchCommand extends FloorScopedSearchCommand
         return 'メーカー';
     }
 
-    protected function endpoint(): string
-    {
-        return MakerSearchRequest::ENDPOINT;
-    }
-
     protected function createFloorScopedRequest(
         string $floorId,
         ?string $initial,

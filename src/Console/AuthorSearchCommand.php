@@ -29,11 +29,6 @@ final class AuthorSearchCommand extends FloorScopedSearchCommand
         return '作者';
     }
 
-    protected function endpoint(): string
-    {
-        return AuthorSearchRequest::ENDPOINT;
-    }
-
     protected function createFloorScopedRequest(
         string $floorId,
         ?string $initial,

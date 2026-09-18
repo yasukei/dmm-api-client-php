@@ -189,50 +189,6 @@ test('レスポンスを取得して検証する', function (): void {
         ->and($result['stderr'])->toBe('');
 });
 
-test('--no-validate なら、通常は弾かれる値もそのまま送る', function (): void {
-    $result = runItemList([
-        '--site=BOGUS',
-        '--sort=nonexistent',
-        '--hits=9999',
-        '--no-validate',
-        '--dry-run',
-    ]);
-
-    expect($result['code'])->toBe(Application::EXIT_SUCCESS);
-
-    parse_str((string) parse_url(trim($result['stdout']), PHP_URL_QUERY), $query);
-
-    expect($query)->toMatchArray([
-        'site' => 'BOGUS',
-        'sort' => 'nonexistent',
-        'hits' => '9999',
-    ]);
-});
-
-test('--no-validate なら必須オプションも要求しない', function (): void {
-    $result = runItemList(['--no-validate', '--dry-run']);
-
-    expect($result['code'])->toBe(Application::EXIT_SUCCESS)
-        ->and($result['stdout'])->not->toContain('site=');
-});
-
-test('--no-validate でも複数指定はそのまま送る', function (): void {
-    $result = runItemList([
-        '--article=whatever',
-        '--article=another',
-        '--article-id=1',
-        '--no-validate',
-        '--dry-run',
-    ]);
-
-    parse_str((string) parse_url(trim($result['stdout']), PHP_URL_QUERY), $query);
-
-    expect($query)->toMatchArray([
-        'article' => ['whatever', 'another'],
-        'article_id' => '1',
-    ]);
-});
-
 test('アフィリエイト ID は形式を問わずそのまま送る', function (): void {
     // 受け付ける形式は API 側の都合で決まるため、コマンド側では検証しない。
     putenv('DMM_AFFILIATE_ID=myaffiliateid-123');

@@ -29,11 +29,6 @@ final class SeriesSearchCommand extends FloorScopedSearchCommand
         return 'シリーズ';
     }
 
-    protected function endpoint(): string
-    {
-        return SeriesSearchRequest::ENDPOINT;
-    }
-
     protected function createFloorScopedRequest(
         string $floorId,
         ?string $initial,

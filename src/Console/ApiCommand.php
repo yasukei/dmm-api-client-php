@@ -13,7 +13,6 @@ use DmmApiClient\Api\Exception\MalformedResponseException;
 use DmmApiClient\Api\Exception\ResponseValidationException;
 use DmmApiClient\Api\Exception\TransportException;
 use DmmApiClient\Api\Request\Credentials;
-use DmmApiClient\Api\Request\RawRequest;
 use DmmApiClient\Api\Request\Request;
 use Http\Discovery\Exception\NotFoundException;
 use JsonException;
@@ -68,7 +67,6 @@ abstract class ApiCommand implements Command
             new OptionDefinition('env-file', '読み込む .env のパス（既定: カレントディレクトリの .env）', 'PATH'),
             new OptionDefinition('dry-run', '送信せずに、組み立てた URI だけを表示する'),
             new OptionDefinition('raw', 'レスポンスを整形せず、受け取ったまま出力する'),
-            new OptionDefinition('no-validate', 'パラメータもレスポンスも検証しない（指定した値をそのまま送り、返ってきた JSON をそのまま出す）'),
             new OptionDefinition('no-mask', '認証情報を伏せ字にせず、そのまま出力する'),
             new OptionDefinition('help', 'このコマンドの使い方を表示する'),
         ];
@@ -118,11 +116,6 @@ abstract class ApiCommand implements Command
     abstract protected function requestOptions(): array;
 
     /**
-     * 呼び出す API のエンドポイントパス（例: `/FloorList`）。
-     */
-    abstract protected function endpoint(): string;
-
-    /**
      * オプションからリクエストを組み立てる。
      *
      * @throws UsageException オプションの値が不正な場合
@@ -136,7 +129,11 @@ abstract class ApiCommand implements Command
      * 戻り値の DTO はコンソールでは使わない（出力は生ボディから作る）が、
      * 型付きメソッドを通すこと自体が検証を意味する。
      *
-     * @throws UsageException オプションの値が不正な場合
+     * @throws UsageException               オプションの値が不正な場合
+     * @throws TransportException           HTTP 通信に失敗した場合
+     * @throws ApiErrorException            API がエラーを返した場合
+     * @throws MalformedResponseException   レスポンスが JSON として読めなかった場合
+     * @throws ResponseValidationException  レスポンスが期待する構造と一致しなかった場合
      */
     abstract protected function invoke(DmmApiClient $client, Input $input): object;
 
@@ -147,7 +144,6 @@ abstract class ApiCommand implements Command
 
     final public function execute(Input $input, Environment $environment, Output $output): int
     {
-        $unchecked = $input->flag('no-validate');
         $credentials = $environment->credentials();
 
         // 認証情報はエコーバックにも affiliateURL にも埋め込まれて返ってくる。
@@ -160,20 +156,13 @@ abstract class ApiCommand implements Command
         $client = $this->createClient($credentials);
 
         if ($input->flag('dry-run')) {
-            $request = $unchecked ? $this->createUncheckedRequest($input) : $this->createRequest($input);
-            $output->line($client->buildUri($request));
+            $output->line($client->buildUri($this->createRequest($input)));
 
             return Application::EXIT_SUCCESS;
         }
 
         try {
-            if ($unchecked) {
-                // 型付きメソッドは通せない。RawRequest は itemList() などが要求する
-                // 具体型ではないうえ、検証を外すのが --no-validate の目的でもある。
-                $client->fetchRaw($this->createUncheckedRequest($input));
-            } else {
-                $this->invoke($client, $input);
-            }
+            $this->invoke($client, $input);
         } catch (TransportException $exception) {
             // レスポンスそのものが届いていないので、書き出す本文も無い。
             $output->error($exception->getMessage());
@@ -372,34 +361,6 @@ abstract class ApiCommand implements Command
                 $exception->getMessage(),
             ));
         }
-    }
-
-    /**
-     * 検証を通さずにリクエストを組み立てる。
-     *
-     * 値を取るオプションのうち指定されたものを、そのままクエリパラメータにする。
-     * オプション名の `-` はクエリのキーでは `_` になる（`--gte-date` → `gte_date`）。
-     * 繰り返し指定されたオプションは、そのまま複数の値として送る。
-     */
-    private function createUncheckedRequest(Input $input): Request
-    {
-        $parameters = [];
-
-        foreach ($this->requestOptions() as $option) {
-            if (! $option->takesValue()) {
-                continue;
-            }
-
-            $values = $input->optionValues($option->name);
-
-            if ($values === []) {
-                continue;
-            }
-
-            $parameters[str_replace('-', '_', $option->name)] = count($values) === 1 ? $values[0] : $values;
-        }
-
-        return new RawRequest($this->endpoint(), $parameters);
     }
 
     /**

@@ -46,11 +46,6 @@ final class ItemListCommand extends ApiCommand
         ];
     }
 
-    protected function endpoint(): string
-    {
-        return ItemListRequest::ENDPOINT;
-    }
-
     protected function createRequest(Input $input): ItemListRequest
     {
         return new ItemListRequest(

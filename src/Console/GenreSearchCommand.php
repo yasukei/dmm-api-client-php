@@ -29,11 +29,6 @@ final class GenreSearchCommand extends FloorScopedSearchCommand
         return 'ジャンル';
     }
 
-    protected function endpoint(): string
-    {
-        return GenreSearchRequest::ENDPOINT;
-    }
-
     protected function createFloorScopedRequest(
         string $floorId,
         ?string $initial,
