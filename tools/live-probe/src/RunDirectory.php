@@ -22,8 +22,7 @@ final readonly class RunDirectory
 
     private function __construct(
         public string $path,
-    ) {
-    }
+    ) {}
 
     /**
      * @throws ProbeException

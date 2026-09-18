@@ -32,8 +32,7 @@ final class Clients
         private readonly Credentials $credentials,
         private readonly ?ClientInterface $httpClient,
         private readonly string $baseUri,
-    ) {
-    }
+    ) {}
 
     /**
      * 実行に指定された認証情報で送るクライアント。

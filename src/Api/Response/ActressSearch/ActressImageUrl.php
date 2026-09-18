@@ -16,6 +16,5 @@ final readonly class ActressImageUrl
     public function __construct(
         public string $small,
         public string $large,
-    ) {
-    }
+    ) {}
 }

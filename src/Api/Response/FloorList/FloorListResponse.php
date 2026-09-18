@@ -18,6 +18,5 @@ final readonly class FloorListResponse
     public function __construct(
         public FloorListResult $result,
         public ?RequestEcho $request = null,
-    ) {
-    }
+    ) {}
 }

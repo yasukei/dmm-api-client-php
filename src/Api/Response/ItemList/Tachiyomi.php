@@ -20,6 +20,5 @@ final readonly class Tachiyomi
         public string $url,
         #[MapFromKey('affiliateURL')]
         public string $affiliateUrl,
-    ) {
-    }
+    ) {}
 }

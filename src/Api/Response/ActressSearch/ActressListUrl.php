@@ -18,6 +18,5 @@ final readonly class ActressListUrl
         public string $digital,
         public string $monthly,
         public string $mono,
-    ) {
-    }
+    ) {}
 }

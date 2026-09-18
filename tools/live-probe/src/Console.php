@@ -16,8 +16,7 @@ final readonly class Console
 {
     public function __construct(
         private Output $output,
-    ) {
-    }
+    ) {}
 
     public function progress(string $line): void
     {

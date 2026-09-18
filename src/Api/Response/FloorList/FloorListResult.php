@@ -16,6 +16,5 @@ final readonly class FloorListResult
      */
     public function __construct(
         public array $site = [],
-    ) {
-    }
+    ) {}
 }

@@ -82,7 +82,7 @@ test('PSR-18 の実装が見つからなければ使い方のエラーにする'
 
     // 自動検出を通したいので、スタブのクライアントは渡さない。
     $code = withoutDiscovery(
-        fn (): int => (new Application(null, $captured->output))->run(['dmm-api-client', 'floor-list']),
+        fn(): int => (new Application(null, $captured->output))->run(['dmm-api-client', 'floor-list']),
     );
 
     expect($code)->toBe(Application::EXIT_USAGE)

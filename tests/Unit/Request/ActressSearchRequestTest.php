@@ -72,7 +72,7 @@ test('生年月日は時刻を落として日付だけ載せる', function (): v
 });
 
 scenario('範囲外の hits を拒否する', function (int $hits): void {
-    expect(fn (): ActressSearchRequest => new ActressSearchRequest(hits: $hits))
+    expect(fn(): ActressSearchRequest => new ActressSearchRequest(hits: $hits))
         ->toThrow(InvalidArgumentException::class, 'hits must be between 1 and 100');
 })->with([[0], [ActressSearchRequest::HITS_MAX + 1]]);
 
@@ -82,6 +82,6 @@ test('offset に上限はない', function (): void {
 });
 
 scenario('1 未満の offset は拒否する', function (int $offset): void {
-    expect(fn (): ActressSearchRequest => new ActressSearchRequest(offset: $offset))
+    expect(fn(): ActressSearchRequest => new ActressSearchRequest(offset: $offset))
         ->toThrow(InvalidArgumentException::class, 'offset must be 1 or greater');
 })->with([[0], [-1]]);

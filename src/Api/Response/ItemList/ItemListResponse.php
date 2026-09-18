@@ -18,6 +18,5 @@ final readonly class ItemListResponse
     public function __construct(
         public ItemListResult $result,
         public ?RequestEcho $request = null,
-    ) {
-    }
+    ) {}
 }

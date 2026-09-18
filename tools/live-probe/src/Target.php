@@ -17,18 +17,18 @@ use DmmApiClient\Api\Request\Request;
 final readonly class Target
 {
     /**
-     * @param string                 $group         出力先のサブディレクトリ名（例: ItemList）
-     * @param string                 $endpoint      API のエンドポイントパス（例: /ItemList）
-     * @param class-string           $responseClass 検証に使う DTO
-     * @param string                 $key           ファイル名の先頭に付ける、対象を表す文字列
-     * @param string|null            $sort          sort パラメータの値。持たない API では null
-     * @param int|null               $hits          hits パラメータの値。持たない API では null
-     * @param int                    $offsetMax     offset の上限
-     * @param array<string, string>  $context       manifest に残す内訳
-     * @param Closure(int): Request  $build         offset からリクエストを組み立てる
-     * @param Credentials|null       $credentials   送信に使う認証情報。null なら実行に指定されたものを使う
-     * @param bool                   $expectsError  API がエラーを返すことを前提にした対象か。返らなければ実行を失敗させる
-     * @param bool                   $firstPageOnly 先頭ページだけを取る対象か。中間・末尾は取らない
+     * @param string                $group         出力先のサブディレクトリ名（例: ItemList）
+     * @param string                $endpoint      API のエンドポイントパス（例: /ItemList）
+     * @param class-string          $responseClass 検証に使う DTO
+     * @param string                $key           ファイル名の先頭に付ける、対象を表す文字列
+     * @param string|null           $sort          sort パラメータの値。持たない API では null
+     * @param int|null              $hits          hits パラメータの値。持たない API では null
+     * @param int                   $offsetMax     offset の上限
+     * @param array<string, string> $context       manifest に残す内訳
+     * @param Closure(int): Request $build         offset からリクエストを組み立てる
+     * @param Credentials|null      $credentials   送信に使う認証情報。null なら実行に指定されたものを使う
+     * @param bool                  $expectsError  API がエラーを返すことを前提にした対象か。返らなければ実行を失敗させる
+     * @param bool                  $firstPageOnly 先頭ページだけを取る対象か。中間・末尾は取らない
      */
     public function __construct(
         public string $group,
@@ -43,8 +43,7 @@ final readonly class Target
         public ?Credentials $credentials = null,
         public bool $expectsError = false,
         public bool $firstPageOnly = false,
-    ) {
-    }
+    ) {}
 
     /**
      * ページングを持たない（1 回叩いて終わる）対象か。

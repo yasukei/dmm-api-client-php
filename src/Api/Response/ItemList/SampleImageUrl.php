@@ -23,6 +23,5 @@ final readonly class SampleImageUrl
         public ?SampleImages $sampleS = null,
         #[MapFromKey('sample_l')]
         public ?SampleImages $sampleL = null,
-    ) {
-    }
+    ) {}
 }

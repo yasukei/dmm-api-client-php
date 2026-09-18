@@ -26,8 +26,7 @@ final class Output
         private $stdout = STDOUT,
         private $stderr = STDERR,
         private readonly ?CredentialMasker $masker = null,
-    ) {
-    }
+    ) {}
 
     /**
      * 書き出す内容をすべて伏せ字にした、同じ宛先の Output を返す。

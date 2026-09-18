@@ -64,26 +64,26 @@ test('同じオプションを繰り返した場合は後の指定が勝つ', fu
 });
 
 test('未定義のオプションを拒否する', function (): void {
-    expect(fn (): Input => Input::parse(['--typo=1'], inputDefinitions()))
+    expect(fn(): Input => Input::parse(['--typo=1'], inputDefinitions()))
         ->toThrow(UsageException::class, 'Unknown option "--typo".');
 });
 
 test('値の無いオプションを拒否する', function (): void {
-    expect(fn (): Input => Input::parse(['--api-id'], inputDefinitions()))
+    expect(fn(): Input => Input::parse(['--api-id'], inputDefinitions()))
         ->toThrow(UsageException::class, 'Option "--api-id" requires a value.');
 });
 
 test('次がオプションなら値とみなさない', function (): void {
-    expect(fn (): Input => Input::parse(['--api-id', '--raw'], inputDefinitions()))
+    expect(fn(): Input => Input::parse(['--api-id', '--raw'], inputDefinitions()))
         ->toThrow(UsageException::class, 'Option "--api-id" requires a value.');
 });
 
 test('フラグへの値指定を拒否する', function (): void {
-    expect(fn (): Input => Input::parse(['--raw=1'], inputDefinitions()))
+    expect(fn(): Input => Input::parse(['--raw=1'], inputDefinitions()))
         ->toThrow(UsageException::class, 'Option "--raw" does not take a value.');
 });
 
 test('オプション以外の引数を拒否する', function (): void {
-    expect(fn (): Input => Input::parse(['extra'], inputDefinitions()))
+    expect(fn(): Input => Input::parse(['extra'], inputDefinitions()))
         ->toThrow(UsageException::class, 'Unexpected argument "extra".');
 });

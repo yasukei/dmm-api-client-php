@@ -48,6 +48,5 @@ final readonly class ItemInfo
         public array $artist = [],
         #[MapFromKey('genre_category')]
         public array $genreCategory = [],
-    ) {
-    }
+    ) {}
 }

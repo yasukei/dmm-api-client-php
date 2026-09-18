@@ -28,6 +28,5 @@ final readonly class Campaign
         #[MapFromKey('date_end')]
         public string $dateEnd,
         public string $title,
-    ) {
-    }
+    ) {}
 }

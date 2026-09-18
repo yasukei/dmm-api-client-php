@@ -84,6 +84,5 @@ final readonly class Item
         public ?string $isbn = null,
         public ?CdInfo $cdinfo = null,
         public ?array $campaign = null,
-    ) {
-    }
+    ) {}
 }

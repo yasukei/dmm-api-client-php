@@ -69,7 +69,7 @@ final readonly class Probe
 
         try {
             return (new self($options, $console))->run();
-        } catch (ProbeException | UsageException | DmmApiClientException $exception) {
+        } catch (ProbeException|UsageException|DmmApiClientException $exception) {
             // 取得の途中で起きた失敗はレポートに集約する。ここに来るのは、
             // 認証情報が不正だった、FloorList が引けなかったなど、続けられない場合。
             $console->progress($exception->getMessage());
@@ -81,13 +81,14 @@ final readonly class Probe
     private function __construct(
         private Options $options,
         private Console $console,
-    ) {
-    }
+    ) {}
 
     /**
-     * @throws ProbeException|UsageException|DmmApiClientException
-     * @throws NotFoundException PSR-18 / PSR-17 の実装が見つからない場合
-     * @throws JsonException     記録を JSON にできなかった場合
+     * @throws ProbeException
+     * @throws UsageException
+     * @throws DmmApiClientException
+     * @throws NotFoundException     PSR-18 / PSR-17 の実装が見つからない場合
+     * @throws JsonException         記録を JSON にできなかった場合
      */
     private function run(): int
     {
@@ -415,7 +416,7 @@ final readonly class Probe
 
         ksort($best);
 
-        return array_values(array_map(static fn (array $pair): FloorRef => $pair[1], $best));
+        return array_values(array_map(static fn(array $pair): FloorRef => $pair[1], $best));
     }
 
     /**
@@ -675,11 +676,11 @@ final readonly class Probe
      *
      * フロアの一覧が要るので、過去の実行が残っていればそれを読み、無ければ `FloorList` だけ 1 回叩く。
      *
-     * @throws ProbeException            保存済みの実行を読めなかった場合
-     * @throws NotFoundException         PSR-18 / PSR-17 の実装が見つからない場合
-     * @throws InvalidArgumentException  リクエストが受け付けない値だった場合
-     * @throws TransportException        HTTP 通信に失敗した場合
-     * @throws ApiErrorException         API がエラーを返した場合
+     * @throws ProbeException           保存済みの実行を読めなかった場合
+     * @throws NotFoundException        PSR-18 / PSR-17 の実装が見つからない場合
+     * @throws InvalidArgumentException リクエストが受け付けない値だった場合
+     * @throws TransportException       HTTP 通信に失敗した場合
+     * @throws ApiErrorException        API がエラーを返した場合
      */
     private function dryRun(
         Clients $clients,
@@ -817,7 +818,7 @@ final readonly class Probe
             hits: null,
             offsetMax: 1,
             context: [],
-            build: static fn (int $offset): Request => new FloorListRequest(),
+            build: static fn(int $offset): Request => new FloorListRequest(),
         );
     }
 

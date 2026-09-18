@@ -165,7 +165,7 @@ test('未知の在庫状況は検証エラーにする', function (): void {
     // 知らない値が来ればページ全体が例外になる。増えたことを見逃さないための代償。
     $payload = Fixture::decodedWith('item-list', ['result', 'items'], [monoItem(['stock' => 'sold_out'])]);
 
-    expect(fn (): ItemListResponse => responseMapper()->itemList($payload))
+    expect(fn(): ItemListResponse => responseMapper()->itemList($payload))
         ->toThrow(ResponseValidationException::class);
 });
 
@@ -180,7 +180,7 @@ test('商品階層を上位から下位の順にマッピングする', function
     $directory = responseMapper()->itemList($payload)->result->items[0]->directory;
 
     expect($directory)->not->toBeNull()
-        ->and(array_map(static fn (Directory $d): array => [$d->id, $d->name], $directory ?? []))
+        ->and(array_map(static fn(Directory $d): array => [$d->id, $d->name], $directory ?? []))
         ->toBe([[102, 'DVD'], [123, 'イメージビデオ'], [343, '女性アイドル・グラビア']]);
 });
 
@@ -197,7 +197,7 @@ test('商品階層の ID が文字列なら検証エラーにする', function (
         'directory' => [['id' => '102', 'name' => 'DVD']],
     ])]);
 
-    expect(fn (): ItemListResponse => responseMapper()->itemList($payload))
+    expect(fn(): ItemListResponse => responseMapper()->itemList($payload))
         ->toThrow(ResponseValidationException::class);
 });
 
@@ -223,7 +223,7 @@ test('JAN コードが数値で返れば検証エラーにする', function (): 
     // 実データは常に文字列。数値を受け入れると、先頭が 0 の値を取り違える余地が生まれる。
     $payload = Fixture::decodedWith('item-list', ['result', 'items'], [monoItem(['jancode' => 4997766612850])]);
 
-    expect(fn (): ItemListResponse => responseMapper()->itemList($payload))
+    expect(fn(): ItemListResponse => responseMapper()->itemList($payload))
         ->toThrow(ResponseValidationException::class);
 });
 
@@ -476,7 +476,7 @@ test('name/value 形式のエコーバックは検証エラーにする', functi
         ['name' => 'api_id', 'value' => 'MY_API_ID'],
     ]);
 
-    expect(fn (): ItemListResponse => responseMapper()->itemList($payload))
+    expect(fn(): ItemListResponse => responseMapper()->itemList($payload))
         ->toThrow(ResponseValidationException::class);
 });
 
@@ -652,7 +652,7 @@ test('厳密なマッパーは知らない項目を検証エラーにする', fu
     // 既定のマッパーは黙って捨てるので、項目が増えても気づけない。気づきたい場合の入口。
     $payload = Fixture::decodedWith('item-list-empty', ['result', 'brand_new_field'], 'something');
 
-    expect(fn (): object => ResponseMapper::strict()->itemList($payload))
+    expect(fn(): object => ResponseMapper::strict()->itemList($payload))
         ->toThrow(ResponseValidationException::class);
 });
 
@@ -690,7 +690,7 @@ test('型の食い違いは知らない項目とは別のコードになる', fu
 test('型が仕様と違えば、パス付きで検証エラーにする', function (): void {
     $payload = Fixture::decodedWith('item-list-empty', ['result', 'total_count'], 'many');
 
-    expect(fn (): ItemListResponse => responseMapper()->itemList($payload))
+    expect(fn(): ItemListResponse => responseMapper()->itemList($payload))
         ->toThrow(ResponseValidationException::class);
 
     try {
@@ -708,7 +708,7 @@ test('型が仕様と違えば、パス付きで検証エラーにする', funct
 test('数値を表す文字列でも int には暗黙変換しない', function (): void {
     $payload = Fixture::decodedWith('item-list-empty', ['result', 'total_count'], '10');
 
-    expect(fn (): ItemListResponse => responseMapper()->itemList($payload))
+    expect(fn(): ItemListResponse => responseMapper()->itemList($payload))
         ->toThrow(ResponseValidationException::class);
 });
 
@@ -716,6 +716,6 @@ test('必須項目が欠けていれば検証エラーにする', function (): v
     // title と URL は欠けることがあるので、例には使えない。content_id は全商品にあった。
     $payload = Fixture::decodedWithout('item-list', ['result', 'items', 0, 'content_id']);
 
-    expect(fn (): ItemListResponse => responseMapper()->itemList($payload))
+    expect(fn(): ItemListResponse => responseMapper()->itemList($payload))
         ->toThrow(ResponseValidationException::class);
 });

@@ -10,6 +10,4 @@ use RuntimeException;
 /**
  * PSR-18 クライアントが通信に失敗したときに投げる例外の代役。
  */
-final class NetworkFailure extends RuntimeException implements ClientExceptionInterface
-{
-}
+final class NetworkFailure extends RuntimeException implements ClientExceptionInterface {}

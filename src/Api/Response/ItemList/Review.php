@@ -16,6 +16,5 @@ final readonly class Review
     public function __construct(
         public int $count,
         public string $average,
-    ) {
-    }
+    ) {}
 }

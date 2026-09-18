@@ -18,6 +18,5 @@ final readonly class MakerSearchResponse
     public function __construct(
         public MakerSearchResult $result,
         public ?RequestEcho $request = null,
-    ) {
-    }
+    ) {}
 }

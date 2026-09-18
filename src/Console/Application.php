@@ -86,7 +86,7 @@ final readonly class Application
             }
 
             return $command->execute($input, Environment::loadFor($input->option('env-file')), $this->output);
-        } catch (UsageException | InvalidArgumentException $exception) {
+        } catch (UsageException|InvalidArgumentException $exception) {
             $this->output->error($exception->getMessage());
             $this->output->error(sprintf('Run "%s %s --help" for usage.', self::BINARY, $command->name()));
 

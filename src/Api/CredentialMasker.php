@@ -30,8 +30,7 @@ final readonly class CredentialMasker
      */
     private function __construct(
         private array $secrets,
-    ) {
-    }
+    ) {}
 
     public static function forCredentials(Credentials $credentials): self
     {
@@ -64,7 +63,7 @@ final readonly class CredentialMasker
 
         $targets = array_values(array_unique($targets));
 
-        usort($targets, static fn (string $a, string $b): int => strlen($b) <=> strlen($a));
+        usort($targets, static fn(string $a, string $b): int => strlen($b) <=> strlen($a));
 
         return new self($targets);
     }

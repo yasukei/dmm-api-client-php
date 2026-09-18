@@ -28,13 +28,13 @@ final readonly class Reporter
     /** 実例に載せる、実際の値の最大文字数。 */
     private const int VALUE_LIMIT = 300;
 
-    private const string ARTICLE_INTRO =
-        'Each floor is swept again with the most frequent id of every article the floor\'s items actually '
+    private const string ARTICLE_INTRO
+        = 'Each floor is swept again with the most frequent id of every article the floor\'s items actually '
         . 'carry. An id that draws nothing is retried once with the next most frequent one, and the attempt '
         . 'it replaces reads as retried.';
 
-    private const string STOCK_INTRO =
-        'Every mono floor is swept again once per mono_stock value, including the values the enum says '
+    private const string STOCK_INTRO
+        = 'Every mono floor is swept again once per mono_stock value, including the values the enum says '
         . 'cannot be used to filter — that was read off a handful of responses, never checked floor by floor.';
 
     /**
@@ -45,8 +45,7 @@ final readonly class Reporter
         private array $records,
         private RunDirectory $run,
         private float $elapsed,
-    ) {
-    }
+    ) {}
 
     /**
      * 検証に失敗した、あるいは通信に失敗したリクエストがあるか。
@@ -233,12 +232,12 @@ final readonly class Reporter
     }
 
     /**
-     * @param list<FailureGroup> $groups
-     * @param list<FailureGroup> $unknownKeys
-     * @param list<array{requests: int, message: string, status: int|null, samples: list<string>}>                                                                                                                          $apiErrors
-     * @param list<array{label: string, uri: string, message: string}>                                                                                                                                                      $transportErrors
-     * @param list<FilterRow>                                                                                                                                                                                        $articleFilters
-     * @param list<FilterRow>                                                                                                                                                                                        $stockFilters
+     * @param list<FailureGroup>                                                                   $groups
+     * @param list<FailureGroup>                                                                   $unknownKeys
+     * @param list<array{requests: int, message: string, status: int|null, samples: list<string>}> $apiErrors
+     * @param list<array{label: string, uri: string, message: string}>                             $transportErrors
+     * @param list<FilterRow>                                                                      $articleFilters
+     * @param list<FilterRow>                                                                      $stockFilters
      */
     private function markdown(
         array $groups,
@@ -261,7 +260,7 @@ final readonly class Reporter
                 $counts['transport-error'],
                 $counts['cached'],
             ),
-            ...array_map(static fn (string $line): string => '- ' . $line, self::unexpectedOk($counts)),
+            ...array_map(static fn(string $line): string => '- ' . $line, self::unexpectedOk($counts)),
             sprintf('- elapsed: %s', self::duration($this->elapsed)),
             sprintf(
                 '- validation: ok %d / failed %d / skipped %d',
@@ -381,7 +380,7 @@ final readonly class Reporter
      */
     private function failureGroups(): array
     {
-        return $this->groups(static fn (Record $record): array => $record->validation === Record::VALIDATION_FAILED
+        return $this->groups(static fn(Record $record): array => $record->validation === Record::VALIDATION_FAILED
             ? $record->errors
             : []);
     }
@@ -395,7 +394,7 @@ final readonly class Reporter
      */
     private function unknownKeyGroups(): array
     {
-        return $this->groups(static fn (Record $record): array => $record->unknownKeys);
+        return $this->groups(static fn(Record $record): array => $record->unknownKeys);
     }
 
     /**
@@ -429,7 +428,7 @@ final readonly class Reporter
             }
         }
 
-        uasort($grouped, static fn (array $a, array $b): int => $b['requests'] <=> $a['requests']);
+        uasort($grouped, static fn(array $a, array $b): int => $b['requests'] <=> $a['requests']);
 
         $groups = [];
 
@@ -530,7 +529,7 @@ final readonly class Reporter
             }
         }
 
-        uasort($grouped, static fn (array $a, array $b): int => $b['requests'] <=> $a['requests']);
+        uasort($grouped, static fn(array $a, array $b): int => $b['requests'] <=> $a['requests']);
 
         $groups = [];
 
@@ -659,7 +658,7 @@ final readonly class Reporter
                 return null;
             }
 
-            return [$article, $id, static fn (array $item): bool => self::carriesAll($item, $names, $ids)];
+            return [$article, $id, static fn(array $item): bool => self::carriesAll($item, $names, $ids)];
         }));
     }
 
@@ -684,7 +683,7 @@ final readonly class Reporter
                 return null;
             }
 
-            return [$stock, $stock, static fn (array $item): bool => ($item['stock'] ?? null) === $stock];
+            return [$stock, $stock, static fn(array $item): bool => ($item['stock'] ?? null) === $stock];
         });
     }
 
@@ -696,8 +695,8 @@ final readonly class Reporter
      * 絞り込み無しの件数の借り方は同じなのでここに置く。
      *
      * @param Closure(Record): ?array{string, string, Closure(array<mixed>): bool} $describe
-     *        行に載せる名前と値、および商品 1 件が指定に合うかの判定を返す。
-     *        見るべきものが揃っていなければ null を返して、その対象を飛ばす
+     *                                                                                       行に載せる名前と値、および商品 1 件が指定に合うかの判定を返す。
+     *                                                                                       見るべきものが揃っていなければ null を返して、その対象を飛ばす
      *
      * @return list<FilterRow>
      */
@@ -752,9 +751,9 @@ final readonly class Reporter
      *
      * 複数指定は重ねた絞り込みとして扱う。1 つでも欠けていれば、その商品は条件を満たしていない。
      *
-     * @param array<mixed>  $item
-     * @param list<string>  $names
-     * @param list<string>  $ids
+     * @param array<mixed> $item
+     * @param list<string> $names
+     * @param list<string> $ids
      */
     private static function carriesAll(array $item, array $names, array $ids): bool
     {
@@ -865,11 +864,11 @@ final readonly class Reporter
             $grouped[$filter['name']] ??= ['requests' => 0, 'verdicts' => []];
             $grouped[$filter['name']]['requests']++;
             $verdict = $filter['verdict'];
-            $grouped[$filter['name']]['verdicts'][$verdict] =
-                ($grouped[$filter['name']]['verdicts'][$verdict] ?? 0) + 1;
+            $grouped[$filter['name']]['verdicts'][$verdict]
+                = ($grouped[$filter['name']]['verdicts'][$verdict] ?? 0) + 1;
         }
 
-        uasort($grouped, static fn (array $a, array $b): int => $b['requests'] <=> $a['requests']);
+        uasort($grouped, static fn(array $a, array $b): int => $b['requests'] <=> $a['requests']);
 
         $groups = [];
 
@@ -906,7 +905,7 @@ final readonly class Reporter
      * `unreachable` は通信に失敗したもので、指定の可否は判断できていない。
      *
      * @param string          $nameHeader  束ねる単位の見出し（例: article）
-     * @param string|null      $valueHeader 指定した値の見出し（例: article_id）。束ねる単位と同じなら null
+     * @param string|null     $valueHeader 指定した値の見出し（例: article_id）。束ねる単位と同じなら null
      * @param list<FilterRow> $filters
      *
      * @return list<string>

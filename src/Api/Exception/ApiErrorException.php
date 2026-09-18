@@ -29,7 +29,7 @@ final class ApiErrorException extends RuntimeException implements DmmApiClientEx
         $detail = $error->errors === []
             ? ''
             : ' (' . implode(', ', array_map(
-                static fn (string $field, string $reason): string => "{$field}: {$reason}",
+                static fn(string $field, string $reason): string => "{$field}: {$reason}",
                 array_keys($error->errors),
                 $error->errors,
             )) . ')';

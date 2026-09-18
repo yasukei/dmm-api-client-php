@@ -27,8 +27,7 @@ final readonly class Environment
      */
     private function __construct(
         private array $fileValues,
-    ) {
-    }
+    ) {}
 
     /**
      * @param string|null $path     読み込む `.env` のパス

@@ -54,8 +54,7 @@ abstract class ApiCommand implements Command
 
     public function __construct(
         private readonly ?ClientInterface $httpClient = null,
-    ) {
-    }
+    ) {}
 
     /**
      * すべてのサブコマンドが受け付けるオプション。
@@ -81,7 +80,7 @@ abstract class ApiCommand implements Command
     final public static function allowedValues(string $enum): string
     {
         return implode(', ', array_map(
-            static fn (BackedEnum $case): string => (string) $case->value,
+            static fn(BackedEnum $case): string => (string) $case->value,
             $enum::cases(),
         ));
     }
@@ -131,12 +130,12 @@ abstract class ApiCommand implements Command
      * 戻り値の DTO はコンソールでは使わない（出力は生ボディから作る）が、
      * 型付きメソッドを通すこと自体が検証を意味する。
      *
-     * @throws UsageException               オプションの値が不正な場合
-     * @throws InvalidArgumentException     リクエストが受け付けない値だった場合
-     * @throws TransportException           HTTP 通信に失敗した場合
-     * @throws ApiErrorException            API がエラーを返した場合
-     * @throws MalformedResponseException   レスポンスが JSON として読めなかった場合
-     * @throws ResponseValidationException  レスポンスが期待する構造と一致しなかった場合
+     * @throws UsageException              オプションの値が不正な場合
+     * @throws InvalidArgumentException    リクエストが受け付けない値だった場合
+     * @throws TransportException          HTTP 通信に失敗した場合
+     * @throws ApiErrorException           API がエラーを返した場合
+     * @throws MalformedResponseException  レスポンスが JSON として読めなかった場合
+     * @throws ResponseValidationException レスポンスが期待する構造と一致しなかった場合
      */
     abstract protected function invoke(DmmApiClient $client, Input $input): object;
 
@@ -178,7 +177,7 @@ abstract class ApiCommand implements Command
             $output->error($exception->getMessage());
 
             return Application::EXIT_FAILURE;
-        } catch (ApiErrorException | MalformedResponseException $exception) {
+        } catch (ApiErrorException|MalformedResponseException $exception) {
             // エラーの中身こそ見たいので、ボディは通常どおり標準出力へ流す。
             $this->writeBody($client, $input, $output);
             $output->error($exception->getMessage());
@@ -264,7 +263,7 @@ abstract class ApiCommand implements Command
      *
      * @template T of BackedEnum
      *
-     * @param string          $name  文言に載せるオプション名（`--` は付けない）
+     * @param string          $name 文言に載せるオプション名（`--` は付けない）
      * @param class-string<T> $enum
      *
      * @return T
@@ -341,7 +340,7 @@ abstract class ApiCommand implements Command
     {
         return preg_replace_callback(
             '/^(\d{1,4})-(\d{1,2})-(\d{1,2})(?=$|[T ])/',
-            static fn (array $matches): string => sprintf(
+            static fn(array $matches): string => sprintf(
                 '%04d-%02d-%02d',
                 $matches[1],
                 $matches[2],

@@ -18,6 +18,5 @@ final readonly class ItemImageUrl
         public string $list,
         public ?string $small = null,
         public ?string $large = null,
-    ) {
-    }
+    ) {}
 }

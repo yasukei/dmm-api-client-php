@@ -16,6 +16,5 @@ final readonly class CdInfo
      */
     public function __construct(
         public string $kind,
-    ) {
-    }
+    ) {}
 }

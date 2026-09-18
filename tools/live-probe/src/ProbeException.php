@@ -11,6 +11,4 @@ use RuntimeException;
  *
  * API のレスポンスに関する失敗はレポートに集約するので、ここには含めない。
  */
-final class ProbeException extends RuntimeException
-{
-}
+final class ProbeException extends RuntimeException {}

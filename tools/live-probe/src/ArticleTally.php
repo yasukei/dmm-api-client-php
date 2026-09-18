@@ -27,8 +27,7 @@ final readonly class ArticleTally
      */
     private function __construct(
         public array $candidates,
-    ) {
-    }
+    ) {}
 
     /**
      * 分類ごとに、まず試す ID。
@@ -190,6 +189,6 @@ final readonly class ArticleTally
             },
         );
 
-        return array_map(static fn (array $pair): string => $pair[0], $pairs);
+        return array_map(static fn(array $pair): string => $pair[0], $pairs);
     }
 }

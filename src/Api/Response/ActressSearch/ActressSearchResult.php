@@ -30,6 +30,5 @@ final readonly class ActressSearchResult
         #[MapFromKey('first_position')]
         public string $firstPosition,
         public array $actress = [],
-    ) {
-    }
+    ) {}
 }

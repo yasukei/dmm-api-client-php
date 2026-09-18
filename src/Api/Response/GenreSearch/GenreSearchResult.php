@@ -51,6 +51,5 @@ final readonly class GenreSearchResult
         #[MapFromKey('floor_code')]
         public string $floorCode,
         public array $genre = [],
-    ) {
-    }
+    ) {}
 }

@@ -51,6 +51,5 @@ final readonly class AuthorSearchResult
         #[MapFromKey('floor_code')]
         public string $floorCode,
         public array $author = [],
-    ) {
-    }
+    ) {}
 }

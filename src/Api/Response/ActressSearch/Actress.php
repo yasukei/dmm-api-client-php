@@ -46,6 +46,5 @@ final readonly class Actress
         public ?ActressImageUrl $imageUrl = null,
         #[MapFromKey('listURL')]
         public ?ActressListUrl $listUrl = null,
-    ) {
-    }
+    ) {}
 }

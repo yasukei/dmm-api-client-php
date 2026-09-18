@@ -55,7 +55,7 @@ final readonly class Validator
     {
         return self::strip(array_filter(
             $this->map($this->strict, $responseClass, $body),
-            static fn (array $error): bool => $error['code'] === ResponseValidationException::CODE_UNEXPECTED_KEY,
+            static fn(array $error): bool => $error['code'] === ResponseValidationException::CODE_UNEXPECTED_KEY,
         ));
     }
 

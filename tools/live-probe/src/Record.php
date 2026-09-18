@@ -32,15 +32,15 @@ final readonly class Record
     public const string VALIDATION_SKIPPED = 'skipped';
 
     /**
-     * @param string                                       $group         出力先のサブディレクトリ名
-     * @param string                                       $endpoint      API のエンドポイントパス
-     * @param class-string                                 $responseClass 検証に使った DTO
-     * @param string|null                                  $file          run ディレクトリからの相対パス
-     * @param array<string, string>                        $context       サイト・サービス・フロアの内訳
-     * @param string                                       $uri           送信した URI（伏せ字済み）
-     * @param list<array{path: string, message: string}>   $errors        検証エラー
-     * @param list<array{path: string, message: string}>   $unknownKeys   DTO が知らないキー
-     * @param bool                                         $cached        取得せず、保存済みのファイルを使ったか（`--resume`）
+     * @param string                                     $group         出力先のサブディレクトリ名
+     * @param string                                     $endpoint      API のエンドポイントパス
+     * @param class-string                               $responseClass 検証に使った DTO
+     * @param string|null                                $file          run ディレクトリからの相対パス
+     * @param array<string, string>                      $context       サイト・サービス・フロアの内訳
+     * @param string                                     $uri           送信した URI（伏せ字済み）
+     * @param list<array{path: string, message: string}> $errors        検証エラー
+     * @param list<array{path: string, message: string}> $unknownKeys   DTO が知らないキー
+     * @param bool                                       $cached        取得せず、保存済みのファイルを使ったか（`--resume`）
      */
     public function __construct(
         public string $group,
@@ -63,8 +63,7 @@ final readonly class Record
         public int $durationMs,
         public array $unknownKeys = [],
         public bool $cached = false,
-    ) {
-    }
+    ) {}
 
     public function isFailure(): bool
     {

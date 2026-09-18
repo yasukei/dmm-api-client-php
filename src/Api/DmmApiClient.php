@@ -108,10 +108,10 @@ final readonly class DmmApiClient
     /**
      * 商品情報 API (`/ItemList`)。
      *
-     * @throws TransportException           HTTP 通信に失敗した場合
-     * @throws ApiErrorException            API がエラーを返した場合
-     * @throws MalformedResponseException   レスポンスが JSON として読めなかった場合
-     * @throws ResponseValidationException  レスポンスが期待する構造と一致しなかった場合
+     * @throws TransportException          HTTP 通信に失敗した場合
+     * @throws ApiErrorException           API がエラーを返した場合
+     * @throws MalformedResponseException  レスポンスが JSON として読めなかった場合
+     * @throws ResponseValidationException レスポンスが期待する構造と一致しなかった場合
      */
     public function itemList(ItemListRequest $request): ItemListResponse
     {
@@ -232,10 +232,10 @@ final readonly class DmmApiClient
      *
      * @return T
      *
-     * @throws TransportException           HTTP 通信に失敗した場合
-     * @throws ApiErrorException            API がエラーを返した場合
-     * @throws MalformedResponseException   レスポンスが JSON として読めなかった場合
-     * @throws ResponseValidationException  レスポンスが期待する構造と一致しなかった場合
+     * @throws TransportException          HTTP 通信に失敗した場合
+     * @throws ApiErrorException           API がエラーを返した場合
+     * @throws MalformedResponseException  レスポンスが JSON として読めなかった場合
+     * @throws ResponseValidationException レスポンスが期待する構造と一致しなかった場合
      */
     private function send(Request $request, string $responseClass): object
     {
@@ -272,7 +272,7 @@ final readonly class DmmApiClient
         try {
             $decoded = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
             $error = $this->responseMapper->map(ErrorResponse::class, $decoded);
-        } catch (JsonException | ResponseValidationException) {
+        } catch (JsonException|ResponseValidationException) {
             return ApiErrorException::fromUnreadableBody($statusCode, $body);
         }
 

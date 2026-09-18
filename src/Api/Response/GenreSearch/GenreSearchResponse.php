@@ -18,6 +18,5 @@ final readonly class GenreSearchResponse
     public function __construct(
         public GenreSearchResult $result,
         public ?RequestEcho $request = null,
-    ) {
-    }
+    ) {}
 }

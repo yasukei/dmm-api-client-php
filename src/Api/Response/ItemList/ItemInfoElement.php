@@ -27,6 +27,5 @@ final readonly class ItemInfoElement
         public int|string $id,
         public string $name,
         public ?string $ruby = null,
-    ) {
-    }
+    ) {}
 }
