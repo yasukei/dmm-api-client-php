@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace DmmApiClient\Console;
 
+use DmmApiClient\Api\DmmApiClient;
 use DmmApiClient\Api\MonoStock;
 use DmmApiClient\Api\Request\ArticleFilter;
 use DmmApiClient\Api\Request\ArticleType;
 use DmmApiClient\Api\Request\ItemListRequest;
 use DmmApiClient\Api\Request\ItemListSort;
-use DmmApiClient\Api\Request\Request;
-use DmmApiClient\Api\Response\ItemList\ItemListResponse;
 use DmmApiClient\Api\SiteCode;
 
 /**
@@ -47,21 +46,10 @@ final class ItemListCommand extends ApiCommand
         ];
     }
 
-    protected function endpoint(): string
+    protected function createRequest(Input $input): ItemListRequest
     {
-        return ItemListRequest::ENDPOINT;
-    }
-
-    protected function createRequest(Input $input): Request
-    {
-        $site = SiteCode::tryFrom($this->requiredOption($input, 'site'))
-            ?? throw new UsageException(sprintf(
-                'Invalid value for --site. Expected one of: %s.',
-                self::allowedValues(SiteCode::class),
-            ));
-
         return new ItemListRequest(
-            site: $site,
+            site: self::toEnum($this->requiredOption($input, 'site'), 'site', SiteCode::class),
             service: $input->option('service'),
             floor: $input->option('floor'),
             keyword: $input->option('keyword'),
@@ -76,9 +64,9 @@ final class ItemListCommand extends ApiCommand
         );
     }
 
-    protected function responseClass(): string
+    protected function invoke(DmmApiClient $client, Input $input): object
     {
-        return ItemListResponse::class;
+        return $client->itemList($this->createRequest($input));
     }
 
     /**
@@ -104,13 +92,7 @@ final class ItemListCommand extends ApiCommand
         $filters = [];
 
         foreach ($types as $index => $type) {
-            $articleType = ArticleType::tryFrom($type) ?? throw new UsageException(sprintf(
-                'Invalid value "%s" for --article. Expected one of: %s.',
-                $type,
-                self::allowedValues(ArticleType::class),
-            ));
-
-            $filters[] = new ArticleFilter($articleType, $ids[$index]);
+            $filters[] = new ArticleFilter(self::toEnum($type, 'article', ArticleType::class), $ids[$index]);
         }
 
         return $filters;

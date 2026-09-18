@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace DmmApiClient\Console;
 
-use DmmApiClient\Api\Request\Request;
+use DmmApiClient\Api\DmmApiClient;
 use DmmApiClient\Api\Request\SeriesSearchRequest;
-use DmmApiClient\Api\Response\SeriesSearch\SeriesSearchResponse;
 
 /**
  * シリーズ検索 API (`/SeriesSearch`) を呼び出す。
+ *
+ * @extends FloorScopedSearchCommand<SeriesSearchRequest>
  */
 final class SeriesSearchCommand extends FloorScopedSearchCommand
 {
@@ -28,22 +29,17 @@ final class SeriesSearchCommand extends FloorScopedSearchCommand
         return 'シリーズ';
     }
 
-    protected function endpoint(): string
-    {
-        return SeriesSearchRequest::ENDPOINT;
-    }
-
     protected function createFloorScopedRequest(
         string $floorId,
         ?string $initial,
         ?int $hits,
         ?int $offset,
-    ): Request {
+    ): SeriesSearchRequest {
         return new SeriesSearchRequest($floorId, $initial, $hits, $offset);
     }
 
-    protected function responseClass(): string
+    protected function invoke(DmmApiClient $client, Input $input): object
     {
-        return SeriesSearchResponse::class;
+        return $client->seriesSearch($this->createRequest($input));
     }
 }

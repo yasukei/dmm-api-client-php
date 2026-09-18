@@ -85,7 +85,7 @@ final readonly class Application
                 return self::EXIT_SUCCESS;
             }
 
-            return $command->execute($input, $this->loadEnvironment($input), $this->output);
+            return $command->execute($input, Environment::loadFor($input->option('env-file')), $this->output);
         } catch (UsageException | InvalidArgumentException $exception) {
             $this->output->error($exception->getMessage());
             $this->output->error(sprintf('Run "%s %s --help" for usage.', self::BINARY, $command->name()));
@@ -107,19 +107,6 @@ final readonly class Application
         }
 
         return null;
-    }
-
-    private function loadEnvironment(Input $input): Environment
-    {
-        $path = $input->option('env-file');
-
-        if ($path !== null) {
-            return Environment::load($path, required: true);
-        }
-
-        $workingDirectory = getcwd();
-
-        return Environment::load($workingDirectory === false ? null : $workingDirectory . '/.env');
     }
 
     private function printApplicationHelp(): void
@@ -184,21 +171,10 @@ final readonly class Application
      */
     private function printDateFormats(array $options): void
     {
-        $notes = [
-            ApiCommand::DATETIME_PLACEHOLDER => [
-                'DATETIME は 2016-04-01、2016-04-01T12:34:56、2016-04-01 12:34:56 のいずれかで指定する。',
-                '時刻を省略した場合、--gte-date は 00:00:00、--lte-date は 23:59:59 として扱う。',
-                '空白を含む形はシェルの引用符が要る。',
-            ],
-            ApiCommand::DATE_PLACEHOLDER => [
-                'DATE は 1990-01-01 のように日付で指定する。時刻は送信しない。',
-            ],
-        ];
-
         $placeholders = array_column($options, 'placeholder');
         $lines = [];
 
-        foreach ($notes as $placeholder => $note) {
+        foreach (ApiCommand::placeholderNotes() as $placeholder => $note) {
             if (in_array($placeholder, $placeholders, true)) {
                 $lines = [...$lines, ...$note];
             }

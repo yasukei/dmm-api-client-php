@@ -85,7 +85,7 @@ final readonly class Probe
             return $this->revalidate();
         }
 
-        $credentials = $this->credentials();
+        $credentials = Environment::loadFor($this->options->envFile)->credentials();
         $masker = $this->options->mask ? CredentialMasker::forCredentials($credentials) : CredentialMasker::disabled();
         $console = new Console((new Output())->masked($masker));
         $clients = new Clients($credentials, self::httpClient(), $this->options->baseUri);
@@ -185,7 +185,7 @@ final readonly class Probe
                 ));
             }
 
-            if ($this->options->limit !== null && $runner->sent() >= $this->options->limit) {
+            if ($runner->limitReached()) {
                 $console->progress(sprintf('reached --limit=%d; stopping.', $this->options->limit));
 
                 return false;
@@ -206,7 +206,7 @@ final readonly class Probe
      */
     private static function sortAddsNothing(Target $target, array $onePage): bool
     {
-        return $target->group === 'ItemList'
+        return $target->group === Planner::ITEM_LIST
             && $target->sort !== null
             && isset($onePage[$target->context['floor_id'] ?? '']);
     }
@@ -216,7 +216,7 @@ final readonly class Probe
      */
     private static function fitsOnOnePage(Target $target, Record $record): bool
     {
-        return $target->group === 'ItemList'
+        return $target->group === Planner::ITEM_LIST
             && $target->sort !== null
             && $target->hits !== null
             && $record->totalCount !== null
@@ -249,7 +249,7 @@ final readonly class Probe
         $plans = [];
 
         foreach ($floors as $floor) {
-            $tally = ArticleTally::fromBodies($run->bodies('ItemList', $floor->key() . '__'));
+            $tally = ArticleTally::fromBodies($run->bodies(Planner::ITEM_LIST, $floor->key() . '__'));
 
             foreach ($tally->articles() as $article => $id) {
                 $plans[] = [$floor, $tally, $article, $id];
@@ -294,7 +294,7 @@ final readonly class Probe
                 );
             }
 
-            if ($this->options->limit !== null && $runner->sent() >= $this->options->limit) {
+            if ($runner->limitReached()) {
                 $console->progress(sprintf('reached --limit=%d; stopping.', $this->options->limit));
 
                 return false;
@@ -441,7 +441,7 @@ final readonly class Probe
     {
         $best = [];
 
-        foreach ($run->bodies('ItemList', $floor->key() . '__') as $body) {
+        foreach ($run->bodies(Planner::ITEM_LIST, $floor->key() . '__') as $body) {
             foreach (ArticleTally::itemsOf(Json::decode($body)) as $item) {
                 $articles = [];
 
@@ -511,7 +511,7 @@ final readonly class Probe
      */
     private function wantsFollowUps(): bool
     {
-        return $this->options->wantsEndpoint('ItemList') && $this->options->wantsUnsortedEndpoints();
+        return $this->options->wantsEndpoint(Planner::ITEM_LIST) && $this->options->wantsUnsortedEndpoints();
     }
 
     /**
@@ -750,28 +750,6 @@ final readonly class Probe
         }
 
         return $index;
-    }
-
-    /**
-     * @throws UsageException 認証情報が揃わない場合
-     */
-    private function credentials(): Credentials
-    {
-        $environment = Environment::load(
-            $this->options->envFile ?? getcwd() . '/.env',
-            required: $this->options->envFile !== null,
-        );
-
-        $apiId = $environment->get('DMM_API_ID');
-        $affiliateId = $environment->get('DMM_AFFILIATE_ID');
-
-        if ($apiId === null || $affiliateId === null) {
-            throw new UsageException(
-                'Missing credentials. Set DMM_API_ID and DMM_AFFILIATE_ID as environment variables, or put them in .env.',
-            );
-        }
-
-        return new Credentials($apiId, $affiliateId);
     }
 
     /**

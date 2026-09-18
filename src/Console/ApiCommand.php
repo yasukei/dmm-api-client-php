@@ -9,12 +9,11 @@ use DateTimeImmutable;
 use DmmApiClient\Api\CredentialMasker;
 use DmmApiClient\Api\DmmApiClient;
 use DmmApiClient\Api\Exception\ApiErrorException;
+use DmmApiClient\Api\Exception\MalformedResponseException;
 use DmmApiClient\Api\Exception\ResponseValidationException;
 use DmmApiClient\Api\Exception\TransportException;
 use DmmApiClient\Api\Request\Credentials;
-use DmmApiClient\Api\Request\RawRequest;
 use DmmApiClient\Api\Request\Request;
-use DmmApiClient\Api\Response\ResponseMapper;
 use Http\Discovery\Exception\NotFoundException;
 use JsonException;
 use Psr\Http\Client\ClientInterface;
@@ -52,13 +51,9 @@ abstract class ApiCommand implements Command
      */
     public const string DATETIME_PLACEHOLDER = 'DATETIME';
 
-    private readonly ResponseMapper $responseMapper;
-
     public function __construct(
         private readonly ?ClientInterface $httpClient = null,
-        ?ResponseMapper $responseMapper = null,
     ) {
-        $this->responseMapper = $responseMapper ?? new ResponseMapper();
     }
 
     /**
@@ -72,8 +67,6 @@ abstract class ApiCommand implements Command
             new OptionDefinition('env-file', '読み込む .env のパス（既定: カレントディレクトリの .env）', 'PATH'),
             new OptionDefinition('dry-run', '送信せずに、組み立てた URI だけを表示する'),
             new OptionDefinition('raw', 'レスポンスを整形せず、受け取ったまま出力する'),
-            new OptionDefinition('no-validate-request', 'パラメータを検証せず、指定した値をそのまま送る'),
-            new OptionDefinition('no-validate-response', 'レスポンスの DTO 検証を行わない'),
             new OptionDefinition('no-mask', '認証情報を伏せ字にせず、そのまま出力する'),
             new OptionDefinition('help', 'このコマンドの使い方を表示する'),
         ];
@@ -93,16 +86,34 @@ abstract class ApiCommand implements Command
     }
 
     /**
+     * 値の表記ごとに、受け付ける書式をヘルプで補う文言。
+     *
+     * 書式を決めているのは {@see self::dateOption()} なので、文言もここに置く。
+     * 時刻を省略したときに何時何分として読むかは `$endOfDay` の指定しだいで、
+     * それを知っているのはこのクラスだけ。並べ方は {@see Application} が決める。
+     *
+     * @return array<string, list<string>>
+     */
+    final public static function placeholderNotes(): array
+    {
+        return [
+            self::DATETIME_PLACEHOLDER => [
+                'DATETIME は 2016-04-01、2016-04-01T12:34:56、2016-04-01 12:34:56 のいずれかで指定する。',
+                '時刻を省略した場合、--gte-date は 00:00:00、--lte-date は 23:59:59 として扱う。',
+                '空白を含む形はシェルの引用符が要る。',
+            ],
+            self::DATE_PLACEHOLDER => [
+                'DATE は 1990-01-01 のように日付で指定する。時刻は送信しない。',
+            ],
+        ];
+    }
+
+    /**
      * このコマンド固有のオプション。
      *
      * @return list<OptionDefinition>
      */
     abstract protected function requestOptions(): array;
-
-    /**
-     * 呼び出す API のエンドポイントパス（例: `/FloorList`）。
-     */
-    abstract protected function endpoint(): string;
 
     /**
      * オプションからリクエストを組み立てる。
@@ -112,11 +123,19 @@ abstract class ApiCommand implements Command
     abstract protected function createRequest(Input $input): Request;
 
     /**
-     * レスポンスの検証に使う DTO。
+     * 組み立てたリクエストで API を呼び出す。
      *
-     * @return class-string
+     * 呼ぶのは {@see DmmApiClient} の型付きメソッドで、検証もマッピングもそちらが行う。
+     * 戻り値の DTO はコンソールでは使わない（出力は生ボディから作る）が、
+     * 型付きメソッドを通すこと自体が検証を意味する。
+     *
+     * @throws UsageException               オプションの値が不正な場合
+     * @throws TransportException           HTTP 通信に失敗した場合
+     * @throws ApiErrorException            API がエラーを返した場合
+     * @throws MalformedResponseException   レスポンスが JSON として読めなかった場合
+     * @throws ResponseValidationException  レスポンスが期待する構造と一致しなかった場合
      */
-    abstract protected function responseClass(): string;
+    abstract protected function invoke(DmmApiClient $client, Input $input): object;
 
     final public function options(): array
     {
@@ -125,8 +144,7 @@ abstract class ApiCommand implements Command
 
     final public function execute(Input $input, Environment $environment, Output $output): int
     {
-        $unchecked = $input->flag('no-validate-request');
-        $credentials = $this->resolveCredentials($environment);
+        $credentials = $environment->credentials();
 
         // 認証情報はエコーバックにも affiliateURL にも埋め込まれて返ってくる。
         // 出力を保存したときに漏れないよう、既定で伏せ字にする。
@@ -136,36 +154,47 @@ abstract class ApiCommand implements Command
             : CredentialMasker::forCredentials($credentials));
 
         $client = $this->createClient($credentials);
-        $request = $unchecked ? $this->createUncheckedRequest($input) : $this->createRequest($input);
 
         if ($input->flag('dry-run')) {
-            $output->line($client->buildUri($request));
+            $output->line($client->buildUri($this->createRequest($input)));
 
             return Application::EXIT_SUCCESS;
         }
 
         try {
-            $body = $client->fetchRaw($request);
-        } catch (ApiErrorException $exception) {
-            // エラーの中身こそ見たいので、ボディは通常どおり標準出力へ流す。
-            $output->write($this->format($exception->responseBody, $input, $output));
-            $output->error($exception->getMessage());
-
-            return Application::EXIT_FAILURE;
+            $this->invoke($client, $input);
         } catch (TransportException $exception) {
+            // レスポンスそのものが届いていないので、書き出す本文も無い。
             $output->error($exception->getMessage());
+
+            return Application::EXIT_FAILURE;
+        } catch (ApiErrorException | MalformedResponseException $exception) {
+            // エラーの中身こそ見たいので、ボディは通常どおり標準出力へ流す。
+            $this->writeBody($client, $input, $output);
+            $output->error($exception->getMessage());
+
+            return Application::EXIT_FAILURE;
+        } catch (ResponseValidationException $exception) {
+            $this->writeBody($client, $input, $output);
+            $this->reportValidationErrors($exception, $output);
 
             return Application::EXIT_FAILURE;
         }
 
-        $output->write($this->format($body, $input, $output));
+        $this->writeBody($client, $input, $output);
 
-        if ($input->flag('no-validate-response')) {
-            return Application::EXIT_SUCCESS;
-        }
+        return Application::EXIT_SUCCESS;
+    }
 
-        // 検証は、伏せ字にする前の実際のレスポンスに対して行う。
-        return $this->validate($body, $output);
+    /**
+     * 受け取った生ボディを標準出力へ書き出す。
+     *
+     * 成功しても失敗しても、返ってきたものは見せる。DTO ではなく生ボディを出すのは、
+     * DTO が知らないキーを落とさずに、API が返したとおりを見せるため。
+     */
+    private function writeBody(DmmApiClient $client, Input $input, Output $output): void
+    {
+        $output->write($this->format($client->lastResponseBody() ?? '', $input, $output));
     }
 
     /**
@@ -213,10 +242,27 @@ abstract class ApiCommand implements Command
     {
         $value = $input->option($name);
 
-        if ($value === null) {
-            return null;
-        }
+        return $value === null ? null : self::toEnum($value, $name, $enum);
+    }
 
+    /**
+     * 文字列を列挙型として解釈する。
+     *
+     * 必須のオプションや、繰り返し指定できるオプションのように
+     * {@see self::enumOption()} の形に収まらない場合はこちらを直接使う。
+     * 受け付けない値のときの文言を 1 か所に保つためのもの。
+     *
+     * @template T of BackedEnum
+     *
+     * @param string          $name  文言に載せるオプション名（`--` は付けない）
+     * @param class-string<T> $enum
+     *
+     * @return T
+     *
+     * @throws UsageException 列挙型が受け付けない値の場合
+     */
+    final protected static function toEnum(string $value, string $name, string $enum): BackedEnum
+    {
         return $enum::tryFrom($value) ?? throw new UsageException(sprintf(
             'Invalid value "%s" for --%s. Expected one of: %s.',
             $value,
@@ -308,74 +354,13 @@ abstract class ApiCommand implements Command
     private function createClient(Credentials $credentials): DmmApiClient
     {
         try {
-            return new DmmApiClient($credentials, $this->httpClient);
+            return new DmmApiClient($credentials, httpClient: $this->httpClient);
         } catch (NotFoundException $exception) {
             throw new UsageException(sprintf(
                 '%s Example: composer require guzzlehttp/guzzle.',
                 $exception->getMessage(),
             ));
         }
-    }
-
-    /**
-     * 認証情報を環境変数か `.env` から読み出す。
-     *
-     * コマンドライン引数からは受け取らない。引数は ps などから他のユーザーにも見え、
-     * シェルの履歴にも残るため、認証情報の渡し方として適さない。
-     *
-     * @throws UsageException 認証情報が揃わない場合
-     */
-    private function resolveCredentials(Environment $environment): Credentials
-    {
-        $apiId = $environment->get('DMM_API_ID');
-        $affiliateId = $environment->get('DMM_AFFILIATE_ID');
-
-        $missing = [];
-
-        if ($apiId === null) {
-            $missing[] = 'DMM_API_ID';
-        }
-
-        if ($affiliateId === null) {
-            $missing[] = 'DMM_AFFILIATE_ID';
-        }
-
-        if ($apiId === null || $affiliateId === null) {
-            throw new UsageException(sprintf(
-                'Missing credentials: %s. Set them as environment variables, or put them in a .env file.',
-                implode(', ', $missing),
-            ));
-        }
-
-        return new Credentials($apiId, $affiliateId);
-    }
-
-    /**
-     * 検証を通さずにリクエストを組み立てる。
-     *
-     * 値を取るオプションのうち指定されたものを、そのままクエリパラメータにする。
-     * オプション名の `-` はクエリのキーでは `_` になる（`--gte-date` → `gte_date`）。
-     * 繰り返し指定されたオプションは、そのまま複数の値として送る。
-     */
-    private function createUncheckedRequest(Input $input): Request
-    {
-        $parameters = [];
-
-        foreach ($this->requestOptions() as $option) {
-            if (! $option->takesValue()) {
-                continue;
-            }
-
-            $values = $input->optionValues($option->name);
-
-            if ($values === []) {
-                continue;
-            }
-
-            $parameters[str_replace('-', '_', $option->name)] = count($values) === 1 ? $values[0] : $values;
-        }
-
-        return new RawRequest($this->endpoint(), $parameters);
     }
 
     /**
@@ -402,33 +387,20 @@ abstract class ApiCommand implements Command
     }
 
     /**
-     * レスポンスが DTO と一致するか確かめ、食い違いを標準エラー出力へ書き出す。
+     * レスポンスが DTO と食い違った内容を標準エラー出力へ書き出す。
+     *
+     * 検証そのものは {@see DmmApiClient} が行う。ここが受け持つのは、その結果を
+     * コンソールの形に整えることだけ。
      *
      * 検証エラーには、型が合わなかった値そのものが含まれる。認証情報を含む値であっても
      * 伏せ字は {@see Output} 側で適用されるため、ここでは何もしない。
      */
-    private function validate(string $body, Output $output): int
+    private function reportValidationErrors(ResponseValidationException $exception, Output $output): void
     {
-        try {
-            $decoded = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
-        } catch (JsonException $exception) {
-            $output->error('Response is not valid JSON: ' . $exception->getMessage());
+        $output->error(sprintf('Response did not match %s:', $exception->targetClass));
 
-            return Application::EXIT_FAILURE;
+        foreach ($exception->errors as $error) {
+            $output->error(sprintf('  %s: %s', $error['path'], $error['message']));
         }
-
-        try {
-            $this->responseMapper->map($this->responseClass(), $decoded);
-        } catch (ResponseValidationException $exception) {
-            $output->error(sprintf('Response did not match %s:', $exception->targetClass));
-
-            foreach ($exception->errors as $error) {
-                $output->error(sprintf('  %s: %s', $error['path'], $error['message']));
-            }
-
-            return Application::EXIT_FAILURE;
-        }
-
-        return Application::EXIT_SUCCESS;
     }
 }

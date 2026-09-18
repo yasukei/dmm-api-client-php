@@ -10,6 +10,8 @@ use DmmApiClient\Api\Request\Request;
  * フロア ID を必須とする検索 API（ジャンル・メーカー・シリーズ・作者）の共通部分。
  *
  * 4 つとも受け付けるパラメータが同じなので、対象の呼び名だけを差し替える。
+ *
+ * @template TRequest of Request リクエストの具体型。各コマンドが対応する型を束縛する
  */
 abstract class FloorScopedSearchCommand extends ApiCommand
 {
@@ -28,6 +30,14 @@ abstract class FloorScopedSearchCommand extends ApiCommand
         ];
     }
 
+    /**
+     * オプションからリクエストを組み立てる。
+     *
+     * {@see self::invoke()} の実装が `$client->genreSearch(...)` のような型付きメソッドへ
+     * そのまま渡せるよう、戻り値を具体型のまま返す。
+     *
+     * @return TRequest
+     */
     final protected function createRequest(Input $input): Request
     {
         return $this->createFloorScopedRequest(
@@ -38,6 +48,9 @@ abstract class FloorScopedSearchCommand extends ApiCommand
         );
     }
 
+    /**
+     * @return TRequest
+     */
     abstract protected function createFloorScopedRequest(
         string $floorId,
         ?string $initial,

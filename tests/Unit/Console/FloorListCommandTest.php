@@ -91,16 +91,6 @@ test('仕様と食い違うレスポンスは、本文を出したうえで失�
         ->and($result['stderr'])->toContain('result.site.0.code');
 });
 
-test('--no-validate-response なら食い違いがあっても成功にする', function (): void {
-    $payload = Fixture::decodedWith('floor-list', ['result', 'site', 0, 'code'], 'NEWSITE');
-    $http = StubHttpClient::respondingWith(200, (string) json_encode($payload));
-
-    $result = runFloorList($http, ['--no-validate-response']);
-
-    expect($result['code'])->toBe(Application::EXIT_SUCCESS)
-        ->and($result['stderr'])->toBe('');
-});
-
 test('API がエラーを返したら、エラー本文を出したうえで失敗にする', function (): void {
     $result = runFloorList(StubHttpClient::respondingWithFixture('error', 400));
 
@@ -122,7 +112,9 @@ test('JSON でないボディは、そのまま出したうえで失敗にする
 
     expect($result['code'])->toBe(Application::EXIT_FAILURE)
         ->and($result['stdout'])->toContain('not json')
-        ->and($result['stderr'])->toContain('Could not pretty-print');
+        ->and($result['stderr'])->toContain('Could not pretty-print')
+        // 読めなかったことの報告はクライアントから上がる。どの API かも添えられる。
+        ->and($result['stderr'])->toContain('Response from /FloorList is not valid JSON');
 });
 
 test('認証情報が無ければ使い方の誤りとして扱う', function (): void {
@@ -173,20 +165,6 @@ test('環境変数が .env より優先される', function (): void {
     );
 
     expect($result['stdout'])->toContain('api_id=MY_API_ID');
-});
-
-test('--no-validate-request でもリクエストの組み立て方は変わらない', function (): void {
-    // /FloorList は固有のパラメータを持たないため、検証を飛ばしても送信内容は同じになる。
-    $result = runFloorList(
-        StubHttpClient::respondingWithFixture('floor-list'),
-        ['--no-validate-request', '--dry-run', '--no-mask'],
-    );
-
-    expect($result['code'])->toBe(Application::EXIT_SUCCESS)
-        ->and(trim($result['stdout']))->toBe(
-            'https://api.dmm.com/affiliate/v3/FloorList'
-            . '?api_id=MY_API_ID&affiliate_id=myaffiliateid-999&output=json',
-        );
 });
 
 test('アフィリエイト ID は形式を問わずそのまま送る', function (): void {

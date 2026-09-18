@@ -32,10 +32,19 @@ use DmmApiClient\Api\Response\SeriesSearch\SeriesSearchResponse;
  */
 final class Planner
 {
+    /**
+     * 商品情報 API の名前。
+     *
+     * エンドポイント名であると同時に、保存先のディレクトリ名でもあり、記録の group でもある。
+     * {@see self::ARTICLES} や {@see self::MONO_STOCK} は保存済みの `ItemList` を
+     * 読み直して組み立てるので、書き出す側と読む側で綴りが食い違うと黙って空振りする。
+     */
+    public const string ITEM_LIST = 'ItemList';
+
     /** `--endpoint` に指定できる名前。 */
     public const array ENDPOINTS = [
         'FloorList',
-        'ItemList',
+        self::ITEM_LIST,
         'ActressSearch',
         'GenreSearch',
         'MakerSearch',
@@ -91,7 +100,7 @@ final class Planner
     /**
      * offset の上限。API が返す検索結果は 50000 件までなので、それ以上は指定しない。
      */
-    public const int OFFSET_MAX = 50000;
+    private const int OFFSET_MAX = 50000;
 
     /**
      * フロア ID で絞り込む 4 つの API。いずれもパラメータの形が同じ。
@@ -124,7 +133,7 @@ final class Planner
                 continue;
             }
 
-            if ($options->wantsEndpoint('ItemList')) {
+            if ($options->wantsEndpoint(self::ITEM_LIST)) {
                 $targets = [...$targets, ...self::itemList($floor, $options)];
             }
 
@@ -209,29 +218,6 @@ final class Planner
             credentials: $credentials,
             expectsError: true,
         );
-    }
-
-    /**
-     * 実データに出た分類を `article` / `article_id` に指定して、同じフロアをもう一度叩く対象。
-     *
-     * 何を指定できるかはフロアごとに違い、そのフロアの `ItemList` を集めてみるまで分からない。
-     * だから対象は、フロアの sweep が済んだあとに {@see ArticleTally} から組み立てる。
-     *
-     * 取るのは先頭ページだけ。見たいのは「指定した分類で絞り込めるか」であって、
-     * その分類の商品を集めることではない。ページを振っても分かることは増えず、
-     * 取得するデータだけが増える。
-     *
-     * @return list<Target>
-     */
-    public static function articleTargets(FloorRef $floor, ArticleTally $tally, Options $options): array
-    {
-        $targets = [];
-
-        foreach ($tally->articles() as $article => $id) {
-            $targets[] = self::articleTarget($floor, $article, $id, $options);
-        }
-
-        return $targets;
     }
 
     /**
@@ -399,7 +385,7 @@ final class Planner
             }
 
             $targets[] = new Target(
-                group: 'ItemList',
+                group: self::ITEM_LIST,
                 endpoint: ItemListRequest::ENDPOINT,
                 responseClass: ItemListResponse::class,
                 key: $floor->key(),

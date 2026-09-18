@@ -5,6 +5,7 @@ declare(strict_types=1);
 use DmmApiClient\Api\Request\Credentials;
 use DmmApiClient\Api\Response\ResponseMapper;
 use DmmApiClient\Console\Application;
+use Http\Discovery\ClassDiscovery;
 use Pest\PendingCalls\TestCall;
 use Tests\Support\CapturingOutput;
 use Tests\Support\StubHttpClient;
@@ -117,4 +118,28 @@ function dryRunQuery(string $command, array $arguments): array
     parse_str((string) parse_url(trim($result['stdout']), PHP_URL_QUERY), $query);
 
     return $query;
+}
+
+/**
+ * 実装の自動検出が効かない状態で $callback を実行する。
+ *
+ * 自動検出はインストール済みのパッケージを探す戦略に任せている。戦略を空にすると、
+ * 実装を入れていない環境と同じ状態になる。
+ *
+ * @template T
+ *
+ * @param callable(): T $callback
+ *
+ * @return T
+ */
+function withoutDiscovery(callable $callback): mixed
+{
+    $strategies = ClassDiscovery::getStrategies();
+    ClassDiscovery::setStrategies([]);
+
+    try {
+        return $callback();
+    } finally {
+        ClassDiscovery::setStrategies(iterator_to_array($strategies));
+    }
 }

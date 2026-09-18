@@ -50,15 +50,15 @@ final class Clients
     /**
      * @param Credentials|null $credentials null なら実行に指定された認証情報を使う
      */
-    public function forCredentials(?Credentials $credentials): DmmApiClient
+    private function forCredentials(?Credentials $credentials): DmmApiClient
     {
         $credentials ??= $this->credentials;
         $key = $credentials->apiId . "\0" . $credentials->affiliateId;
 
         return $this->clients[$key] ??= new DmmApiClient(
             $credentials,
+            $this->baseUri,
             $this->httpClient,
-            baseUri: $this->baseUri,
         );
     }
 }
