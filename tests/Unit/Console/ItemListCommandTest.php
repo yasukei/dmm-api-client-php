@@ -25,16 +25,6 @@ function itemListQuery(array $arguments): array
     return dryRunQuery('item-list', $arguments);
 }
 
-beforeEach(function (): void {
-    putenv('DMM_API_ID=MY_API_ID');
-    putenv('DMM_AFFILIATE_ID=myaffiliateid-999');
-});
-
-afterEach(function (): void {
-    putenv('DMM_API_ID');
-    putenv('DMM_AFFILIATE_ID');
-});
-
 test('オプションをクエリパラメータに変換する', function (): void {
     $query = itemListQuery([
         '--site=FANZA',
