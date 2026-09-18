@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace DmmApiClient\Console;
 
+use DmmApiClient\Api\DmmApiClient;
 use DmmApiClient\Api\Request\ActressSearchRequest;
 use DmmApiClient\Api\Request\ActressSearchSort;
-use DmmApiClient\Api\Request\Request;
-use DmmApiClient\Api\Response\ActressSearch\ActressSearchResponse;
 
 /**
  * 女優検索 API (`/ActressSearch`) を呼び出す。
@@ -46,12 +45,7 @@ final class ActressSearchCommand extends ApiCommand
         ];
     }
 
-    protected function endpoint(): string
-    {
-        return ActressSearchRequest::ENDPOINT;
-    }
-
-    protected function createRequest(Input $input): Request
+    protected function createRequest(Input $input): ActressSearchRequest
     {
         return new ActressSearchRequest(
             initial: $input->option('initial'),
@@ -73,8 +67,8 @@ final class ActressSearchCommand extends ApiCommand
         );
     }
 
-    protected function responseClass(): string
+    protected function invoke(DmmApiClient $client, Input $input): object
     {
-        return ActressSearchResponse::class;
+        return $client->actressSearch($this->createRequest($input));
     }
 }

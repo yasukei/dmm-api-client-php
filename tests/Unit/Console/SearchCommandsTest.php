@@ -49,8 +49,9 @@ scenario('各コマンドがレスポンスを取得して DTO 検証を通す',
 ]);
 
 scenario('各コマンドが正しいエンドポイントを呼ぶ', function (string $command, string $arguments, string $endpoint): void {
+    // 見るのは送ったリクエストだけなので、レスポンスが DTO と合わずに失敗しても構わない。
     $http = StubHttpClient::respondingWith(200, '{}');
-    runCommand($command, [...splitArguments($arguments), '--no-validate-response'], $http);
+    runCommand($command, splitArguments($arguments), $http);
 
     expect($http->lastRequest()->getUri()->getPath())->toBe('/affiliate/v3' . $endpoint);
 })->with([

@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace DmmApiClient\Console;
 
+use DmmApiClient\Api\DmmApiClient;
 use DmmApiClient\Api\MonoStock;
 use DmmApiClient\Api\Request\ArticleFilter;
 use DmmApiClient\Api\Request\ArticleType;
 use DmmApiClient\Api\Request\ItemListRequest;
 use DmmApiClient\Api\Request\ItemListSort;
-use DmmApiClient\Api\Request\Request;
-use DmmApiClient\Api\Response\ItemList\ItemListResponse;
 use DmmApiClient\Api\SiteCode;
 
 /**
@@ -47,12 +46,7 @@ final class ItemListCommand extends ApiCommand
         ];
     }
 
-    protected function endpoint(): string
-    {
-        return ItemListRequest::ENDPOINT;
-    }
-
-    protected function createRequest(Input $input): Request
+    protected function createRequest(Input $input): ItemListRequest
     {
         return new ItemListRequest(
             site: self::toEnum($this->requiredOption($input, 'site'), 'site', SiteCode::class),
@@ -70,9 +64,9 @@ final class ItemListCommand extends ApiCommand
         );
     }
 
-    protected function responseClass(): string
+    protected function invoke(DmmApiClient $client, Input $input): object
     {
-        return ItemListResponse::class;
+        return $client->itemList($this->createRequest($input));
     }
 
     /**

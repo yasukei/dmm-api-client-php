@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace DmmApiClient\Console;
 
+use DmmApiClient\Api\DmmApiClient;
 use DmmApiClient\Api\Request\GenreSearchRequest;
-use DmmApiClient\Api\Request\Request;
-use DmmApiClient\Api\Response\GenreSearch\GenreSearchResponse;
 
 /**
  * ジャンル検索 API (`/GenreSearch`) を呼び出す。
+ *
+ * @extends FloorScopedSearchCommand<GenreSearchRequest>
  */
 final class GenreSearchCommand extends FloorScopedSearchCommand
 {
@@ -28,22 +29,17 @@ final class GenreSearchCommand extends FloorScopedSearchCommand
         return 'ジャンル';
     }
 
-    protected function endpoint(): string
-    {
-        return GenreSearchRequest::ENDPOINT;
-    }
-
     protected function createFloorScopedRequest(
         string $floorId,
         ?string $initial,
         ?int $hits,
         ?int $offset,
-    ): Request {
+    ): GenreSearchRequest {
         return new GenreSearchRequest($floorId, $initial, $hits, $offset);
     }
 
-    protected function responseClass(): string
+    protected function invoke(DmmApiClient $client, Input $input): object
     {
-        return GenreSearchResponse::class;
+        return $client->genreSearch($this->createRequest($input));
     }
 }
