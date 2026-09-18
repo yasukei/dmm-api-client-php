@@ -25,7 +25,6 @@ use DmmApiClient\Api\Response\ItemList\ItemListResponse;
 use DmmApiClient\Api\Response\MakerSearch\MakerSearchResponse;
 use DmmApiClient\Api\Response\SeriesSearch\SeriesSearchResponse;
 use DmmApiClient\Api\SiteCode;
-use Http\Discovery\ClassDiscovery;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7\Response;
 use Psr\Http\Client\ClientInterface;
@@ -34,30 +33,6 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Tests\Support\NetworkFailure;
 use Tests\Support\StubHttpClient;
-
-/**
- * 実装の自動検出が効かない状態で $callback を実行する。
- *
- * 自動検出はインストール済みのパッケージを探す戦略に任せている。戦略を空にすると、
- * 実装を入れていない環境と同じ状態になる。
- *
- * @template T
- *
- * @param callable(): T $callback
- *
- * @return T
- */
-function withoutDiscovery(callable $callback): mixed
-{
-    $strategies = ClassDiscovery::getStrategies();
-    ClassDiscovery::setStrategies([]);
-
-    try {
-        return $callback();
-    } finally {
-        ClassDiscovery::setStrategies(iterator_to_array($strategies));
-    }
-}
 
 test('認証情報・リクエストパラメータ・output を載せた URI を組み立てる', function (): void {
     $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::respondingWith(200, '{}'));
