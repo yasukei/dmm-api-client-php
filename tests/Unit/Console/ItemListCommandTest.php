@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use DmmApiClient\Console\Application;
-use Tests\Support\CapturingOutput;
 use Tests\Support\StubHttpClient;
 
 /**
@@ -13,40 +12,18 @@ use Tests\Support\StubHttpClient;
  */
 function runItemList(array $arguments, ?StubHttpClient $http = null): array
 {
-    $captured = new CapturingOutput();
-    $http ??= StubHttpClient::respondingWithFixture('item-list');
-    $code = (new Application($http, $captured->output))->run(['dmm-api-client', 'item-list', ...$arguments]);
-
-    return ['code' => $code, 'stdout' => $captured->stdout(), 'stderr' => $captured->stderr()];
+    return runCommand('item-list', $arguments, $http ?? StubHttpClient::respondingWithFixture('item-list'));
 }
 
 /**
- * --dry-run で組み立てられた URI のクエリを、デコード済みの配列で返す。
- *
  * @param list<string> $arguments
  *
  * @return array<int|string, array<mixed>|string>
  */
 function itemListQuery(array $arguments): array
 {
-    $result = runItemList([...$arguments, '--dry-run']);
-
-    expect($result['code'])->toBe(Application::EXIT_SUCCESS);
-
-    parse_str((string) parse_url(trim($result['stdout']), PHP_URL_QUERY), $query);
-
-    return $query;
+    return dryRunQuery('item-list', $arguments);
 }
-
-beforeEach(function (): void {
-    putenv('DMM_API_ID=MY_API_ID');
-    putenv('DMM_AFFILIATE_ID=myaffiliateid-999');
-});
-
-afterEach(function (): void {
-    putenv('DMM_API_ID');
-    putenv('DMM_AFFILIATE_ID');
-});
 
 test('オプションをクエリパラメータに変換する', function (): void {
     $query = itemListQuery([
