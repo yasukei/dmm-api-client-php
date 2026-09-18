@@ -8,6 +8,7 @@ use DmmApiClient\Api\CredentialMasker;
 use DmmApiClient\Api\Exception\ApiErrorException;
 use DmmApiClient\Api\Exception\TransportException;
 use DmmApiClient\Api\Response\Error\ErrorResponse;
+use Http\Discovery\Exception\NotFoundException;
 
 /**
  * 対象を 1 本ずつ叩き、レスポンスを保存して検証する。
@@ -85,6 +86,9 @@ final class Runner
 
     /**
      * 1 本のリクエストを処理し、結果を控える。
+     *
+     * @throws NotFoundException PSR-18 / PSR-17 の実装が見つからない場合
+     * @throws ProbeException    レスポンスを保存できなかった場合
      */
     public function execute(Target $target, int $offset, ?string $page): Record
     {
@@ -98,6 +102,9 @@ final class Runner
      * 1 本のリクエストを処理する。
      *
      * `--resume` で既に保存済みのファイルがある場合は取得せず、保存済みのボディを検証する。
+     *
+     * @throws NotFoundException PSR-18 / PSR-17 の実装が見つからない場合
+     * @throws ProbeException    レスポンスを保存できなかった場合
      */
     private function fetch(Target $target, int $offset, ?string $page): Record
     {
@@ -236,6 +243,8 @@ final class Runner
      * あとから検証し直しても（`--revalidate`）結果は変わらない。
      *
      * @param class-string|null $responseClass 対象の既定の DTO ではなく、別の DTO で検証する場合に指定する
+     *
+     * @throws ProbeException レスポンスを保存できなかった場合
      */
     private function store(
         Target $target,
@@ -321,7 +330,7 @@ final class Runner
     {
         $backoff = self::BACKOFF;
 
-        sleep($backoff[$attempt - 1] ?? (int) end($backoff));
+        sleep($backoff[$attempt - 1] ?? end($backoff));
     }
 
     private static function isRetryable(int $status): bool

@@ -28,6 +28,8 @@ final class Json
 
     /**
      * @param array<mixed> $data
+     *
+     * @throws JsonException 値を JSON にできなかった場合
      */
     public static function encode(array $data, bool $pretty = true): string
     {
@@ -42,6 +44,8 @@ final class Json
 
     /**
      * 配列とは限らない値を、そのまま JSON の 1 行にする。
+     *
+     * @throws JsonException 値を JSON にできなかった場合
      */
     public static function encodeValue(mixed $value): string
     {

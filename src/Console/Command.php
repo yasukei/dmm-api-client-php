@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace DmmApiClient\Console;
 
+use DmmApiClient\Api\Exception\DmmApiClientException;
+
 /**
  * `bin/dmm-api-client` のサブコマンド。
  */
@@ -28,6 +30,8 @@ interface Command
 
     /**
      * @return int 終了コード
+     *
+     * @throws DmmApiClientException 実行を続けられない場合。呼び出し側が文言を出して終了コードに変える
      */
     public function execute(Input $input, Environment $environment, Output $output): int;
 }

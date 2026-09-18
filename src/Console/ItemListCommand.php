@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace DmmApiClient\Console;
 
 use DmmApiClient\Api\DmmApiClient;
+use DmmApiClient\Api\Exception\InvalidArgumentException;
 use DmmApiClient\Api\MonoStock;
 use DmmApiClient\Api\Request\ArticleFilter;
 use DmmApiClient\Api\Request\ArticleType;
@@ -73,7 +74,8 @@ final class ItemListCommand extends ApiCommand
      *
      * @return list<ArticleFilter>
      *
-     * @throws UsageException 指定回数が揃っていない、または未知のカテゴリの場合
+     * @throws UsageException           指定回数が揃っていない、または未知のカテゴリの場合
+     * @throws InvalidArgumentException ArticleFilter が受け付けない値だった場合
      */
     private function articleFilters(Input $input): array
     {

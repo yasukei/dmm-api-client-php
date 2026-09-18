@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DmmApiClient\Console;
 
+use DmmApiClient\Api\Exception\InvalidArgumentException;
 use DmmApiClient\Api\Request\Request;
 
 /**
@@ -37,6 +38,9 @@ abstract class FloorScopedSearchCommand extends ApiCommand
      * そのまま渡せるよう、戻り値を具体型のまま返す。
      *
      * @return TRequest
+     *
+     * @throws UsageException           オプションの値が不正な場合
+     * @throws InvalidArgumentException リクエストが受け付けない値だった場合
      */
     final protected function createRequest(Input $input): Request
     {
@@ -50,6 +54,8 @@ abstract class FloorScopedSearchCommand extends ApiCommand
 
     /**
      * @return TRequest
+     *
+     * @throws InvalidArgumentException リクエストが受け付けない値だった場合
      */
     abstract protected function createFloorScopedRequest(
         string $floorId,
