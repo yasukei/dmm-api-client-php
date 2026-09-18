@@ -50,7 +50,20 @@
         "cs-fix": "php-cs-fixer fix",
         "cs-check": "php-cs-fixer fix --dry-run --diff",
         "rector": "rector process",
-        "rector-dry": "rector process --dry-run"
+        "rector-dry": "rector process --dry-run",
+        "fix": [
+            "@rector",
+            "@cs-fix"
+        ],
+        "lint": [
+            "@stan",
+            "@cs-check",
+            "@rector-dry"
+        ]
+    },
+    "scripts-descriptions": {
+        "fix": "自動修正をかける。Rector が書き換えた結果を PHP-CS-Fixer が整形するため、この順序で実行する",
+        "lint": "静的解析・コードスタイル・リファクタリングの検査をまとめて実行する（CI と同じ内容）"
     },
     "config": {
         "platform": {
