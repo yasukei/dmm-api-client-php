@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace DmmApiClient\LiveProbe;
 
+use JsonException;
+
 /**
  * 1 回の実行分の出力をまとめるディレクトリ。
  *
@@ -149,6 +151,8 @@ final readonly class RunDirectory
 
     /**
      * 1 件ずつ追記する。途中で止まっても、それまでの結果が残るようにするため。
+     *
+     * @throws JsonException 記録を JSON にできなかった場合
      */
     public function appendRecord(Record $record): void
     {
@@ -186,6 +190,8 @@ final readonly class RunDirectory
 
     /**
      * @param list<Record> $records
+     *
+     * @throws JsonException 記録を JSON にできなかった場合
      */
     public function writeRecords(array $records): void
     {
@@ -230,6 +236,8 @@ final readonly class RunDirectory
 
     /**
      * @param array<string, mixed> $data
+     *
+     * @throws JsonException 内容を JSON にできなかった場合
      */
     public function writeRun(array $data): void
     {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DmmApiClient\Console;
 
+use DmmApiClient\Api\Exception\InvalidArgumentException;
 use DmmApiClient\Api\Request\Credentials;
 
 /**
@@ -79,7 +80,8 @@ final readonly class Environment
      * コマンドライン引数からは受け取らない。引数は ps などから他のユーザーにも見え、
      * シェルの履歴にも残るため、認証情報の渡し方として適さない。
      *
-     * @throws UsageException 認証情報が揃わない場合
+     * @throws UsageException           認証情報が揃わない場合
+     * @throws InvalidArgumentException 認証情報が Credentials の受け付けない値だった場合
      */
     public function credentials(): Credentials
     {

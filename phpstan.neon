@@ -19,7 +19,32 @@ parameters:
     reportPossiblyNonexistentConstantArrayOffset: true
     rememberPossiblyImpureFunctionValues: false
 
+    # @throws を「書いてあること」ではなく「実際に投げるものと一致すること」として検証する。
+    # 公開 API の例外契約がドキュメントではなく型として残る。
+    exceptions:
+        implicitThrows: false
+        check:
+            missingCheckedExceptionInThrows: true
+            tooWideThrowType: true
+        uncheckedExceptionClasses:
+            # プログラム側の誤り。呼び出し側が捕まえて回復する種類ではない。
+            - ValueError
+            - TypeError
+        uncheckedExceptionRegexes:
+            # PSR-17 が URI 不正で投げるもの。URI を組み立てているのはこちらなので、
+            # 起きるとしたら実装の誤り。自前の
+            # DmmApiClient\Api\Exception\InvalidArgumentException は
+            # これを継承しているが、範囲外の値を弾く契約の一部なので外さない。
+            - '#^InvalidArgumentException$#'
+
     ignoreErrors:
+        # 例外契約を検証したいのは、利用者に見せる API のほう。
+        # テストの補助関数まで @throws で埋めても、読む人の役には立たない。
+        # 想定外の例外が飛べばテストはそのまま落ちる。
+        -
+            identifier: missingType.checkedException
+            path: tests/*
+
         # scenario() は Pest の test() にそのまま渡すだけのラッパーで、
         # データセットの数だけ引数の数も型も変わる。Closure の形を一つに決められない。
         -
