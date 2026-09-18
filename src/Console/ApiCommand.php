@@ -9,6 +9,7 @@ use DateTimeImmutable;
 use DmmApiClient\Api\CredentialMasker;
 use DmmApiClient\Api\DmmApiClient;
 use DmmApiClient\Api\Exception\ApiErrorException;
+use DmmApiClient\Api\Exception\InvalidArgumentException;
 use DmmApiClient\Api\Exception\MalformedResponseException;
 use DmmApiClient\Api\Exception\ResponseValidationException;
 use DmmApiClient\Api\Exception\TransportException;
@@ -117,7 +118,8 @@ abstract class ApiCommand implements Command
     /**
      * オプションからリクエストを組み立てる。
      *
-     * @throws UsageException オプションの値が不正な場合
+     * @throws UsageException           オプションの値が不正な場合
+     * @throws InvalidArgumentException リクエストが受け付けない値だった場合
      */
     abstract protected function createRequest(Input $input): Request;
 
@@ -129,6 +131,7 @@ abstract class ApiCommand implements Command
      * 型付きメソッドを通すこと自体が検証を意味する。
      *
      * @throws UsageException              オプションの値が不正な場合
+     * @throws InvalidArgumentException    リクエストが受け付けない値だった場合
      * @throws TransportException          HTTP 通信に失敗した場合
      * @throws ApiErrorException           API がエラーを返した場合
      * @throws MalformedResponseException  レスポンスが JSON として読めなかった場合
@@ -141,6 +144,13 @@ abstract class ApiCommand implements Command
         return [...$this->requestOptions(), ...self::commonOptions()];
     }
 
+    /**
+     * API の呼び出しで起きた例外はここで終了コードに変える。抜けるのは実行前の段階、
+     * つまりオプションや実行環境が整っていない場合だけ。
+     *
+     * @throws UsageException           オプションの値や実行環境が不正な場合
+     * @throws InvalidArgumentException リクエストが受け付けない値だった場合
+     */
     final public function execute(Input $input, Environment $environment, Output $output): int
     {
         $credentials = $environment->credentials();
@@ -373,16 +383,16 @@ abstract class ApiCommand implements Command
 
         try {
             $decoded = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
+
+            return json_encode(
+                $decoded,
+                JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR,
+            ) . PHP_EOL;
         } catch (JsonException $exception) {
             $output->error('Could not pretty-print the response: ' . $exception->getMessage());
 
             return $body;
         }
-
-        return json_encode(
-            $decoded,
-            JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR,
-        ) . PHP_EOL;
     }
 
     /**

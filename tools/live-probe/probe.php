@@ -21,5 +21,5 @@ if (! class_exists(Probe::class)) {
     exit(2);
 }
 
-/** @var list<string> $argv */
+/** @var non-empty-list<string> $argv */
 exit(Probe::main($argv, __DIR__ . '/runs'));

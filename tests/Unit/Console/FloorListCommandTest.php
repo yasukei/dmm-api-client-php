@@ -118,6 +118,18 @@ test('JSON でないボディは、そのまま出したうえで失敗にする
         ->and($result['stderr'])->toContain('Response from /FloorList is not valid JSON');
 });
 
+test('倍精度に収まらない数値を含むボディも、そのまま出したうえで失敗にする', function (): void {
+    // 1e400 は json_decode では INF になり、json_encode はこれを JSON にできない。
+    // 読めたボディを整形し直せない唯一の経路で、素通しすると JsonException が
+    // Application まで抜けてスタックトレースのまま終わる。
+    $result = runFloorList(StubHttpClient::respondingWith(200, '{"result": 1e400}'));
+
+    expect($result['code'])->toBe(Application::EXIT_FAILURE)
+        ->and($result['stdout'])->toContain('1e400')
+        ->and($result['stderr'])->toContain('Could not pretty-print')
+        ->and($result['stderr'])->toContain('Inf and NaN cannot be JSON encoded');
+});
+
 test('認証情報が無ければ使い方の誤りとして扱う', function (): void {
     putenv('DMM_API_ID');
     putenv('DMM_AFFILIATE_ID');

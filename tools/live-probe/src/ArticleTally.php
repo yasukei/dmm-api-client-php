@@ -65,7 +65,7 @@ final readonly class ArticleTally
      */
     public static function fromBodies(iterable $bodies): self
     {
-        /** @var array<string, array<string, int>> $counted */
+        /** @var array<string, array<array-key, int>> $counted */
         $counted = [];
 
         foreach ($bodies as $body) {
@@ -168,7 +168,7 @@ final readonly class ArticleTally
      * 同数で並んだ場合は ID の小さい方を先にする。実行のたびに試す ID が変わると、
      * 前回の結果と突き合わせられなくなるため。
      *
-     * @param array<string, int> $ids
+     * @param array<array-key, int> $ids
      *
      * @return list<string>
      */
@@ -182,7 +182,11 @@ final readonly class ArticleTally
 
         usort(
             $pairs,
-            static fn(array $a, array $b): int => $b[1] <=> $a[1] ?: strcmp($a[0], $b[0]),
+            static function (array $a, array $b): int {
+                $byCount = $b[1] <=> $a[1];
+
+                return $byCount !== 0 ? $byCount : strcmp($a[0], $b[0]);
+            },
         );
 
         return array_map(static fn(array $pair): string => $pair[0], $pairs);

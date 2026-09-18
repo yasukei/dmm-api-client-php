@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DmmApiClient\LiveProbe;
 
+use DmmApiClient\Api\Exception\InvalidArgumentException;
 use DmmApiClient\Api\MonoStock;
 use DmmApiClient\Api\Request\ActressSearchRequest;
 use DmmApiClient\Api\Request\ActressSearchSort;
@@ -119,6 +120,8 @@ final class Planner
      * @param Credentials    $credentials 実行に指定された認証情報。エラーを引く対象はこれを壊して使う
      *
      * @return list<Target>
+     *
+     * @throws InvalidArgumentException リクエストが受け付けない値だった場合
      */
     public static function build(array $floors, Options $options, Credentials $credentials): array
     {
@@ -175,6 +178,8 @@ final class Planner
      * どちらも API から見れば不正なリクエストで、エラーを引く目的には差が無い。
      *
      * @return list<Target>
+     *
+     * @throws InvalidArgumentException Credentials が受け付けない値だった場合
      */
     private static function errorCases(Credentials $credentials): array
     {
@@ -251,6 +256,8 @@ final class Planner
      * 分類名と ID をそれぞれカンマで連ねて記録に残す。
      *
      * @param array<string, string> $articles 分類名 => ID。すべて {@see ArticleType} にあるもの
+     *
+     * @throws InvalidArgumentException ArticleFilter または ItemListRequest が受け付けない値だった場合
      */
     public static function articleComboTarget(FloorRef $floor, array $articles, Options $options): Target
     {
@@ -293,6 +300,8 @@ final class Planner
      *
      * 無いものは {@see RawRequest} で送る。enum に足すのは絞り込みが効くと確かめてからで、
      * ドキュメントに無いものを、確かめる前に API として提供したくないため。
+     *
+     * @throws InvalidArgumentException リクエストが受け付けない値だった場合
      */
     private static function articleRequest(
         FloorRef $floor,

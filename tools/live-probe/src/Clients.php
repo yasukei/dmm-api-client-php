@@ -6,6 +6,7 @@ namespace DmmApiClient\LiveProbe;
 
 use DmmApiClient\Api\DmmApiClient;
 use DmmApiClient\Api\Request\Credentials;
+use Http\Discovery\Exception\NotFoundException;
 use Psr\Http\Client\ClientInterface;
 
 /**
@@ -35,12 +36,17 @@ final class Clients
 
     /**
      * 実行に指定された認証情報で送るクライアント。
+     *
+     * @throws NotFoundException PSR-18 / PSR-17 の実装が見つからない場合
      */
     public function primary(): DmmApiClient
     {
         return $this->forCredentials(null);
     }
 
+    /**
+     * @throws NotFoundException PSR-18 / PSR-17 の実装が見つからない場合
+     */
     public function forTarget(Target $target): DmmApiClient
     {
         return $this->forCredentials($target->credentials);
@@ -48,6 +54,8 @@ final class Clients
 
     /**
      * @param Credentials|null $credentials null なら実行に指定された認証情報を使う
+     *
+     * @throws NotFoundException PSR-18 / PSR-17 の実装が見つからない場合
      */
     private function forCredentials(?Credentials $credentials): DmmApiClient
     {

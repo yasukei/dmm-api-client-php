@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace DmmApiClient\LiveProbe;
 
 use Closure;
+use JsonException;
 
 /**
  * 実行結果を集計して、標準出力向けのサマリと失敗一覧のファイルを作る。
@@ -96,6 +97,8 @@ final readonly class Reporter
 
     /**
      * 標準出力に出すサマリ。
+     *
+     * @throws JsonException 値を JSON にできなかった場合
      */
     public function summary(): string
     {
@@ -196,6 +199,8 @@ final readonly class Reporter
 
     /**
      * failures.json と failures.md を書き出す。
+     *
+     * @throws JsonException 書き出す内容を JSON にできなかった場合
      */
     public function writeFailures(): void
     {
@@ -370,6 +375,8 @@ final readonly class Reporter
      * 検証エラーを、DTO のフィールド（配列の添字を `*` に均したパス）で束ねる。
      *
      * @return list<FailureGroup>
+     *
+     * @throws JsonException 値を JSON にできなかった場合
      */
     private function failureGroups(): array
     {
@@ -382,6 +389,8 @@ final readonly class Reporter
      * DTO が知らないキーを、同じ要領でパスごとに束ねる。
      *
      * @return list<FailureGroup>
+     *
+     * @throws JsonException 値を JSON にできなかった場合
      */
     private function unknownKeyGroups(): array
     {
@@ -392,6 +401,8 @@ final readonly class Reporter
      * @param callable(Record): list<array{path: string, message: string}> $select
      *
      * @return list<FailureGroup>
+     *
+     * @throws JsonException 値を JSON にできなかった場合
      */
     private function groups(callable $select): array
     {
@@ -444,6 +455,8 @@ final readonly class Reporter
      * @param list<array{Record, array{path: string, message: string}}> $records
      *
      * @return list<Sample>
+     *
+     * @throws JsonException 値を JSON にできなかった場合
      */
     private function samples(array $records): array
     {
@@ -467,6 +480,8 @@ final readonly class Reporter
      * 保存したレスポンスから、エラーになった位置の実際の値を取り出す。
      *
      * DTO を直すときに「どんな値が来ていたのか」がその場で分かるようにするため。
+     *
+     * @throws JsonException 値を JSON にできなかった場合
      */
     private function valueAt(Record $record, string $path): string
     {

@@ -26,6 +26,7 @@ use DmmApiClient\Api\Response\ItemList\ItemListResponse;
 use DmmApiClient\Api\Response\MakerSearch\MakerSearchResponse;
 use DmmApiClient\Api\Response\ResponseMapper;
 use DmmApiClient\Api\Response\SeriesSearch\SeriesSearchResponse;
+use Http\Discovery\Exception\NotFoundException;
 use Http\Discovery\Psr17FactoryDiscovery;
 use Http\Discovery\Psr18ClientDiscovery;
 use JsonException;
@@ -58,6 +59,8 @@ final readonly class DmmApiClient
      * @param RequestFactoryInterface|null $requestFactory PSR-17 リクエストファクトリ。null なら自動検出する
      * @param StreamFactoryInterface|null  $streamFactory  PSR-17 ストリームファクトリ。生ボディのキャプチャに使う。null ならリクエストファクトリが兼ねていればそれを使い、兼ねていなければ自動検出する
      * @param ResponseMapper|null          $responseMapper レスポンスの検証・マッピング担当。null なら既定の設定で生成する
+     *
+     * @throws NotFoundException 自動検出に任せた PSR-18 / PSR-17 の実装が見つからない場合
      */
     public function __construct(
         private Credentials $credentials,
@@ -228,6 +231,11 @@ final readonly class DmmApiClient
      * @param class-string<T> $responseClass
      *
      * @return T
+     *
+     * @throws TransportException          HTTP 通信に失敗した場合
+     * @throws ApiErrorException           API がエラーを返した場合
+     * @throws MalformedResponseException  レスポンスが JSON として読めなかった場合
+     * @throws ResponseValidationException レスポンスが期待する構造と一致しなかった場合
      */
     private function send(Request $request, string $responseClass): object
     {
@@ -238,6 +246,8 @@ final readonly class DmmApiClient
 
     /**
      * @return array<mixed>
+     *
+     * @throws MalformedResponseException レスポンスが JSON として読めなかった場合
      */
     private function decode(string $endpoint, string $body): array
     {

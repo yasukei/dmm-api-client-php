@@ -77,41 +77,65 @@ final readonly class ResponseMapper
         return new self(self::strictMapperBuilder()->mapper());
     }
 
+    /**
+     * @throws ResponseValidationException
+     */
     public function itemList(mixed $payload): ItemListResponse
     {
         return $this->map(ItemListResponse::class, $payload);
     }
 
+    /**
+     * @throws ResponseValidationException
+     */
     public function floorList(mixed $payload): FloorListResponse
     {
         return $this->map(FloorListResponse::class, $payload);
     }
 
+    /**
+     * @throws ResponseValidationException
+     */
     public function actressSearch(mixed $payload): ActressSearchResponse
     {
         return $this->map(ActressSearchResponse::class, $payload);
     }
 
+    /**
+     * @throws ResponseValidationException
+     */
     public function genreSearch(mixed $payload): GenreSearchResponse
     {
         return $this->map(GenreSearchResponse::class, $payload);
     }
 
+    /**
+     * @throws ResponseValidationException
+     */
     public function makerSearch(mixed $payload): MakerSearchResponse
     {
         return $this->map(MakerSearchResponse::class, $payload);
     }
 
+    /**
+     * @throws ResponseValidationException
+     */
     public function seriesSearch(mixed $payload): SeriesSearchResponse
     {
         return $this->map(SeriesSearchResponse::class, $payload);
     }
 
+    /**
+     * @throws ResponseValidationException
+     */
     public function authorSearch(mixed $payload): AuthorSearchResponse
     {
         return $this->map(AuthorSearchResponse::class, $payload);
     }
 
+    /**
+     * @throws ResponseValidationException
+     */
     public function error(mixed $payload): ErrorResponse
     {
         return $this->map(ErrorResponse::class, $payload);

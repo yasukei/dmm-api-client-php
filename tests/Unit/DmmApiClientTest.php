@@ -26,6 +26,7 @@ use DmmApiClient\Api\Response\MakerSearch\MakerSearchResponse;
 use DmmApiClient\Api\Response\SeriesSearch\SeriesSearchResponse;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7\Response;
+use PHPUnit\Framework\Assert;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\RequestInterface;
@@ -140,7 +141,7 @@ test('API がエラーを返したら ApiErrorException にする', function ():
 
     try {
         $client->itemList(new ItemListRequest(site: 'FANZA'));
-        $this->fail('ApiErrorException が送出されませんでした。');
+        Assert::fail('ApiErrorException が送出されませんでした。');
     } catch (ApiErrorException $exception) {
         expect($exception->httpStatusCode)->toBe(400)
             ->and($exception->error?->status)->toBe(400)
@@ -157,7 +158,7 @@ test('エラーボディを解釈できなくても ApiErrorException にする'
 
     try {
         $client->itemList(new ItemListRequest(site: 'FANZA'));
-        $this->fail('ApiErrorException が送出されませんでした。');
+        Assert::fail('ApiErrorException が送出されませんでした。');
     } catch (ApiErrorException $exception) {
         expect($exception->httpStatusCode)->toBe(503)
             ->and($exception->error)->toBeNull()
@@ -171,7 +172,7 @@ test('ボディが JSON でなければ MalformedResponseException にする', f
 
     try {
         $client->itemList(new ItemListRequest(site: 'FANZA'));
-        $this->fail('MalformedResponseException が送出されませんでした。');
+        Assert::fail('MalformedResponseException が送出されませんでした。');
     } catch (MalformedResponseException $exception) {
         expect($exception->endpoint)->toBe('/ItemList')
             ->and($exception->responseBody)->toBe('not json at all');
@@ -202,7 +203,7 @@ test('通信に失敗したら TransportException にする', function (): void 
 
     try {
         $client->itemList(new ItemListRequest(site: 'FANZA'));
-        $this->fail('TransportException が送出されませんでした。');
+        Assert::fail('TransportException が送出されませんでした。');
     } catch (TransportException $exception) {
         expect($exception->endpoint)->toBe('/ItemList')
             ->and($exception->getMessage())->toContain('Could not resolve host')
@@ -222,7 +223,7 @@ test('通信エラーのメッセージから認証情報を伏せ字にする',
 
     try {
         $client->itemList(new ItemListRequest(site: 'FANZA'));
-        $this->fail('TransportException が送出されませんでした。');
+        Assert::fail('TransportException が送出されませんでした。');
     } catch (TransportException $exception) {
         expect($exception->getMessage())->toContain('Could not resolve host')
             ->and($exception->getMessage())->toContain('api_id=***&affiliate_id=***')
