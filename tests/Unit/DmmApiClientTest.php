@@ -16,6 +16,8 @@ use DmmApiClient\Api\Request\GenreSearchRequest;
 use DmmApiClient\Api\Request\ItemListRequest;
 use DmmApiClient\Api\Request\ItemListSort;
 use DmmApiClient\Api\Request\MakerSearchRequest;
+use DmmApiClient\Api\Request\RawRequest;
+use DmmApiClient\Api\Request\Request;
 use DmmApiClient\Api\Request\SeriesSearchRequest;
 use DmmApiClient\Api\Response\ActressSearch\ActressSearchResponse;
 use DmmApiClient\Api\Response\AuthorSearch\AuthorSearchResponse;
@@ -24,6 +26,7 @@ use DmmApiClient\Api\Response\GenreSearch\GenreSearchResponse;
 use DmmApiClient\Api\Response\ItemList\ItemListResponse;
 use DmmApiClient\Api\Response\MakerSearch\MakerSearchResponse;
 use DmmApiClient\Api\Response\SeriesSearch\SeriesSearchResponse;
+use Http\Discovery\Exception\NotFoundException;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7\Response;
 use PHPUnit\Framework\Assert;
@@ -136,102 +139,295 @@ test('取得したレスポンスを DTO に変換する', function (): void {
         ->and($response->result->items[0]->title)->toBe('サンプル動画作品');
 });
 
-test('API がエラーを返したら ApiErrorException にする', function (): void {
-    $http = StubHttpClient::respondingWithFixture('error', 400);
-    $client = new DmmApiClient(credentials(), httpClient: $http);
+/*
+ * 型付きメソッドの例外は、実装が共通かどうかに関わらずメソッドごとに確かめる。
+ * 各行は [エンドポイント, 返す DTO のクラス, 呼び出し]。
+ */
+dataset('typed methods', [
+    'itemList' => ['/ItemList', ItemListResponse::class,
+        fn(DmmApiClient $client): ItemListResponse => $client->itemList(new ItemListRequest(site: 'FANZA'))],
+    'floorList' => ['/FloorList', FloorListResponse::class,
+        fn(DmmApiClient $client): FloorListResponse => $client->floorList(new FloorListRequest())],
+    'actressSearch' => ['/ActressSearch', ActressSearchResponse::class,
+        fn(DmmApiClient $client): ActressSearchResponse => $client->actressSearch(new ActressSearchRequest())],
+    'genreSearch' => ['/GenreSearch', GenreSearchResponse::class,
+        fn(DmmApiClient $client): GenreSearchResponse => $client->genreSearch(new GenreSearchRequest('43'))],
+    'makerSearch' => ['/MakerSearch', MakerSearchResponse::class,
+        fn(DmmApiClient $client): MakerSearchResponse => $client->makerSearch(new MakerSearchRequest('43'))],
+    'seriesSearch' => ['/SeriesSearch', SeriesSearchResponse::class,
+        fn(DmmApiClient $client): SeriesSearchResponse => $client->seriesSearch(new SeriesSearchRequest('43'))],
+    'authorSearch' => ['/AuthorSearch', AuthorSearchResponse::class,
+        fn(DmmApiClient $client): AuthorSearchResponse => $client->authorSearch(new AuthorSearchRequest('80'))],
+]);
 
+/*
+ * fetchRaw に渡すリクエスト。各行は [リクエスト, エンドポイント]。
+ */
+dataset('raw requests', [
+    'ItemListRequest' => [new ItemListRequest(site: 'FANZA'), '/ItemList'],
+    'FloorListRequest' => [new FloorListRequest(), '/FloorList'],
+    'ActressSearchRequest' => [new ActressSearchRequest(), '/ActressSearch'],
+    'GenreSearchRequest' => [new GenreSearchRequest('43'), '/GenreSearch'],
+    'MakerSearchRequest' => [new MakerSearchRequest('43'), '/MakerSearch'],
+    'SeriesSearchRequest' => [new SeriesSearchRequest('43'), '/SeriesSearch'],
+    'AuthorSearchRequest' => [new AuthorSearchRequest('80'), '/AuthorSearch'],
+    'RawRequest' => [new RawRequest('/ItemList', ['site' => 'FANZA']), '/ItemList'],
+]);
+
+/*
+ * API が 2xx 以外を返した場合のうち、エラーボディを ErrorResponse として読めないもの。
+ * 各行は [ステータスコード, ボディ, Content-Type]。
+ */
+dataset('unreadable error bodies', [
+    'JSON でない（300）' => [300, '<html>Multiple Choices</html>', 'text/html'],
+    'JSON でない（404）' => [404, '<html>Not Found</html>', 'text/html'],
+    'JSON でない（503）' => [503, '<html>Service Unavailable</html>', 'text/html'],
+    'JSON だが ErrorResponse の構造でない' => [400, '{"result":{"status":400}}', 'application/json'],
+    'JSON だがオブジェクトでない' => [500, '"Internal Server Error"', 'application/json'],
+]);
+
+/**
+ * 通信エラーのメッセージ。Guzzle などと同じく、送信先 URI をそのまま載せる。
+ */
+function transportFailureMessage(string $endpoint): string
+{
+    return 'cURL error 6: Could not resolve host (see https://curl.se/libcurl/c/libcurl-errors.html)'
+        . ' for https://api.dmm.com/affiliate/v3' . $endpoint
+        . '?api_id=MY_API_ID&affiliate_id=myaffiliateid-999&output=json';
+}
+
+/**
+ * $call が $class の例外を投げることを確かめ、その例外を返す。
+ *
+ * @template E of Throwable
+ *
+ * @param class-string<E>  $class
+ * @param Closure(): mixed $call
+ *
+ * @return E
+ */
+function catchThrown(string $class, Closure $call): Throwable
+{
     try {
-        $client->itemList(new ItemListRequest(site: 'FANZA'));
-        Assert::fail('ApiErrorException が送出されませんでした。');
-    } catch (ApiErrorException $exception) {
-        expect($exception->httpStatusCode)->toBe(400)
-            ->and($exception->error?->status)->toBe(400)
-            ->and($exception->error?->message)->toBe('BAD REQUEST')
-            ->and($exception->error?->errors)->toBe(['affiliate_id' => 'Invalid Request Error'])
-            ->and($exception->getMessage())
-            ->toBe('DMM API returned 400 BAD REQUEST (affiliate_id: Invalid Request Error)');
+        $call();
+    } catch (Throwable $exception) {
+        expect($exception)->toBeInstanceOf($class);
+
+        /** @var E */
+        return $exception;
     }
-});
 
-test('エラーボディを解釈できなくても ApiErrorException にする', function (): void {
-    $http = StubHttpClient::respondingWith(503, '<html>Service Unavailable</html>', 'text/html');
-    $client = new DmmApiClient(credentials(), httpClient: $http);
+    Assert::fail(sprintf('%s が送出されませんでした。', $class));
+}
 
-    try {
-        $client->itemList(new ItemListRequest(site: 'FANZA'));
-        Assert::fail('ApiErrorException が送出されませんでした。');
-    } catch (ApiErrorException $exception) {
-        expect($exception->httpStatusCode)->toBe(503)
-            ->and($exception->error)->toBeNull()
-            ->and($exception->responseBody)->toBe('<html>Service Unavailable</html>');
-    }
-});
+scenario('API がエラーを返したら ApiErrorException にする', function (string $endpoint, string $responseClass, Closure $call): void {
+    $body = Fixture::json('error');
+    $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::respondingWith(400, $body));
 
-test('ボディが JSON でなければ MalformedResponseException にする', function (): void {
-    $http = StubHttpClient::respondingWith(200, 'not json at all');
-    $client = new DmmApiClient(credentials(), httpClient: $http);
+    $exception = catchThrown(ApiErrorException::class, fn(): mixed => $call($client));
 
-    try {
-        $client->itemList(new ItemListRequest(site: 'FANZA'));
-        Assert::fail('MalformedResponseException が送出されませんでした。');
-    } catch (MalformedResponseException $exception) {
-        expect($exception->endpoint)->toBe('/ItemList')
-            ->and($exception->responseBody)->toBe('not json at all');
-    }
-});
+    expect($exception->httpStatusCode)->toBe(400)
+        ->and($exception->getCode())->toBe(400)
+        ->and($exception->error?->status)->toBe(400)
+        ->and($exception->error?->message)->toBe('BAD REQUEST')
+        ->and($exception->error?->errors)->toBe(['affiliate_id' => 'Invalid Request Error'])
+        ->and($exception->responseBody)->toBe($body)
+        ->and($exception->getMessage())
+        ->toBe('DMM API returned 400 BAD REQUEST (affiliate_id: Invalid Request Error)');
+})->with('typed methods');
 
-test('ボディが JSON オブジェクトでなければ MalformedResponseException にする', function (): void {
-    $http = StubHttpClient::respondingWith(200, '"just a string"');
+scenario('エラーボディを解釈できなくても ApiErrorException にする', function (
+    string $endpoint,
+    string $responseClass,
+    Closure $call,
+    int $statusCode,
+    string $body,
+    string $contentType,
+): void {
+    $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::respondingWith($statusCode, $body, $contentType));
 
-    expect(fn(): ItemListResponse => (new DmmApiClient(credentials(), httpClient: $http))
-        ->itemList(new ItemListRequest(site: 'FANZA')))
-        ->toThrow(MalformedResponseException::class, 'not a JSON object');
-});
+    $exception = catchThrown(ApiErrorException::class, fn(): mixed => $call($client));
 
-test('構造が仕様と合わなければ ResponseValidationException にする', function (): void {
-    $http = StubHttpClient::respondingWith(200, (string) json_encode([
-        'result' => ['status' => 200, 'result_count' => 'many', 'total_count' => 1, 'first_position' => 1],
-    ]));
+    expect($exception->httpStatusCode)->toBe($statusCode)
+        ->and($exception->error)->toBeNull()
+        ->and($exception->responseBody)->toBe($body);
+})->with('typed methods')->with('unreadable error bodies');
 
-    expect(fn(): ItemListResponse => (new DmmApiClient(credentials(), httpClient: $http))
-        ->itemList(new ItemListRequest(site: 'FANZA')))
-        ->toThrow(ResponseValidationException::class);
-});
+scenario('ボディが JSON でなければ MalformedResponseException にする', function (string $endpoint, string $responseClass, Closure $call): void {
+    $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::respondingWith(200, 'not json at all'));
 
-test('通信に失敗したら TransportException にする', function (): void {
-    $http = StubHttpClient::failingWith('Could not resolve host');
-    $client = new DmmApiClient(credentials(), httpClient: $http);
+    $exception = catchThrown(MalformedResponseException::class, fn(): mixed => $call($client));
 
-    try {
-        $client->itemList(new ItemListRequest(site: 'FANZA'));
-        Assert::fail('TransportException が送出されませんでした。');
-    } catch (TransportException $exception) {
-        expect($exception->endpoint)->toBe('/ItemList')
-            ->and($exception->getMessage())->toContain('Could not resolve host')
-            ->and($exception->getPrevious())->toBeInstanceOf(NetworkFailure::class);
-    }
-});
+    expect($exception->endpoint)->toBe($endpoint)
+        ->and($exception->responseBody)->toBe('not json at all')
+        ->and($exception->getPrevious())->toBeInstanceOf(JsonException::class);
+})->with('typed methods');
 
-test('通信エラーのメッセージから認証情報を伏せ字にする', function (): void {
+scenario('ボディが JSON オブジェクトでなければ MalformedResponseException にする', function (
+    string $endpoint,
+    string $responseClass,
+    Closure $call,
+    string $body,
+): void {
+    $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::respondingWith(200, $body));
+
+    $exception = catchThrown(MalformedResponseException::class, fn(): mixed => $call($client));
+
+    expect($exception->endpoint)->toBe($endpoint)
+        ->and($exception->responseBody)->toBe($body)
+        ->and($exception->getMessage())->toContain('not a JSON object');
+})->with('typed methods')->with([
+    '文字列' => ['"just a string"'],
+    '数値' => ['42'],
+    'null' => ['null'],
+]);
+
+scenario('構造が仕様と合わなければ ResponseValidationException にする', function (
+    string $endpoint,
+    string $responseClass,
+    Closure $call,
+    string $body,
+): void {
+    $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::respondingWith(200, $body));
+
+    $exception = catchThrown(ResponseValidationException::class, fn(): mixed => $call($client));
+
+    expect($exception->targetClass)->toBe($responseClass)
+        ->and($exception->errors)->not->toBeEmpty();
+})->with('typed methods')->with([
+    'result がない' => ['{}'],
+    'result がオブジェクトでない' => ['{"result":"not an object"}'],
+]);
+
+scenario('通信に失敗したら TransportException にする', function (string $endpoint, string $responseClass, Closure $call): void {
+    $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::failingWith('Could not resolve host'));
+
+    $exception = catchThrown(TransportException::class, fn(): mixed => $call($client));
+
+    expect($exception->endpoint)->toBe($endpoint)
+        ->and($exception->getMessage())->toContain('Could not resolve host')
+        ->and($exception->getPrevious())->toBeInstanceOf(NetworkFailure::class);
+})->with('typed methods');
+
+scenario('通信エラーのメッセージから認証情報を伏せ字にする', function (string $endpoint, string $responseClass, Closure $call): void {
     // Guzzle などは PSR-18 の例外メッセージに送信先 URI をそのまま載せるため、
     // 何もしないと api_id と affiliate_id が例外のログに残ってしまう。
-    $http = StubHttpClient::failingWith(
-        'cURL error 6: Could not resolve host (see https://curl.se/libcurl/c/libcurl-errors.html)'
-        . ' for https://api.dmm.com/affiliate/v3/ItemList'
-        . '?api_id=MY_API_ID&affiliate_id=myaffiliateid-999&site=FANZA&output=json',
-    );
-    $client = new DmmApiClient(credentials(), httpClient: $http);
+    $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::failingWith(transportFailureMessage($endpoint)));
 
-    try {
-        $client->itemList(new ItemListRequest(site: 'FANZA'));
-        Assert::fail('TransportException が送出されませんでした。');
-    } catch (TransportException $exception) {
-        expect($exception->getMessage())->toContain('Could not resolve host')
-            ->and($exception->getMessage())->toContain('api_id=***&affiliate_id=***')
-            ->and($exception->getMessage())->not->toContain('MY_API_ID')
-            ->and($exception->getMessage())->not->toContain('myaffiliateid-999');
-    }
-});
+    $exception = catchThrown(TransportException::class, fn(): mixed => $call($client));
+
+    expect($exception->getMessage())->toContain('Could not resolve host')
+        ->and($exception->getMessage())->toContain('api_id=***&affiliate_id=***')
+        ->and($exception->getMessage())->not->toContain('MY_API_ID')
+        ->and($exception->getMessage())->not->toContain('myaffiliateid-999');
+})->with('typed methods');
+
+scenario('fetchRaw はボディを変換せずにそのまま返す', function (Request $request, string $endpoint, string $body): void {
+    $http = StubHttpClient::respondingWith(200, $body);
+
+    $raw = (new DmmApiClient(credentials(), httpClient: $http))->fetchRaw($request);
+
+    expect($raw)->toBe($body)
+        ->and($http->requests)->toHaveCount(1)
+        ->and($http->lastRequest()->getMethod())->toBe('GET')
+        ->and($http->lastRequest()->getHeaderLine('Accept'))->toBe('application/json')
+        ->and($http->lastRequest()->getUri()->getPath())->toBe('/affiliate/v3' . $endpoint);
+})->with('raw requests')->with([
+    // DTO への変換も JSON としての検証もしないので、どちらに失敗するボディでも例外にしない。
+    '仕様どおりの JSON' => [Fixture::json('item-list')],
+    '構造が仕様と合わない JSON' => ['{"result":"not an object"}'],
+    'JSON でない' => ['not json at all'],
+    '空' => [''],
+]);
+
+scenario('fetchRaw は 2xx を成功として扱う', function (Request $request, string $endpoint, int $statusCode): void {
+    $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::respondingWith($statusCode, '{}'));
+
+    expect($client->fetchRaw($request))->toBe('{}');
+})->with('raw requests')->with([
+    '200' => [200],
+    '204' => [204],
+    '299' => [299],
+]);
+
+scenario('fetchRaw は API がエラーを返したら ApiErrorException にする', function (Request $request, string $endpoint): void {
+    $body = Fixture::json('error');
+    $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::respondingWith(400, $body));
+
+    $exception = catchThrown(ApiErrorException::class, fn(): string => $client->fetchRaw($request));
+
+    expect($exception->httpStatusCode)->toBe(400)
+        ->and($exception->error?->message)->toBe('BAD REQUEST')
+        ->and($exception->error?->errors)->toBe(['affiliate_id' => 'Invalid Request Error'])
+        ->and($exception->responseBody)->toBe($body)
+        ->and($exception->getMessage())
+        ->toBe('DMM API returned 400 BAD REQUEST (affiliate_id: Invalid Request Error)');
+})->with('raw requests');
+
+scenario('fetchRaw はエラーボディを解釈できなくても ApiErrorException にする', function (
+    Request $request,
+    string $endpoint,
+    int $statusCode,
+    string $body,
+    string $contentType,
+): void {
+    $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::respondingWith($statusCode, $body, $contentType));
+
+    $exception = catchThrown(ApiErrorException::class, fn(): string => $client->fetchRaw($request));
+
+    expect($exception->httpStatusCode)->toBe($statusCode)
+        ->and($exception->error)->toBeNull()
+        ->and($exception->responseBody)->toBe($body);
+})->with('raw requests')->with('unreadable error bodies');
+
+scenario('fetchRaw は通信に失敗したら TransportException にする', function (Request $request, string $endpoint): void {
+    $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::failingWith(transportFailureMessage($endpoint)));
+
+    $exception = catchThrown(TransportException::class, fn(): string => $client->fetchRaw($request));
+
+    expect($exception->endpoint)->toBe($endpoint)
+        ->and($exception->getPrevious())->toBeInstanceOf(NetworkFailure::class)
+        ->and($exception->getMessage())->toContain('Could not resolve host')
+        ->and($exception->getMessage())->toContain('api_id=***&affiliate_id=***')
+        ->and($exception->getMessage())->not->toContain('MY_API_ID')
+        ->and($exception->getMessage())->not->toContain('myaffiliateid-999');
+})->with('raw requests');
+
+scenario('自動検出に任せた実装が見つからなければ NotFoundException にする', function (Closure $construct, string $message): void {
+    $exception = catchThrown(NotFoundException::class, fn(): mixed => withoutDiscovery($construct));
+
+    expect($exception->getMessage())->toContain($message);
+})->with([
+    'PSR-18 クライアント' => [
+        fn(): DmmApiClient => new DmmApiClient(
+            credentials(),
+            requestFactory: new Psr17Factory(),
+            streamFactory: new Psr17Factory(),
+        ),
+        'No PSR-18 clients found',
+    ],
+    'PSR-17 リクエストファクトリ' => [
+        fn(): DmmApiClient => new DmmApiClient(
+            credentials(),
+            httpClient: StubHttpClient::respondingWith(200, '{}'),
+            streamFactory: new Psr17Factory(),
+        ),
+        'No PSR-17 request factory found',
+    ],
+    'PSR-17 ストリームファクトリ' => [
+        fn(): DmmApiClient => new DmmApiClient(
+            credentials(),
+            httpClient: StubHttpClient::respondingWith(200, '{}'),
+            requestFactory: new class implements RequestFactoryInterface {
+                public function createRequest(string $method, $uri): RequestInterface
+                {
+                    return (new Psr17Factory())->createRequest($method, $uri);
+                }
+            },
+        ),
+        'No PSR-17 stream factory found',
+    ],
+]);
 
 test('PSR-18 の実装を渡さなくても自動検出する', function (): void {
     expect((new DmmApiClient(credentials()))->buildUri(new FloorListRequest()))
