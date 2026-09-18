@@ -61,7 +61,7 @@ final readonly class Probe
 
         try {
             return (new self($options, $console))->run();
-        } catch (ProbeException | UsageException | DmmApiClientException $exception) {
+        } catch (ProbeException|UsageException|DmmApiClientException $exception) {
             // 取得の途中で起きた失敗はレポートに集約する。ここに来るのは、
             // 認証情報が不正だった、FloorList が引けなかったなど、続けられない場合。
             $console->progress($exception->getMessage());
@@ -73,8 +73,7 @@ final readonly class Probe
     private function __construct(
         private Options $options,
         private Console $console,
-    ) {
-    }
+    ) {}
 
     /**
      * @throws ProbeException|UsageException|DmmApiClientException
@@ -392,7 +391,7 @@ final readonly class Probe
 
         ksort($best);
 
-        return array_values(array_map(static fn (array $pair): FloorRef => $pair[1], $best));
+        return array_values(array_map(static fn(array $pair): FloorRef => $pair[1], $best));
     }
 
     /**
@@ -775,7 +774,7 @@ final readonly class Probe
             hits: null,
             offsetMax: 1,
             context: [],
-            build: static fn (int $offset): Request => new FloorListRequest(),
+            build: static fn(int $offset): Request => new FloorListRequest(),
         );
     }
 

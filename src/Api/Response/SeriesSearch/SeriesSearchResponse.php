@@ -18,6 +18,5 @@ final readonly class SeriesSearchResponse
     public function __construct(
         public SeriesSearchResult $result,
         public ?RequestEcho $request = null,
-    ) {
-    }
+    ) {}
 }

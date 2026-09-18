@@ -27,6 +27,5 @@ final readonly class Genre
         public string $ruby,
         #[MapFromKey('list_url')]
         public ?string $listUrl = null,
-    ) {
-    }
+    ) {}
 }

@@ -9,6 +9,4 @@ use Throwable;
 /**
  * 本ライブラリが送出するすべての例外が実装するマーカーインターフェース。
  */
-interface DmmApiClientException extends Throwable
-{
-}
+interface DmmApiClientException extends Throwable {}

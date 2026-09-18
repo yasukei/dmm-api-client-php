@@ -22,6 +22,5 @@ final readonly class ErrorResult
         public int $status,
         public string $message,
         public array $errors = [],
-    ) {
-    }
+    ) {}
 }

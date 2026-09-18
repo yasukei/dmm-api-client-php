@@ -51,6 +51,5 @@ final readonly class SeriesSearchResult
         #[MapFromKey('floor_code')]
         public string $floorCode,
         public array $series = [],
-    ) {
-    }
+    ) {}
 }

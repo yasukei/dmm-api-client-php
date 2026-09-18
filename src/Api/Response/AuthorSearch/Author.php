@@ -30,6 +30,5 @@ final readonly class Author
         public ?string $listUrl = null,
         #[MapFromKey('another_name')]
         public ?string $anotherName = null,
-    ) {
-    }
+    ) {}
 }

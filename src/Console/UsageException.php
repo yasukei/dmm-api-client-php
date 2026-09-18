@@ -14,6 +14,4 @@ use RuntimeException;
  * それでも {@see DmmApiClientException} を実装するのは、コマンドが送出しうる例外を
  * 1 つの catch でまとめて受けられるようにするため。
  */
-final class UsageException extends RuntimeException implements DmmApiClientException
-{
-}
+final class UsageException extends RuntimeException implements DmmApiClientException {}

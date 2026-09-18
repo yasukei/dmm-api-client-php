@@ -34,7 +34,7 @@ test('パスを渡さなければ何も読み込まない', function (): void {
 });
 
 test('必須指定でファイルが無ければ例外にする', function (): void {
-    expect(fn (): Environment => Environment::load('/nonexistent/.env', required: true))
+    expect(fn(): Environment => Environment::load('/nonexistent/.env', required: true))
         ->toThrow(UsageException::class, 'does not exist');
 });
 

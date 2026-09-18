@@ -20,12 +20,11 @@ final readonly class Input
     private function __construct(
         private array $values,
         private array $flags,
-    ) {
-    }
+    ) {}
 
     /**
-     * @param list<string>             $tokens      コマンド名より後ろの引数
-     * @param list<OptionDefinition>   $definitions 受け付けるオプション
+     * @param list<string>           $tokens      コマンド名より後ろの引数
+     * @param list<OptionDefinition> $definitions 受け付けるオプション
      *
      * @throws UsageException 未定義のオプション、値の欠落、オプション以外の引数があった場合
      */

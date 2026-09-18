@@ -18,6 +18,5 @@ final readonly class Floor
         public string $id,
         public string $name,
         public string $code,
-    ) {
-    }
+    ) {}
 }

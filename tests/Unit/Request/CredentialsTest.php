@@ -31,6 +31,6 @@ scenario('アフィリエイト ID の形式は検証しない', function (strin
 ]);
 
 test('api_id が空なら拒否する', function (): void {
-    expect(fn (): Credentials => new Credentials('', 'myaffiliateid-999'))
+    expect(fn(): Credentials => new Credentials('', 'myaffiliateid-999'))
         ->toThrow(InvalidArgumentException::class, 'api_id must not be empty.');
 });

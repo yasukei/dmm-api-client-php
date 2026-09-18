@@ -18,6 +18,5 @@ final readonly class Site
         public string $name,
         public string $code,
         public array $service,
-    ) {
-    }
+    ) {}
 }

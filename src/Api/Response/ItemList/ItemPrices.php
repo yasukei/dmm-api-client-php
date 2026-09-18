@@ -24,6 +24,5 @@ final readonly class ItemPrices
         #[MapFromKey('list_price')]
         public int|string|null $listPrice = null,
         public ?Deliveries $deliveries = null,
-    ) {
-    }
+    ) {}
 }

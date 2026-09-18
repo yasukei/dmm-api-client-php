@@ -50,11 +50,10 @@ final readonly class Options
         public ?string $envFile,
         public string $baseUri,
         public bool $help,
-    ) {
-    }
+    ) {}
 
     /**
-     * @param list<string> $argv          スクリプト名を含む引数
+     * @param list<string> $argv           スクリプト名を含む引数
      * @param string       $defaultOutRoot `--out` 未指定時の出力ルート
      *
      * @throws ProbeException 引数の書式や値が不正な場合

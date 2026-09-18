@@ -27,6 +27,5 @@ final readonly class ItemListResult
         #[MapFromKey('first_position')]
         public int $firstPosition,
         public array $items = [],
-    ) {
-    }
+    ) {}
 }

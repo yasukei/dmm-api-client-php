@@ -19,8 +19,7 @@ final readonly class FloorCatalog
     private function __construct(
         public array $floors,
         public array $warnings,
-    ) {
-    }
+    ) {}
 
     /**
      * @param array<mixed> $decoded

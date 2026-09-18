@@ -54,7 +54,7 @@ final class ResponseValidationException extends RuntimeException implements DmmA
         }
 
         $summary = implode(', ', array_map(
-            static fn (array $e): string => "{$e['path']}: {$e['message']}",
+            static fn(array $e): string => "{$e['path']}: {$e['message']}",
             $errors,
         ));
 

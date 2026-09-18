@@ -25,8 +25,7 @@ final class CapturingHttpClient implements ClientInterface
     public function __construct(
         private readonly ClientInterface $inner,
         private readonly StreamFactoryInterface $streamFactory,
-    ) {
-    }
+    ) {}
 
     public function sendRequest(RequestInterface $request): ResponseInterface
     {

@@ -41,7 +41,7 @@ test('レスポンスを受け取っていなければ null を返す', function
 });
 
 test('キャプチャするのは最後に通したレスポンスの生ボディ', function (): void {
-    $inner = new class () implements ClientInterface {
+    $inner = new class implements ClientInterface {
         private int $calls = 0;
 
         public function sendRequest(RequestInterface $request): ResponseInterface
@@ -60,14 +60,14 @@ test('キャプチャするのは最後に通したレスポンスの生ボデ�
 test('通信に失敗した場合は生ボディをキャプチャしない', function (): void {
     $client = capturingClient(StubHttpClient::failingWith('connection refused'));
 
-    expect(fn (): mixed => $client->sendRequest(new Request('GET', 'https://api.dmm.com/')))
+    expect(fn(): mixed => $client->sendRequest(new Request('GET', 'https://api.dmm.com/')))
         ->toThrow(NetworkFailure::class);
 
     expect($client->body())->toBeNull();
 });
 
 test('通信に失敗したら、前の送信でキャプチャした生ボディも残さない', function (): void {
-    $inner = new class () implements ClientInterface {
+    $inner = new class implements ClientInterface {
         private int $calls = 0;
 
         public function sendRequest(RequestInterface $request): ResponseInterface
@@ -83,7 +83,7 @@ test('通信に失敗したら、前の送信でキャプチャした生ボデ�
 
     $client->sendRequest(new Request('GET', 'https://api.dmm.com/'));
 
-    expect(fn (): mixed => $client->sendRequest(new Request('GET', 'https://api.dmm.com/')))
+    expect(fn(): mixed => $client->sendRequest(new Request('GET', 'https://api.dmm.com/')))
         ->toThrow(NetworkFailure::class);
 
     expect($client->body())->toBeNull();

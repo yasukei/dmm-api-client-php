@@ -18,6 +18,5 @@ final readonly class ActressSearchResponse
     public function __construct(
         public ActressSearchResult $result,
         public ?RequestEcho $request = null,
-    ) {
-    }
+    ) {}
 }

@@ -19,8 +19,7 @@ final readonly class OptionDefinition
         public string $name,
         public string $description,
         public ?string $placeholder = null,
-    ) {
-    }
+    ) {}
 
     public function takesValue(): bool
     {

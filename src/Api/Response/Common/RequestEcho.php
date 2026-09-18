@@ -23,6 +23,5 @@ final readonly class RequestEcho
      */
     public function __construct(
         public array $parameters = [],
-    ) {
-    }
+    ) {}
 }

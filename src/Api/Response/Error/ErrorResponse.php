@@ -18,6 +18,5 @@ final readonly class ErrorResponse
     public function __construct(
         public ErrorResult $result,
         public ?RequestEcho $request = null,
-    ) {
-    }
+    ) {}
 }

@@ -18,6 +18,5 @@ final readonly class Service
         public string $name,
         public string $code,
         public array $floor,
-    ) {
-    }
+    ) {}
 }

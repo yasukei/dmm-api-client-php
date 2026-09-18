@@ -14,8 +14,7 @@ final readonly class FloorRef
         public string $serviceCode,
         public string $floorId,
         public string $floorCode,
-    ) {
-    }
+    ) {}
 
     /**
      * 保存するファイル名の先頭に付ける、フロアを表す文字列。

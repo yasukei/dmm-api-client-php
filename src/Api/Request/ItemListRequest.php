@@ -29,18 +29,18 @@ final readonly class ItemListRequest implements Request
     public const int OFFSET_MAX = 50000;
 
     /**
-     * @param string               $site      検索対象サイト（例: DMM.com、FANZA）
-     * @param string|null          $service   サービスコードによる絞り込み（例: digital、mono）
-     * @param string|null          $floor     フロアコードによる絞り込み（例: videoa、books）
-     * @param string|null          $keyword   検索キーワード（URL エンコードは不要）
-     * @param string|null          $cid       商品 ID を指定して 1 件だけ取得する場合の ID
-     * @param list<ArticleFilter>  $articles  カテゴリによる絞り込み条件。複数指定できる
-     * @param DateTimeImmutable|null $gteDate この日時以降に発売・配信された商品に絞り込む
-     * @param DateTimeImmutable|null $lteDate この日時以前に発売・配信された商品に絞り込む
-     * @param MonoStock|null       $monoStock 通販商品の在庫状況による絞り込み
-     * @param ItemListSort|null    $sort      並び順（未指定時は API 既定の rank）
-     * @param int|null             $hits      取得件数（1〜100。未指定時は API 既定の 20）
-     * @param int|null             $offset    検索開始位置（1〜50000、1 始まり。未指定時は API 既定の 1）
+     * @param string                 $site      検索対象サイト（例: DMM.com、FANZA）
+     * @param string|null            $service   サービスコードによる絞り込み（例: digital、mono）
+     * @param string|null            $floor     フロアコードによる絞り込み（例: videoa、books）
+     * @param string|null            $keyword   検索キーワード（URL エンコードは不要）
+     * @param string|null            $cid       商品 ID を指定して 1 件だけ取得する場合の ID
+     * @param list<ArticleFilter>    $articles  カテゴリによる絞り込み条件。複数指定できる
+     * @param DateTimeImmutable|null $gteDate   この日時以降に発売・配信された商品に絞り込む
+     * @param DateTimeImmutable|null $lteDate   この日時以前に発売・配信された商品に絞り込む
+     * @param MonoStock|null         $monoStock 通販商品の在庫状況による絞り込み
+     * @param ItemListSort|null      $sort      並び順（未指定時は API 既定の rank）
+     * @param int|null               $hits      取得件数（1〜100。未指定時は API 既定の 20）
+     * @param int|null               $offset    検索開始位置（1〜50000、1 始まり。未指定時は API 既定の 1）
      *
      * @throws InvalidArgumentException $hits / $offset が範囲外の場合
      */
@@ -95,7 +95,7 @@ final readonly class ItemListRequest implements Request
                 'hits' => $this->hits === null ? null : (string) $this->hits,
                 'offset' => $this->offset === null ? null : (string) $this->offset,
             ],
-            static fn (?string $value): bool => $value !== null,
+            static fn(?string $value): bool => $value !== null,
         );
 
         if ($this->articles === []) {
@@ -104,11 +104,11 @@ final readonly class ItemListRequest implements Request
 
         return $parameters + [
             'article' => array_map(
-                static fn (ArticleFilter $article): string => $article->type->value,
+                static fn(ArticleFilter $article): string => $article->type->value,
                 $this->articles,
             ),
             'article_id' => array_map(
-                static fn (ArticleFilter $article): string => $article->id,
+                static fn(ArticleFilter $article): string => $article->id,
                 $this->articles,
             ),
         ];

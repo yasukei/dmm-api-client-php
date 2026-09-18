@@ -27,8 +27,8 @@ final class Runner
      */
     private const string UNEXPECTED_OK_PATH = '*outcome*';
 
-    private const string UNEXPECTED_OK_MESSAGE =
-        'Expected the API to reject this request, but it returned a successful response. '
+    private const string UNEXPECTED_OK_MESSAGE
+        = 'Expected the API to reject this request, but it returned a successful response. '
         . 'The error DTOs got no coverage from it.';
 
     /** 直前のリクエストを送った時刻。レート制御に使う。 */
@@ -50,8 +50,7 @@ final class Runner
         private readonly RunDirectory $run,
         private readonly Options $options,
         private readonly array $previous = [],
-    ) {
-    }
+    ) {}
 
     public function sent(): int
     {

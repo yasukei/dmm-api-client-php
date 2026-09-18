@@ -36,10 +36,10 @@ function floorScopedRequests(string $floorId = '43', ?string $initial = null, ?i
 function floorScopedRequestFactories(string $floorId = '43', ?int $hits = null, ?int $offset = null): array
 {
     return [
-        'GenreSearch' => [fn (): Request => new GenreSearchRequest($floorId, hits: $hits, offset: $offset)],
-        'MakerSearch' => [fn (): Request => new MakerSearchRequest($floorId, hits: $hits, offset: $offset)],
-        'SeriesSearch' => [fn (): Request => new SeriesSearchRequest($floorId, hits: $hits, offset: $offset)],
-        'AuthorSearch' => [fn (): Request => new AuthorSearchRequest($floorId, hits: $hits, offset: $offset)],
+        'GenreSearch' => [fn(): Request => new GenreSearchRequest($floorId, hits: $hits, offset: $offset)],
+        'MakerSearch' => [fn(): Request => new MakerSearchRequest($floorId, hits: $hits, offset: $offset)],
+        'SeriesSearch' => [fn(): Request => new SeriesSearchRequest($floorId, hits: $hits, offset: $offset)],
+        'AuthorSearch' => [fn(): Request => new AuthorSearchRequest($floorId, hits: $hits, offset: $offset)],
     ];
 }
 

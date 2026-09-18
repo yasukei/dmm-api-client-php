@@ -21,8 +21,7 @@ final class StubHttpClient implements ClientInterface
 
     private function __construct(
         private readonly ResponseInterface|ClientExceptionInterface $result,
-    ) {
-    }
+    ) {}
 
     public static function respondingWith(int $statusCode, string $body, string $contentType = 'application/json'): self
     {

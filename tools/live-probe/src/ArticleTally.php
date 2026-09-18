@@ -27,8 +27,7 @@ final readonly class ArticleTally
      */
     private function __construct(
         public array $candidates,
-    ) {
-    }
+    ) {}
 
     /**
      * 分類ごとに、まず試す ID。
@@ -183,9 +182,9 @@ final readonly class ArticleTally
 
         usort(
             $pairs,
-            static fn (array $a, array $b): int => $b[1] <=> $a[1] ?: strcmp($a[0], $b[0]),
+            static fn(array $a, array $b): int => $b[1] <=> $a[1] ?: strcmp($a[0], $b[0]),
         );
 
-        return array_map(static fn (array $pair): string => $pair[0], $pairs);
+        return array_map(static fn(array $pair): string => $pair[0], $pairs);
     }
 }

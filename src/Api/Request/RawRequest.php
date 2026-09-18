@@ -22,8 +22,7 @@ final readonly class RawRequest implements Request
     public function __construct(
         private string $endpoint,
         private array $parameters = [],
-    ) {
-    }
+    ) {}
 
     public function endpoint(): string
     {

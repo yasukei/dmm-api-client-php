@@ -14,6 +14,5 @@ final readonly class SampleImages
      */
     public function __construct(
         public array $image = [],
-    ) {
-    }
+    ) {}
 }

@@ -14,6 +14,6 @@ test('種別と ID を保持する', function (): void {
 });
 
 test('ID が空なら拒否する', function (): void {
-    expect(fn (): ArticleFilter => new ArticleFilter(ArticleType::Genre, ''))
+    expect(fn(): ArticleFilter => new ArticleFilter(ArticleType::Genre, ''))
         ->toThrow(InvalidArgumentException::class, 'article_id must not be empty.');
 });

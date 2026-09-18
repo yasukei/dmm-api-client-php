@@ -30,6 +30,5 @@ final readonly class Maker
         public ?string $listUrl = null,
         #[MapFromKey('another_name')]
         public ?string $anotherName = null,
-    ) {
-    }
+    ) {}
 }

@@ -34,6 +34,5 @@ final readonly class SampleMovieUrl
         public ?string $size644x414 = null,
         #[MapFromKey('size_720_480')]
         public ?string $size720x480 = null,
-    ) {
-    }
+    ) {}
 }

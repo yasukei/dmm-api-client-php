@@ -214,7 +214,7 @@ final class Planner
             hits: null,
             offsetMax: 1,
             context: ['case' => $case],
-            build: static fn (int $offset): Request => $request,
+            build: static fn(int $offset): Request => $request,
             credentials: $credentials,
             expectsError: true,
         );
@@ -238,7 +238,7 @@ final class Planner
             hits: $hits,
             offsetMax: ItemListRequest::OFFSET_MAX,
             context: $floor->context() + ['article' => $article, 'article_id' => $id],
-            build: static fn (int $offset): Request => self::articleRequest($floor, $article, $id, $hits, $offset),
+            build: static fn(int $offset): Request => self::articleRequest($floor, $article, $id, $hits, $offset),
             firstPageOnly: true,
         );
     }
@@ -275,7 +275,7 @@ final class Planner
                 'article' => implode(',', array_keys($articles)),
                 'article_id' => implode(',', array_values($articles)),
             ],
-            build: static fn (int $offset): Request => new ItemListRequest(
+            build: static fn(int $offset): Request => new ItemListRequest(
                 site: $floor->site,
                 service: $floor->serviceCode,
                 floor: $floor->floorCode,
@@ -356,7 +356,7 @@ final class Planner
                 hits: $hits,
                 offsetMax: ItemListRequest::OFFSET_MAX,
                 context: $floor->context() + ['mono_stock' => $stock->value],
-                build: static fn (int $offset): Request => new ItemListRequest(
+                build: static fn(int $offset): Request => new ItemListRequest(
                     site: $floor->site,
                     service: $floor->serviceCode,
                     floor: $floor->floorCode,
@@ -393,7 +393,7 @@ final class Planner
                 hits: $hits,
                 offsetMax: ItemListRequest::OFFSET_MAX,
                 context: $floor->context(),
-                build: static fn (int $offset): Request => new ItemListRequest(
+                build: static fn(int $offset): Request => new ItemListRequest(
                     site: $floor->site,
                     service: $floor->serviceCode,
                     floor: $floor->floorCode,
@@ -416,7 +416,7 @@ final class Planner
     {
         return [self::FIRST_SORT, ...array_values(array_filter(
             ItemListSort::cases(),
-            static fn (ItemListSort $sort): bool => $sort !== self::FIRST_SORT,
+            static fn(ItemListSort $sort): bool => $sort !== self::FIRST_SORT,
         ))];
     }
 
@@ -442,7 +442,7 @@ final class Planner
                 hits: $hits,
                 offsetMax: self::OFFSET_MAX,
                 context: [],
-                build: static fn (int $offset): Request => new ActressSearchRequest(
+                build: static fn(int $offset): Request => new ActressSearchRequest(
                     sort: $sort,
                     hits: $hits,
                     offset: $offset,

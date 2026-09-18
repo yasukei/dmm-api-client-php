@@ -102,19 +102,19 @@ scenario('各エンドポイントが対応する DTO を返す', function (stri
         ->and($http->lastRequest()->getUri()->getPath())->toBe('/affiliate/v3' . $endpoint);
 })->with([
     'itemList' => ['item-list', '/ItemList',
-        fn (DmmApiClient $client): ItemListResponse => $client->itemList(new ItemListRequest(site: 'FANZA'))],
+        fn(DmmApiClient $client): ItemListResponse => $client->itemList(new ItemListRequest(site: 'FANZA'))],
     'floorList' => ['floor-list', '/FloorList',
-        fn (DmmApiClient $client): FloorListResponse => $client->floorList(new FloorListRequest())],
+        fn(DmmApiClient $client): FloorListResponse => $client->floorList(new FloorListRequest())],
     'actressSearch' => ['actress-search', '/ActressSearch',
-        fn (DmmApiClient $client): ActressSearchResponse => $client->actressSearch(new ActressSearchRequest())],
+        fn(DmmApiClient $client): ActressSearchResponse => $client->actressSearch(new ActressSearchRequest())],
     'genreSearch' => ['genre-search', '/GenreSearch',
-        fn (DmmApiClient $client): GenreSearchResponse => $client->genreSearch(new GenreSearchRequest('43'))],
+        fn(DmmApiClient $client): GenreSearchResponse => $client->genreSearch(new GenreSearchRequest('43'))],
     'makerSearch' => ['maker-search', '/MakerSearch',
-        fn (DmmApiClient $client): MakerSearchResponse => $client->makerSearch(new MakerSearchRequest('43'))],
+        fn(DmmApiClient $client): MakerSearchResponse => $client->makerSearch(new MakerSearchRequest('43'))],
     'seriesSearch' => ['series-search', '/SeriesSearch',
-        fn (DmmApiClient $client): SeriesSearchResponse => $client->seriesSearch(new SeriesSearchRequest('43'))],
+        fn(DmmApiClient $client): SeriesSearchResponse => $client->seriesSearch(new SeriesSearchRequest('43'))],
     'authorSearch' => ['author-search', '/AuthorSearch',
-        fn (DmmApiClient $client): AuthorSearchResponse => $client->authorSearch(new AuthorSearchRequest('80'))],
+        fn(DmmApiClient $client): AuthorSearchResponse => $client->authorSearch(new AuthorSearchRequest('80'))],
 ]);
 
 test('floorList は引数を省略できる', function (): void {
@@ -181,7 +181,7 @@ test('ボディが JSON でなければ MalformedResponseException にする', f
 test('ボディが JSON オブジェクトでなければ MalformedResponseException にする', function (): void {
     $http = StubHttpClient::respondingWith(200, '"just a string"');
 
-    expect(fn (): ItemListResponse => (new DmmApiClient(credentials(), httpClient: $http))
+    expect(fn(): ItemListResponse => (new DmmApiClient(credentials(), httpClient: $http))
         ->itemList(new ItemListRequest(site: 'FANZA')))
         ->toThrow(MalformedResponseException::class, 'not a JSON object');
 });
@@ -191,7 +191,7 @@ test('構造が仕様と合わなければ ResponseValidationException にする
         'result' => ['status' => 200, 'result_count' => 'many', 'total_count' => 1, 'first_position' => 1],
     ]));
 
-    expect(fn (): ItemListResponse => (new DmmApiClient(credentials(), httpClient: $http))
+    expect(fn(): ItemListResponse => (new DmmApiClient(credentials(), httpClient: $http))
         ->itemList(new ItemListRequest(site: 'FANZA')))
         ->toThrow(ResponseValidationException::class);
 });
@@ -238,7 +238,7 @@ test('PSR-18 の実装を渡さなくても自動検出する', function (): voi
 
 test('リクエストファクトリがストリームファクトリを兼ねていれば、自動検出しない', function (): void {
     // Psr17Factory はリクエストとストリームのファクトリを兼ねる。
-    $response = withoutDiscovery(fn (): FloorListResponse => (new DmmApiClient(
+    $response = withoutDiscovery(fn(): FloorListResponse => (new DmmApiClient(
         credentials(),
         httpClient: StubHttpClient::respondingWithFixture('floor-list'),
         requestFactory: new Psr17Factory(),
@@ -248,14 +248,14 @@ test('リクエストファクトリがストリームファクトリを兼ね�
 });
 
 test('ストリームファクトリを渡せば、リクエストファクトリが兼ねていなくても自動検出しない', function (): void {
-    $requestFactory = new class () implements RequestFactoryInterface {
+    $requestFactory = new class implements RequestFactoryInterface {
         public function createRequest(string $method, $uri): RequestInterface
         {
             return (new Psr17Factory())->createRequest($method, $uri);
         }
     };
 
-    $response = withoutDiscovery(fn (): FloorListResponse => (new DmmApiClient(
+    $response = withoutDiscovery(fn(): FloorListResponse => (new DmmApiClient(
         credentials(),
         httpClient: StubHttpClient::respondingWithFixture('floor-list'),
         requestFactory: $requestFactory,
@@ -302,14 +302,14 @@ test('buildUri は送信しないので生ボディを更新しない', function
 test('生ボディは最後の呼び出しで上書きされる', function (): void {
     $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::respondingWith(400, '{"result":{"status":400}}'));
 
-    expect(fn (): mixed => $client->floorList())->toThrow(ApiErrorException::class);
+    expect(fn(): mixed => $client->floorList())->toThrow(ApiErrorException::class);
 
     // エラーで終わった場合も、そのレスポンスの生ボディが残る。
     expect($client->lastResponseBody())->toBe('{"result":{"status":400}}');
 });
 
 test('通信に失敗したら、前の呼び出しの生ボディを返さない', function (): void {
-    $inner = new class () implements ClientInterface {
+    $inner = new class implements ClientInterface {
         private int $calls = 0;
 
         public function sendRequest(RequestInterface $request): ResponseInterface
@@ -323,8 +323,8 @@ test('通信に失敗したら、前の呼び出しの生ボディを返さな�
     };
     $client = new DmmApiClient(credentials(), httpClient: $inner);
 
-    expect(fn (): mixed => $client->floorList())->toThrow(ApiErrorException::class);
-    expect(fn (): mixed => $client->floorList())->toThrow(TransportException::class);
+    expect(fn(): mixed => $client->floorList())->toThrow(ApiErrorException::class);
+    expect(fn(): mixed => $client->floorList())->toThrow(TransportException::class);
 
     expect($client->lastResponseBody())->toBeNull();
 });

@@ -104,7 +104,7 @@ final readonly class ActressSearchRequest implements Request
                 'hits' => $this->hits === null ? null : (string) $this->hits,
                 'offset' => $this->offset === null ? null : (string) $this->offset,
             ],
-            static fn (?string $value): bool => $value !== null,
+            static fn(?string $value): bool => $value !== null,
         );
     }
 }

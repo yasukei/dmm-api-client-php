@@ -23,6 +23,5 @@ final readonly class Delivery
         public int|string $price,
         #[MapFromKey('list_price')]
         public int|string $listPrice,
-    ) {
-    }
+    ) {}
 }

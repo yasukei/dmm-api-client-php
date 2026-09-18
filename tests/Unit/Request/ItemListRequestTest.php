@@ -95,7 +95,7 @@ scenario('hits の境界値を受け付ける', function (int $hits): void {
 })->with([[ItemListRequest::HITS_MIN], [50], [ItemListRequest::HITS_MAX]]);
 
 scenario('範囲外の hits を拒否する', function (int $hits): void {
-    expect(fn (): ItemListRequest => new ItemListRequest(site: 'FANZA', hits: $hits))
+    expect(fn(): ItemListRequest => new ItemListRequest(site: 'FANZA', hits: $hits))
         ->toThrow(InvalidArgumentException::class, 'hits must be between 1 and 100');
 })->with([[0], [-1], [ItemListRequest::HITS_MAX + 1]]);
 
@@ -104,6 +104,6 @@ scenario('offset の境界値を受け付ける', function (int $offset): void {
 })->with([[ItemListRequest::OFFSET_MIN], [ItemListRequest::OFFSET_MAX]]);
 
 scenario('範囲外の offset を拒否する', function (int $offset): void {
-    expect(fn (): ItemListRequest => new ItemListRequest(site: 'FANZA', offset: $offset))
+    expect(fn(): ItemListRequest => new ItemListRequest(site: 'FANZA', offset: $offset))
         ->toThrow(InvalidArgumentException::class, 'offset must be between 1 and 50000');
 })->with([[0], [-1], [ItemListRequest::OFFSET_MAX + 1]]);

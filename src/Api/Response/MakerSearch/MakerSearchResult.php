@@ -51,6 +51,5 @@ final readonly class MakerSearchResult
         #[MapFromKey('floor_code')]
         public string $floorCode,
         public array $maker = [],
-    ) {
-    }
+    ) {}
 }
