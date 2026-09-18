@@ -53,19 +53,19 @@ final readonly class DmmApiClient
 
     /**
      * @param Credentials                  $credentials    API ID とアフィリエイト ID
+     * @param string                       $baseUri        API のベース URI。末尾のスラッシュは不要
      * @param ClientInterface|null         $httpClient     PSR-18 クライアント。null なら自動検出する
      * @param RequestFactoryInterface|null $requestFactory PSR-17 リクエストファクトリ。null なら自動検出する
-     * @param ResponseMapper|null          $responseMapper レスポンスの検証・マッピング担当。null なら既定の設定で生成する
-     * @param string                       $baseUri        API のベース URI。末尾のスラッシュは不要
      * @param StreamFactoryInterface|null  $streamFactory  PSR-17 ストリームファクトリ。生ボディのキャプチャに使う。null ならリクエストファクトリが兼ねていればそれを使い、兼ねていなければ自動検出する
+     * @param ResponseMapper|null          $responseMapper レスポンスの検証・マッピング担当。null なら既定の設定で生成する
      */
     public function __construct(
         private Credentials $credentials,
+        private string $baseUri = self::DEFAULT_BASE_URI,
         ?ClientInterface $httpClient = null,
         ?RequestFactoryInterface $requestFactory = null,
-        ?ResponseMapper $responseMapper = null,
-        private string $baseUri = self::DEFAULT_BASE_URI,
         ?StreamFactoryInterface $streamFactory = null,
+        ?ResponseMapper $responseMapper = null,
     ) {
         $httpClient ??= Psr18ClientDiscovery::find();
         $this->requestFactory = $requestFactory ?? Psr17FactoryDiscovery::findRequestFactory();

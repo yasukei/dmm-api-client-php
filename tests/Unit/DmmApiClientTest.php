@@ -60,7 +60,7 @@ function withoutDiscovery(callable $callback): mixed
 }
 
 test('認証情報・リクエストパラメータ・output を載せた URI を組み立てる', function (): void {
-    $client = new DmmApiClient(credentials(), StubHttpClient::respondingWith(200, '{}'));
+    $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::respondingWith(200, '{}'));
 
     $uri = $client->buildUri(new ItemListRequest(
         site: SiteCode::Fanza,
@@ -76,7 +76,7 @@ test('認証情報・リクエストパラメータ・output を載せた URI �
 });
 
 test('複数 article をインデックス付きのクエリに展開する', function (): void {
-    $client = new DmmApiClient(credentials(), StubHttpClient::respondingWith(200, '{}'));
+    $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::respondingWith(200, '{}'));
 
     $uri = $client->buildUri(new ItemListRequest(
         site: SiteCode::Fanza,
@@ -94,8 +94,8 @@ test('複数 article をインデックス付きのクエリに展開する', fu
 test('ベース URI を差し替えられる', function (): void {
     $client = new DmmApiClient(
         credentials(),
+        'https://example.test/api',
         StubHttpClient::respondingWith(200, '{}'),
-        baseUri: 'https://example.test/api',
     );
 
     expect($client->buildUri(new FloorListRequest()))->toStartWith('https://example.test/api/FloorList?');
@@ -104,7 +104,7 @@ test('ベース URI を差し替えられる', function (): void {
 test('Accept ヘッダ付きの GET を送る', function (): void {
     $http = StubHttpClient::respondingWithFixture('item-list');
 
-    (new DmmApiClient(credentials(), $http))->itemList(new ItemListRequest(site: SiteCode::Fanza));
+    (new DmmApiClient(credentials(), httpClient: $http))->itemList(new ItemListRequest(site: SiteCode::Fanza));
 
     expect($http->requests)->toHaveCount(1)
         ->and($http->lastRequest()->getMethod())->toBe('GET')
@@ -122,7 +122,7 @@ scenario('各エンドポイントが対応する DTO を返す', function (stri
 
     // データセットのクロージャは戻り値型で DTO を縛っているため、
     // 別の型が返れば TypeError になる。
-    $response = $call(new DmmApiClient(credentials(), $http));
+    $response = $call(new DmmApiClient(credentials(), httpClient: $http));
 
     expect($response)->toBeObject()
         ->and($http->lastRequest()->getUri()->getPath())->toBe('/affiliate/v3' . $endpoint);
@@ -146,14 +146,14 @@ scenario('各エンドポイントが対応する DTO を返す', function (stri
 test('floorList は引数を省略できる', function (): void {
     $http = StubHttpClient::respondingWithFixture('floor-list');
 
-    expect((new DmmApiClient(credentials(), $http))->floorList())
+    expect((new DmmApiClient(credentials(), httpClient: $http))->floorList())
         ->toBeInstanceOf(FloorListResponse::class);
 });
 
 test('取得したレスポンスを DTO に変換する', function (): void {
     $http = StubHttpClient::respondingWithFixture('item-list');
 
-    $response = (new DmmApiClient(credentials(), $http))
+    $response = (new DmmApiClient(credentials(), httpClient: $http))
         ->itemList(new ItemListRequest(site: SiteCode::Fanza));
 
     expect($response->result->totalCount)->toBe(12450)
@@ -162,7 +162,7 @@ test('取得したレスポンスを DTO に変換する', function (): void {
 
 test('API がエラーを返したら ApiErrorException にする', function (): void {
     $http = StubHttpClient::respondingWithFixture('error', 400);
-    $client = new DmmApiClient(credentials(), $http);
+    $client = new DmmApiClient(credentials(), httpClient: $http);
 
     try {
         $client->itemList(new ItemListRequest(site: SiteCode::Fanza));
@@ -179,7 +179,7 @@ test('API がエラーを返したら ApiErrorException にする', function ():
 
 test('エラーボディを解釈できなくても ApiErrorException にする', function (): void {
     $http = StubHttpClient::respondingWith(503, '<html>Service Unavailable</html>', 'text/html');
-    $client = new DmmApiClient(credentials(), $http);
+    $client = new DmmApiClient(credentials(), httpClient: $http);
 
     try {
         $client->itemList(new ItemListRequest(site: SiteCode::Fanza));
@@ -193,7 +193,7 @@ test('エラーボディを解釈できなくても ApiErrorException にする'
 
 test('ボディが JSON でなければ MalformedResponseException にする', function (): void {
     $http = StubHttpClient::respondingWith(200, 'not json at all');
-    $client = new DmmApiClient(credentials(), $http);
+    $client = new DmmApiClient(credentials(), httpClient: $http);
 
     try {
         $client->itemList(new ItemListRequest(site: SiteCode::Fanza));
@@ -207,7 +207,7 @@ test('ボディが JSON でなければ MalformedResponseException にする', f
 test('ボディが JSON オブジェクトでなければ MalformedResponseException にする', function (): void {
     $http = StubHttpClient::respondingWith(200, '"just a string"');
 
-    expect(fn (): ItemListResponse => (new DmmApiClient(credentials(), $http))
+    expect(fn (): ItemListResponse => (new DmmApiClient(credentials(), httpClient: $http))
         ->itemList(new ItemListRequest(site: SiteCode::Fanza)))
         ->toThrow(MalformedResponseException::class, 'not a JSON object');
 });
@@ -217,14 +217,14 @@ test('構造が仕様と合わなければ ResponseValidationException にする
         'result' => ['status' => 200, 'result_count' => 'many', 'total_count' => 1, 'first_position' => 1],
     ]));
 
-    expect(fn (): ItemListResponse => (new DmmApiClient(credentials(), $http))
+    expect(fn (): ItemListResponse => (new DmmApiClient(credentials(), httpClient: $http))
         ->itemList(new ItemListRequest(site: SiteCode::Fanza)))
         ->toThrow(ResponseValidationException::class);
 });
 
 test('通信に失敗したら TransportException にする', function (): void {
     $http = StubHttpClient::failingWith('Could not resolve host');
-    $client = new DmmApiClient(credentials(), $http);
+    $client = new DmmApiClient(credentials(), httpClient: $http);
 
     try {
         $client->itemList(new ItemListRequest(site: SiteCode::Fanza));
@@ -244,7 +244,7 @@ test('通信エラーのメッセージから認証情報を伏せ字にする',
         . ' for https://api.dmm.com/affiliate/v3/ItemList'
         . '?api_id=MY_API_ID&affiliate_id=myaffiliateid-999&site=FANZA&output=json',
     );
-    $client = new DmmApiClient(credentials(), $http);
+    $client = new DmmApiClient(credentials(), httpClient: $http);
 
     try {
         $client->itemList(new ItemListRequest(site: SiteCode::Fanza));
@@ -266,8 +266,8 @@ test('リクエストファクトリがストリームファクトリを兼ね�
     // Psr17Factory はリクエストとストリームのファクトリを兼ねる。
     $response = withoutDiscovery(fn (): FloorListResponse => (new DmmApiClient(
         credentials(),
-        StubHttpClient::respondingWithFixture('floor-list'),
-        new Psr17Factory(),
+        httpClient: StubHttpClient::respondingWithFixture('floor-list'),
+        requestFactory: new Psr17Factory(),
     ))->floorList());
 
     expect($response)->toBeInstanceOf(FloorListResponse::class);
@@ -283,8 +283,8 @@ test('ストリームファクトリを渡せば、リクエストファクト�
 
     $response = withoutDiscovery(fn (): FloorListResponse => (new DmmApiClient(
         credentials(),
-        StubHttpClient::respondingWithFixture('floor-list'),
-        $requestFactory,
+        httpClient: StubHttpClient::respondingWithFixture('floor-list'),
+        requestFactory: $requestFactory,
         streamFactory: new Psr17Factory(),
     ))->floorList());
 
@@ -293,7 +293,7 @@ test('ストリームファクトリを渡せば、リクエストファクト�
 
 test('型付きメソッドを呼んだあとでも生ボディを参照できる', function (): void {
     $body = Tests\Support\Fixture::json('floor-list');
-    $client = new DmmApiClient(credentials(), StubHttpClient::respondingWith(200, $body));
+    $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::respondingWith(200, $body));
 
     $response = $client->floorList();
 
@@ -304,7 +304,7 @@ test('型付きメソッドを呼んだあとでも生ボディを参照でき�
 test('DTO が知らないキーも生ボディには残る', function (): void {
     // 既定のマッパーは知らないキーを捨てるため、DTO 経由では辿れない。
     $body = '{"result":{"site":[{"name":"DMM.com","code":"DMM.com","service":[],"new_field":"x"}]}}';
-    $client = new DmmApiClient(credentials(), StubHttpClient::respondingWith(200, $body));
+    $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::respondingWith(200, $body));
 
     $client->floorList();
 
@@ -312,13 +312,13 @@ test('DTO が知らないキーも生ボディには残る', function (): void {
 });
 
 test('1 度も呼び出していなければ生ボディは null', function (): void {
-    $client = new DmmApiClient(credentials(), StubHttpClient::respondingWith(200, '{}'));
+    $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::respondingWith(200, '{}'));
 
     expect($client->lastResponseBody())->toBeNull();
 });
 
 test('buildUri は送信しないので生ボディを更新しない', function (): void {
-    $client = new DmmApiClient(credentials(), StubHttpClient::respondingWith(200, '{"result":{}}'));
+    $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::respondingWith(200, '{"result":{}}'));
 
     $client->buildUri(new FloorListRequest());
 
@@ -326,7 +326,7 @@ test('buildUri は送信しないので生ボディを更新しない', function
 });
 
 test('生ボディは最後の呼び出しで上書きされる', function (): void {
-    $client = new DmmApiClient(credentials(), StubHttpClient::respondingWith(400, '{"result":{"status":400}}'));
+    $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::respondingWith(400, '{"result":{"status":400}}'));
 
     expect(fn (): mixed => $client->floorList())->toThrow(ApiErrorException::class);
 
@@ -347,7 +347,7 @@ test('通信に失敗したら、前の呼び出しの生ボディを返さな�
             return new Response(400, ['Content-Type' => 'application/json'], '{"result":{"status":400}}');
         }
     };
-    $client = new DmmApiClient(credentials(), $inner);
+    $client = new DmmApiClient(credentials(), httpClient: $inner);
 
     expect(fn (): mixed => $client->floorList())->toThrow(ApiErrorException::class);
     expect(fn (): mixed => $client->floorList())->toThrow(TransportException::class);
