@@ -141,10 +141,11 @@ final readonly class Probe
         ));
 
         // 前の段が `--limit` に達したら、その先の段は始めない。
-        $this->runTargets($runner, $targets, $console, $run)
+        if ($this->runTargets($runner, $targets, $console, $run)
             && $this->processArticles($runner, $catalog, $console, $run)
-            && $this->processArticleCombos($runner, $catalog, $console, $run)
-            && $this->processMonoStock($runner, $catalog, $console, $run);
+            && $this->processArticleCombos($runner, $catalog, $console, $run)) {
+            $this->processMonoStock($runner, $catalog, $console, $run);
+        }
 
         $run->writeRun([
             'startedAt' => $startedAt,
@@ -183,7 +184,7 @@ final readonly class Probe
         $onePage = [];
 
         foreach ($targets as $target) {
-            $index++;
+            ++$index;
 
             if (self::sortAddsNothing($target, $onePage)) {
                 continue;
@@ -287,7 +288,7 @@ final readonly class Probe
         $total = count($plans);
 
         foreach ($plans as [$floor, $tally, $article, $id]) {
-            $index++;
+            ++$index;
             $record = $this->processTarget(
                 $runner,
                 Planner::articleTarget($floor, $article, $id, $this->options),

@@ -9,6 +9,7 @@ use Http\Discovery\ClassDiscovery;
 use Pest\PendingCalls\TestCall;
 use Tests\Support\CapturingOutput;
 use Tests\Support\StubHttpClient;
+use Tests\TestCase;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,7 +17,7 @@ use Tests\Support\StubHttpClient;
 |--------------------------------------------------------------------------
 */
 
-pest()->extend(Tests\TestCase::class)->in('Unit');
+pest()->extend(TestCase::class)->in('Unit');
 
 /*
  * コンソールのテストは、認証情報が環境変数から読める状態で走らせる。

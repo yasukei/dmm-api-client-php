@@ -11,6 +11,7 @@ use DmmApiClient\Api\Request\ArticleFilter;
 use DmmApiClient\Api\Request\ArticleType;
 use DmmApiClient\Api\Request\ItemListRequest;
 use DmmApiClient\Api\Request\ItemListSort;
+use DmmApiClient\Api\Response\ItemList\ItemListResponse;
 
 /**
  * 商品情報 API (`/ItemList`) を呼び出す。
@@ -64,7 +65,7 @@ final class ItemListCommand extends ApiCommand
         );
     }
 
-    protected function invoke(DmmApiClient $client, Input $input): object
+    protected function invoke(DmmApiClient $client, Input $input): ItemListResponse
     {
         return $client->itemList($this->createRequest($input));
     }

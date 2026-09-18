@@ -105,6 +105,8 @@ vendor/bin/dmm-api-client item-list --site=DMM.com --keyword=PHP | jq .
 | コマンド | 用途 |
 | --- | --- |
 | `composer test` | 単体テスト（[Pest](https://pestphp.com/)） |
+| `composer lint` | stan + cs-check + rector-dry |
+| `composer fix` | rector + cs-fix |
 | `composer stan` | 静的解析（[PHPStan](https://phpstan.org/)） |
 | `composer cs-check` / `composer cs-fix` | コードスタイル（[PHP-CS-Fixer](https://cs.symfony.com/)） |
 | `composer rector-dry` / `composer rector` | 自動リファクタリング（[Rector](https://getrector.com/)） |

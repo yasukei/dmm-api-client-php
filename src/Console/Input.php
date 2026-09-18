@@ -40,7 +40,7 @@ final readonly class Input
         $flags = [];
         $count = count($tokens);
 
-        for ($index = 0; $index < $count; $index++) {
+        for ($index = 0; $index < $count; ++$index) {
             $token = $tokens[$index];
 
             if (! str_starts_with($token, '--')) {
@@ -79,7 +79,7 @@ final readonly class Input
             }
 
             $values[$name][] = $next;
-            $index++;
+            ++$index;
         }
 
         return new self($values, $flags);

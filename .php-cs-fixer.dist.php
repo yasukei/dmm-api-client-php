@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
+use PhpCsFixer\Config;
+use PhpCsFixer\Finder;
 use PhpCsFixer\Runner\Parallel\ParallelConfigFactory;
 
-$finder = (new PhpCsFixer\Finder())
+$finder = (new Finder())
     ->in([__DIR__ . '/src', __DIR__ . '/tests', __DIR__ . '/tools'])
     // 拡張子のない実行ファイルと、ルート直下の設定ファイルは in() では拾えない。
     ->append([
@@ -13,7 +15,7 @@ $finder = (new PhpCsFixer\Finder())
         __DIR__ . '/rector.php',
     ]);
 
-return (new PhpCsFixer\Config())
+return (new Config())
     ->setRules([
         // 版を固定する。@PER-CS は Fixer の更新で指す版が変わり、CI の結果が勝手に動く。
         '@PER-CS3x0' => true,

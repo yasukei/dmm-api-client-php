@@ -92,7 +92,7 @@ final class Fixture
     {
         $cursor = &$payload;
 
-        for ($index = 0; $index <= $upTo; $index++) {
+        for ($index = 0; $index <= $upTo; ++$index) {
             if (! is_array($cursor)) {
                 throw new RuntimeException(sprintf('Path %s does not exist in the fixture.', implode('.', $path)));
             }

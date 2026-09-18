@@ -6,6 +6,7 @@ namespace DmmApiClient\Console;
 
 use DmmApiClient\Api\DmmApiClient;
 use DmmApiClient\Api\Request\AuthorSearchRequest;
+use DmmApiClient\Api\Response\AuthorSearch\AuthorSearchResponse;
 
 /**
  * 作者検索 API (`/AuthorSearch`) を呼び出す。
@@ -38,7 +39,7 @@ final class AuthorSearchCommand extends FloorScopedSearchCommand
         return new AuthorSearchRequest($floorId, $initial, $hits, $offset);
     }
 
-    protected function invoke(DmmApiClient $client, Input $input): object
+    protected function invoke(DmmApiClient $client, Input $input): AuthorSearchResponse
     {
         return $client->authorSearch($this->createRequest($input));
     }

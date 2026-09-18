@@ -6,6 +6,7 @@ namespace DmmApiClient\Console;
 
 use DmmApiClient\Api\DmmApiClient;
 use DmmApiClient\Api\Request\MakerSearchRequest;
+use DmmApiClient\Api\Response\MakerSearch\MakerSearchResponse;
 
 /**
  * メーカー検索 API (`/MakerSearch`) を呼び出す。
@@ -38,7 +39,7 @@ final class MakerSearchCommand extends FloorScopedSearchCommand
         return new MakerSearchRequest($floorId, $initial, $hits, $offset);
     }
 
-    protected function invoke(DmmApiClient $client, Input $input): object
+    protected function invoke(DmmApiClient $client, Input $input): MakerSearchResponse
     {
         return $client->makerSearch($this->createRequest($input));
     }

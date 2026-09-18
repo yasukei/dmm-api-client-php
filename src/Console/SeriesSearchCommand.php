@@ -6,6 +6,7 @@ namespace DmmApiClient\Console;
 
 use DmmApiClient\Api\DmmApiClient;
 use DmmApiClient\Api\Request\SeriesSearchRequest;
+use DmmApiClient\Api\Response\SeriesSearch\SeriesSearchResponse;
 
 /**
  * シリーズ検索 API (`/SeriesSearch`) を呼び出す。
@@ -38,7 +39,7 @@ final class SeriesSearchCommand extends FloorScopedSearchCommand
         return new SeriesSearchRequest($floorId, $initial, $hits, $offset);
     }
 
-    protected function invoke(DmmApiClient $client, Input $input): object
+    protected function invoke(DmmApiClient $client, Input $input): SeriesSearchResponse
     {
         return $client->seriesSearch($this->createRequest($input));
     }
