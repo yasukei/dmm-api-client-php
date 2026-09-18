@@ -6,6 +6,7 @@ namespace DmmApiClient\Console;
 
 use DmmApiClient\Api\DmmApiClient;
 use DmmApiClient\Api\Request\GenreSearchRequest;
+use DmmApiClient\Api\Response\GenreSearch\GenreSearchResponse;
 
 /**
  * ジャンル検索 API (`/GenreSearch`) を呼び出す。
@@ -38,7 +39,7 @@ final class GenreSearchCommand extends FloorScopedSearchCommand
         return new GenreSearchRequest($floorId, $initial, $hits, $offset);
     }
 
-    protected function invoke(DmmApiClient $client, Input $input): object
+    protected function invoke(DmmApiClient $client, Input $input): GenreSearchResponse
     {
         return $client->genreSearch($this->createRequest($input));
     }

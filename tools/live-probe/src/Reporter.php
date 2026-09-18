@@ -84,11 +84,11 @@ final readonly class Reporter
             $counts['validation-' . $record->validation] = ($counts['validation-' . $record->validation] ?? 0) + 1;
 
             if ($record->cached) {
-                $counts['cached']++;
+                ++$counts['cached'];
             }
 
             if ($record->unknownKeys !== []) {
-                $counts['unknown-keys']++;
+                ++$counts['unknown-keys'];
             }
         }
 
@@ -418,7 +418,7 @@ final readonly class Reporter
                 $grouped[$path] ??= ['requests' => 0, 'messages' => [], 'records' => []];
 
                 if (! isset($seen[$path])) {
-                    $grouped[$path]['requests']++;
+                    ++$grouped[$path]['requests'];
                     $seen[$path] = true;
                     $grouped[$path]['records'][] = [$record, $error];
                 }
@@ -522,7 +522,7 @@ final readonly class Reporter
 
             $message = $record->message ?? 'unknown';
             $grouped[$message] ??= ['requests' => 0, 'status' => $record->httpStatus, 'samples' => []];
-            $grouped[$message]['requests']++;
+            ++$grouped[$message]['requests'];
 
             if (count($grouped[$message]['samples']) < self::SAMPLES_PER_PATH) {
                 $grouped[$message]['samples'][] = $record->label();
@@ -723,7 +723,7 @@ final readonly class Reporter
 
             foreach ($items as $item) {
                 if ($matches($item)) {
-                    $matching++;
+                    ++$matching;
                 }
             }
 
@@ -862,7 +862,7 @@ final readonly class Reporter
 
         foreach ($filters as $filter) {
             $grouped[$filter['name']] ??= ['requests' => 0, 'verdicts' => []];
-            $grouped[$filter['name']]['requests']++;
+            ++$grouped[$filter['name']]['requests'];
             $verdict = $filter['verdict'];
             $grouped[$filter['name']]['verdicts'][$verdict]
                 = ($grouped[$filter['name']]['verdicts'][$verdict] ?? 0) + 1;

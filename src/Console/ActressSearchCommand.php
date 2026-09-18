@@ -7,6 +7,7 @@ namespace DmmApiClient\Console;
 use DmmApiClient\Api\DmmApiClient;
 use DmmApiClient\Api\Request\ActressSearchRequest;
 use DmmApiClient\Api\Request\ActressSearchSort;
+use DmmApiClient\Api\Response\ActressSearch\ActressSearchResponse;
 
 /**
  * 女優検索 API (`/ActressSearch`) を呼び出す。
@@ -67,7 +68,7 @@ final class ActressSearchCommand extends ApiCommand
         );
     }
 
-    protected function invoke(DmmApiClient $client, Input $input): object
+    protected function invoke(DmmApiClient $client, Input $input): ActressSearchResponse
     {
         return $client->actressSearch($this->createRequest($input));
     }

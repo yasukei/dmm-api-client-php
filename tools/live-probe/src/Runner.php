@@ -124,7 +124,7 @@ final class Runner
 
         while (true) {
             $this->throttle();
-            $this->sent++;
+            ++$this->sent;
             $attemptAt = microtime(true);
 
             try {

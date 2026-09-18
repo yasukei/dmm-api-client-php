@@ -368,7 +368,7 @@ abstract class ApiCommand implements Command
             throw new UsageException(sprintf(
                 '%s Example: composer require guzzlehttp/guzzle.',
                 $exception->getMessage(),
-            ));
+            ), $exception->getCode(), $exception);
         }
     }
 

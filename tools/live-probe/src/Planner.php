@@ -153,7 +153,7 @@ final class Planner
 
         // エラーを引く対象は最後に回す。フロアの掃き出しが本題で、これはその付け足しのため。
         if ($options->wantsEndpoint(self::ERRORS) && $options->wantsUnsortedEndpoints()) {
-            $targets = [...$targets, ...self::errorCases($credentials)];
+            return [...$targets, ...self::errorCases($credentials)];
         }
 
         return $targets;

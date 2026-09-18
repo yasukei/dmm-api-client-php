@@ -31,6 +31,7 @@ use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Tests\Support\Fixture;
 use Tests\Support\NetworkFailure;
 use Tests\Support\StubHttpClient;
 
@@ -207,7 +208,7 @@ test('通信に失敗したら TransportException にする', function (): void 
     } catch (TransportException $exception) {
         expect($exception->endpoint)->toBe('/ItemList')
             ->and($exception->getMessage())->toContain('Could not resolve host')
-            ->and($exception->getPrevious())->toBeInstanceOf(Tests\Support\NetworkFailure::class);
+            ->and($exception->getPrevious())->toBeInstanceOf(NetworkFailure::class);
     }
 });
 
@@ -267,7 +268,7 @@ test('ストリームファクトリを渡せば、リクエストファクト�
 });
 
 test('型付きメソッドを呼んだあとでも生ボディを参照できる', function (): void {
-    $body = Tests\Support\Fixture::json('floor-list');
+    $body = Fixture::json('floor-list');
     $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::respondingWith(200, $body));
 
     $response = $client->floorList();
