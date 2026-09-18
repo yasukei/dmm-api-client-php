@@ -350,7 +350,7 @@ abstract class ApiCommand implements Command
     private function createClient(Credentials $credentials): DmmApiClient
     {
         try {
-            return new DmmApiClient($credentials, $this->httpClient);
+            return new DmmApiClient($credentials, httpClient: $this->httpClient);
         } catch (NotFoundException $exception) {
             throw new UsageException(sprintf(
                 '%s Example: composer require guzzlehttp/guzzle.',

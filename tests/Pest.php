@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use DmmApiClient\Api\Request\Credentials;
 use DmmApiClient\Api\Response\ResponseMapper;
+use Http\Discovery\ClassDiscovery;
 use Pest\PendingCalls\TestCall;
 
 /*
@@ -60,4 +61,28 @@ function credentials(): Credentials
 function splitArguments(string $arguments): array
 {
     return $arguments === '' ? [] : explode(' ', $arguments);
+}
+
+/**
+ * 実装の自動検出が効かない状態で $callback を実行する。
+ *
+ * 自動検出はインストール済みのパッケージを探す戦略に任せている。戦略を空にすると、
+ * 実装を入れていない環境と同じ状態になる。
+ *
+ * @template T
+ *
+ * @param callable(): T $callback
+ *
+ * @return T
+ */
+function withoutDiscovery(callable $callback): mixed
+{
+    $strategies = ClassDiscovery::getStrategies();
+    ClassDiscovery::setStrategies([]);
+
+    try {
+        return $callback();
+    } finally {
+        ClassDiscovery::setStrategies(iterator_to_array($strategies));
+    }
 }

@@ -57,8 +57,8 @@ final class Clients
 
         return $this->clients[$key] ??= new DmmApiClient(
             $credentials,
+            $this->baseUri,
             $this->httpClient,
-            baseUri: $this->baseUri,
         );
     }
 }
