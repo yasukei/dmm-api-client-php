@@ -25,6 +25,15 @@ jobs:
           php-version: ${{ matrix.php-version }}
           coverage: none
 
+      # composer.lock は下限の PHP 8.3 で解決してあり、その指定は
+      # config.platform.php として composer.json に入っている。これは
+      # composer update にも効くので、外さないと 8.4 / 8.5 のジョブまで
+      # 8.3 とみなして解決してしまい、それらの利用者が実際に入れる
+      # 組み合わせを一度も試さないことになる。
+      # lint ジョブは lock どおりに入れたいので、そちらでは外さない。
+      - name: Resolve against the runner's PHP, not the locked floor
+        run: composer config --unset platform.php
+
       - name: Install dependencies
         run: composer update --${{ matrix.dependency-version }} --no-interaction --no-progress
 
