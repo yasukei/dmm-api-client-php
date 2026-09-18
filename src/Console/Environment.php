@@ -127,7 +127,9 @@ final readonly class Environment
     {
         $values = [];
 
-        foreach (preg_split('/\R/', $contents) ?: [] as $line) {
+        $lines = preg_split('/\R/', $contents);
+
+        foreach ($lines !== false ? $lines : [] as $line) {
             $line = trim($line);
 
             if ($line === '' || str_starts_with($line, '#')) {

@@ -27,4 +27,5 @@ if (! class_exists(DmmApiClient\Console\Application::class)) {
     exit(1);
 }
 
+/** @var non-empty-list<string> $argv */
 exit((new DmmApiClient\Console\Application())->run($argv));

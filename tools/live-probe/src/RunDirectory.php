@@ -60,7 +60,9 @@ final readonly class RunDirectory
 
         $candidates = [];
 
-        foreach (scandir($root) ?: [] as $entry) {
+        $entries = scandir($root);
+
+        foreach ($entries !== false ? $entries : [] as $entry) {
             if ($entry !== '.' && $entry !== '..' && is_dir($root . '/' . $entry)) {
                 $candidates[] = $entry;
             }
@@ -134,7 +136,9 @@ final readonly class RunDirectory
      */
     public function bodies(string $group, string $prefix): iterable
     {
-        foreach (glob($this->file($group . '/' . $prefix . '*.json')) ?: [] as $path) {
+        $paths = glob($this->file($group . '/' . $prefix . '*.json'));
+
+        foreach ($paths !== false ? $paths : [] as $path) {
             $contents = @file_get_contents($path);
 
             if ($contents !== false) {

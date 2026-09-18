@@ -321,7 +321,7 @@ final class Runner
     {
         $backoff = self::BACKOFF;
 
-        sleep($backoff[$attempt - 1] ?? (int) end($backoff));
+        sleep($backoff[$attempt - 1] ?? end($backoff));
     }
 
     private static function isRetryable(int $status): bool

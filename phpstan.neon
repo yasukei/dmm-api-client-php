@@ -1,6 +1,27 @@
 parameters:
-    level: max
+    level: 10
+    phpVersion:
+        min: 80300
+        max: 80500
     paths:
+        - bin/dmm-api-client
         - src
         - tests
         - tools
+
+    checkUninitializedProperties: true
+    checkBenevolentUnionTypes: true
+    checkMissingCallableSignature: true
+    checkTooWideReturnTypesInProtectedAndPublicMethods: true
+    reportAlwaysTrueInLastCondition: true
+    reportAnyTypeWideningInVarTag: true
+    reportWrongPhpDocTypeInVarTag: true
+    reportPossiblyNonexistentConstantArrayOffset: true
+    rememberPossiblyImpureFunctionValues: false
+
+    ignoreErrors:
+        # scenario() は Pest の test() にそのまま渡すだけのラッパーで、
+        # データセットの数だけ引数の数も型も変わる。Closure の形を一つに決められない。
+        -
+            identifier: missingType.callable
+            path: tests/Pest.php
