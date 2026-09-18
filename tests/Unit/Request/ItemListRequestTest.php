@@ -8,20 +8,19 @@ use DmmApiClient\Api\Request\ArticleFilter;
 use DmmApiClient\Api\Request\ArticleType;
 use DmmApiClient\Api\Request\ItemListRequest;
 use DmmApiClient\Api\Request\ItemListSort;
-use DmmApiClient\Api\SiteCode;
 
 test('エンドポイントを返す', function (): void {
-    expect((new ItemListRequest(site: SiteCode::Fanza))->endpoint())->toBe('/ItemList');
+    expect((new ItemListRequest(site: 'FANZA'))->endpoint())->toBe('/ItemList');
 });
 
 test('site だけ指定した場合は site だけがクエリに載る', function (): void {
-    expect((new ItemListRequest(site: SiteCode::DmmCom))->toQueryParameters())
+    expect((new ItemListRequest(site: 'DMM.com'))->toQueryParameters())
         ->toBe(['site' => 'DMM.com']);
 });
 
 test('指定した項目をすべてクエリに載せる', function (): void {
     $request = new ItemListRequest(
-        site: SiteCode::Fanza,
+        site: 'FANZA',
         service: 'digital',
         floor: 'videoa',
         keyword: 'アクション',
@@ -51,7 +50,7 @@ test('指定した項目をすべてクエリに載せる', function (): void {
 
 test('article は 1 件でもインデックス付き配列で載せる', function (): void {
     $request = new ItemListRequest(
-        site: SiteCode::Fanza,
+        site: 'FANZA',
         articles: [new ArticleFilter(ArticleType::Genre, '6533')],
     );
 
@@ -64,7 +63,7 @@ test('article は 1 件でもインデックス付き配列で載せる', functi
 
 test('article を複数指定できる', function (): void {
     $request = new ItemListRequest(
-        site: SiteCode::Fanza,
+        site: 'FANZA',
         articles: [
             new ArticleFilter(ArticleType::Genre, '6533'),
             new ArticleFilter(ArticleType::Actress, '1078970'),
@@ -80,7 +79,7 @@ test('article を複数指定できる', function (): void {
 
 test('複数 article は http_build_query でインデックス付きの形に展開される', function (): void {
     $request = new ItemListRequest(
-        site: SiteCode::Fanza,
+        site: 'FANZA',
         articles: [
             new ArticleFilter(ArticleType::Genre, '6533'),
             new ArticleFilter(ArticleType::Actress, '1078970'),
@@ -92,19 +91,19 @@ test('複数 article は http_build_query でインデックス付きの形に�
 });
 
 scenario('hits の境界値を受け付ける', function (int $hits): void {
-    expect((new ItemListRequest(site: SiteCode::Fanza, hits: $hits))->hits)->toBe($hits);
+    expect((new ItemListRequest(site: 'FANZA', hits: $hits))->hits)->toBe($hits);
 })->with([[ItemListRequest::HITS_MIN], [50], [ItemListRequest::HITS_MAX]]);
 
 scenario('範囲外の hits を拒否する', function (int $hits): void {
-    expect(fn (): ItemListRequest => new ItemListRequest(site: SiteCode::Fanza, hits: $hits))
+    expect(fn (): ItemListRequest => new ItemListRequest(site: 'FANZA', hits: $hits))
         ->toThrow(InvalidArgumentException::class, 'hits must be between 1 and 100');
 })->with([[0], [-1], [ItemListRequest::HITS_MAX + 1]]);
 
 scenario('offset の境界値を受け付ける', function (int $offset): void {
-    expect((new ItemListRequest(site: SiteCode::Fanza, offset: $offset))->offset)->toBe($offset);
+    expect((new ItemListRequest(site: 'FANZA', offset: $offset))->offset)->toBe($offset);
 })->with([[ItemListRequest::OFFSET_MIN], [ItemListRequest::OFFSET_MAX]]);
 
 scenario('範囲外の offset を拒否する', function (int $offset): void {
-    expect(fn (): ItemListRequest => new ItemListRequest(site: SiteCode::Fanza, offset: $offset))
+    expect(fn (): ItemListRequest => new ItemListRequest(site: 'FANZA', offset: $offset))
         ->toThrow(InvalidArgumentException::class, 'offset must be between 1 and 50000');
 })->with([[0], [-1], [ItemListRequest::OFFSET_MAX + 1]]);

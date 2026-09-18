@@ -80,15 +80,16 @@ test('Accept ヘッダ付きの GET を送る', function (): void {
 });
 
 test('仕様と食い違うレスポンスは、本文を出したうえで失敗として扱う', function (): void {
-    $payload = Fixture::decodedWith('floor-list', ['result', 'site', 0, 'code'], 'NEWSITE');
+    // service は配列で返る。文字列を置けば、その位置を指す検証エラーになる。
+    $payload = Fixture::decodedWith('floor-list', ['result', 'site', 0, 'service'], 'NOT_AN_ARRAY');
     $http = StubHttpClient::respondingWith(200, (string) json_encode($payload));
 
     $result = runFloorList($http);
 
     expect($result['code'])->toBe(Application::EXIT_FAILURE)
-        ->and($result['stdout'])->toContain('NEWSITE')
+        ->and($result['stdout'])->toContain('NOT_AN_ARRAY')
         ->and($result['stderr'])->toContain('FloorListResponse')
-        ->and($result['stderr'])->toContain('result.site.0.code');
+        ->and($result['stderr'])->toContain('result.site.0.service');
 });
 
 test('API がエラーを返したら、エラー本文を出したうえで失敗にする', function (): void {

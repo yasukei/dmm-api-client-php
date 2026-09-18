@@ -38,12 +38,11 @@ use DmmApiClient\Api\DmmApiClient;
 use DmmApiClient\Api\Request\Credentials;
 use DmmApiClient\Api\Request\ItemListRequest;
 use DmmApiClient\Api\Request\ItemListSort;
-use DmmApiClient\Api\SiteCode;
 
 $client = new DmmApiClient(new Credentials('your_api_id', 'your_affiliate_id'));
 
 $response = $client->itemList(new ItemListRequest(
-    site: SiteCode::DmmCom,
+    site: 'DMM.com',
     service: 'mono',
     floor: 'book',
     keyword: 'PHP',
