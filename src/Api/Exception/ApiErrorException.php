@@ -35,7 +35,7 @@ final class ApiErrorException extends RuntimeException implements DmmApiClientEx
             )) . ')';
 
         return new self(
-            sprintf('DMM API returned %d %s%s', $error->status, $error->message, $detail),
+            sprintf('DMM API returned %s %s%s', $error->status, $error->message, $detail),
             $httpStatusCode,
             $error,
             $responseBody,

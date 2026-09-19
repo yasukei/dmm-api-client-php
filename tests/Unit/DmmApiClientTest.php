@@ -227,7 +227,7 @@ scenario('API がエラーを返したら ApiErrorException にする', function
 
     expect($exception->httpStatusCode)->toBe(400)
         ->and($exception->getCode())->toBe(400)
-        ->and($exception->error?->status)->toBe(400)
+        ->and($exception->error?->status)->toBe('400')
         ->and($exception->error?->message)->toBe('BAD REQUEST')
         ->and($exception->error?->errors)->toBe(['affiliate_id' => 'Invalid Request Error'])
         ->and($exception->responseBody)->toBe($body)
