@@ -318,8 +318,8 @@ test('ゼロが数値で返る価格もマッピングできる', function (): v
     $prices = responseMapper()->itemList($payload)->result->items[0]->prices;
 
     expect($prices?->price)->toBe('0')
-        ->and($prices?->listPrice)->toBe(0)
-        ->and($prices?->deliveries?->delivery[0]->listPrice)->toBe(0);
+        ->and($prices?->listPrice)->toBe('0')
+        ->and($prices?->deliveries?->delivery[0]->listPrice)->toBe('0');
 });
 
 test('価格が数値のみの商品もマッピングできる', function (): void {
@@ -328,7 +328,7 @@ test('価格が数値のみの商品もマッピングできる', function (): v
 
     $prices = responseMapper()->itemList($payload)->result->items[0]->prices;
 
-    expect($prices?->price)->toBe(0)
+    expect($prices?->price)->toBe('0')
         ->and($prices?->listPrice)->toBeNull()
         ->and($prices?->deliveries)->toBeNull();
 });
