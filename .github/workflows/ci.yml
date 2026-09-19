@@ -70,3 +70,36 @@ jobs:
 
       - name: Rector
         run: composer rector-dry
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: pcov
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress
+
+      # shell を指定しない run は pipefail なしの bash -e で動き、パイプの終了コードが
+      # tee のものになる。shell: bash を明示して pipefail を付け、テストが落ちたら
+      # このステップも落ちるようにする。
+      - name: Run tests with coverage
+        shell: bash
+        run: composer coverage -- --colors=never | tee coverage.txt
+
+      - name: Write coverage to job summary
+        if: always()
+        run: |
+          {
+            echo '```text'
+            cat coverage.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
