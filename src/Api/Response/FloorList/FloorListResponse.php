@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DmmApiClient\Api\Response\FloorList;
 
+use DmmApiClient\Api\Response\Common\RawBodyAware;
 use DmmApiClient\Api\Response\Common\RequestEcho;
 
 /**
@@ -11,6 +12,8 @@ use DmmApiClient\Api\Response\Common\RequestEcho;
  */
 final readonly class FloorListResponse
 {
+    use RawBodyAware;
+
     /**
      * @param FloorListResult  $result  フロア構成
      * @param RequestEcho|null $request 送信したリクエストパラメータのエコーバック

@@ -21,14 +21,16 @@ final class ResponseValidationException extends RuntimeException implements DmmA
     public const string CODE_UNEXPECTED_KEY = 'unexpected_key';
 
     /**
-     * @param class-string                                                       $targetClass マッピング先の DTO クラス
-     * @param non-empty-list<array{path: string, message: string, code: string}> $errors      パスごとのエラー内容
+     * @param class-string                                                       $targetClass  マッピング先の DTO クラス
+     * @param non-empty-list<array{path: string, message: string, code: string}> $errors       パスごとのエラー内容
+     * @param string|null                                                        $responseBody 受け取ったままの生ボディ。{@see \DmmApiClient\Api\DmmApiClient} を経由せずにマッピングした場合は null
      */
     private function __construct(
         string $message,
         public readonly string $targetClass,
         public readonly array $errors,
         MappingError $previous,
+        public readonly ?string $responseBody = null,
     ) {
         parent::__construct($message, 0, $previous);
     }
@@ -64,5 +66,20 @@ final class ResponseValidationException extends RuntimeException implements DmmA
             $errors,
             $error,
         );
+    }
+
+    /**
+     * 生ボディを添えた例外を返す。
+     *
+     * マッピングはデコード済みの配列に対して行うため、生ボディはマッピングの外でしか分からない。
+     *
+     * @internal {@see \DmmApiClient\Api\DmmApiClient} が使う。
+     */
+    public function withResponseBody(string $responseBody): self
+    {
+        $previous = $this->getPrevious();
+        assert($previous instanceof MappingError);
+
+        return new self($this->getMessage(), $this->targetClass, $this->errors, $previous, $responseBody);
     }
 }

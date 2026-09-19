@@ -33,7 +33,6 @@ use JsonException;
 use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
-use Psr\Http\Message\StreamFactoryInterface;
 
 /**
  * DMM ウェブサービス API v3 のクライアント。
@@ -46,7 +45,7 @@ final readonly class DmmApiClient
     /** API のベース URI。 */
     public const string DEFAULT_BASE_URI = 'https://api.dmm.com/affiliate/v3';
 
-    private CapturingHttpClient $httpClient;
+    private ClientInterface $httpClient;
 
     private RequestFactoryInterface $requestFactory;
 
@@ -57,7 +56,6 @@ final readonly class DmmApiClient
      * @param string                       $baseUri        API のベース URI。末尾のスラッシュは不要
      * @param ClientInterface|null         $httpClient     PSR-18 クライアント。null なら自動検出する
      * @param RequestFactoryInterface|null $requestFactory PSR-17 リクエストファクトリ。null なら自動検出する
-     * @param StreamFactoryInterface|null  $streamFactory  PSR-17 ストリームファクトリ。生ボディのキャプチャに使う。null ならリクエストファクトリが兼ねていればそれを使い、兼ねていなければ自動検出する
      * @param ResponseMapper|null          $responseMapper レスポンスの検証・マッピング担当。null なら既定の設定で生成する
      *
      * @throws NotFoundException 自動検出に任せた PSR-18 / PSR-17 の実装が見つからない場合
@@ -67,46 +65,18 @@ final readonly class DmmApiClient
         private string $baseUri = self::DEFAULT_BASE_URI,
         ?ClientInterface $httpClient = null,
         ?RequestFactoryInterface $requestFactory = null,
-        ?StreamFactoryInterface $streamFactory = null,
         ?ResponseMapper $responseMapper = null,
     ) {
-        $httpClient ??= Psr18ClientDiscovery::find();
+        $this->httpClient = $httpClient ?? Psr18ClientDiscovery::find();
         $this->requestFactory = $requestFactory ?? Psr17FactoryDiscovery::findRequestFactory();
-
-        // PSR-17 の実装はリクエストとストリームのファクトリを 1 クラスで兼ねることが多い。
-        // 兼ねていればそれを使い、依存をすべて渡された場合には自動検出を走らせない。
-        $streamFactory ??= $this->requestFactory instanceof StreamFactoryInterface
-            ? $this->requestFactory
-            : Psr17FactoryDiscovery::findStreamFactory();
-
-        // 生ボディをキャプチャするため、必ず包んでから使う（{@see self::lastResponseBody()}）。
-        $this->httpClient = new CapturingHttpClient($httpClient, $streamFactory);
         $this->responseMapper = $responseMapper ?? new ResponseMapper();
     }
 
     /**
-     * 直前の呼び出しで受け取ったレスポンスの生ボディ。まだ呼び出していない場合と、
-     * 直前の呼び出しが通信に失敗してレスポンスを受け取れなかった場合は null。
-     *
-     * 型付きメソッドは DTO を返すため、DTO が知らないキーは落ちる。DMM が実際に何を
-     * 返しているかを確かめたい場合や、レスポンスをそのまま保存したい場合に使う。
-     *
-     * ```php
-     * $response = $client->floorList();
-     * $raw = $client->lastResponseBody();
-     * ```
-     *
-     * 保持するのは直前の 1 件だけで、次の呼び出しで上書きされる。{@see self::buildUri()}
-     * は送信しないので、値は変わらない。複数の呼び出しを並行させる場合は、
-     * 呼び出しごとにインスタンスを分けること。
-     */
-    public function lastResponseBody(): ?string
-    {
-        return $this->httpClient->body();
-    }
-
-    /**
      * 商品情報 API (`/ItemList`)。
+     *
+     * 型付きメソッドが返す DTO は、受け取ったままの生ボディも持つ
+     * （{@see \DmmApiClient\Api\Response\Common\RawBodyAware}）。
      *
      * @throws TransportException          HTTP 通信に失敗した場合
      * @throws ApiErrorException           API がエラーを返した場合
@@ -226,7 +196,7 @@ final readonly class DmmApiClient
     }
 
     /**
-     * @template T of object
+     * @template T of ItemListResponse|FloorListResponse|ActressSearchResponse|GenreSearchResponse|MakerSearchResponse|SeriesSearchResponse|AuthorSearchResponse
      *
      * @param class-string<T> $responseClass
      *
@@ -241,7 +211,15 @@ final readonly class DmmApiClient
     {
         $body = $this->fetchRaw($request);
 
-        return $this->responseMapper->map($responseClass, $this->decode($request->endpoint(), $body));
+        try {
+            $response = $this->responseMapper->map($responseClass, $this->decode($request->endpoint(), $body));
+        } catch (ResponseValidationException $exception) {
+            throw $exception->withResponseBody($body);
+        }
+
+        $response->attachRawBody($body);
+
+        return $response;
     }
 
     /**

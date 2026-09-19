@@ -15,6 +15,13 @@ use DmmApiClient\Api\Exception\ResponseValidationException;
 use DmmApiClient\Api\Exception\TransportException;
 use DmmApiClient\Api\Request\Credentials;
 use DmmApiClient\Api\Request\Request;
+use DmmApiClient\Api\Response\ActressSearch\ActressSearchResponse;
+use DmmApiClient\Api\Response\AuthorSearch\AuthorSearchResponse;
+use DmmApiClient\Api\Response\FloorList\FloorListResponse;
+use DmmApiClient\Api\Response\GenreSearch\GenreSearchResponse;
+use DmmApiClient\Api\Response\ItemList\ItemListResponse;
+use DmmApiClient\Api\Response\MakerSearch\MakerSearchResponse;
+use DmmApiClient\Api\Response\SeriesSearch\SeriesSearchResponse;
 use Http\Discovery\Exception\NotFoundException;
 use JsonException;
 use Psr\Http\Client\ClientInterface;
@@ -127,8 +134,8 @@ abstract class ApiCommand implements Command
      * 組み立てたリクエストで API を呼び出す。
      *
      * 呼ぶのは {@see DmmApiClient} の型付きメソッドで、検証もマッピングもそちらが行う。
-     * 戻り値の DTO はコンソールでは使わない（出力は生ボディから作る）が、
-     * 型付きメソッドを通すこと自体が検証を意味する。
+     * 出力は DTO そのものではなく、DTO が持つ生ボディから作る。型付きメソッドを
+     * 通すこと自体が検証を意味する。
      *
      * @throws UsageException              オプションの値が不正な場合
      * @throws InvalidArgumentException    リクエストが受け付けない値だった場合
@@ -137,7 +144,7 @@ abstract class ApiCommand implements Command
      * @throws MalformedResponseException  レスポンスが JSON として読めなかった場合
      * @throws ResponseValidationException レスポンスが期待する構造と一致しなかった場合
      */
-    abstract protected function invoke(DmmApiClient $client, Input $input): object;
+    abstract protected function invoke(DmmApiClient $client, Input $input): ItemListResponse|FloorListResponse|ActressSearchResponse|GenreSearchResponse|MakerSearchResponse|SeriesSearchResponse|AuthorSearchResponse;
 
     final public function options(): array
     {
@@ -171,7 +178,7 @@ abstract class ApiCommand implements Command
         }
 
         try {
-            $this->invoke($client, $input);
+            $response = $this->invoke($client, $input);
         } catch (TransportException $exception) {
             // レスポンスそのものが届いていないので、書き出す本文も無い。
             $output->error($exception->getMessage());
@@ -179,18 +186,18 @@ abstract class ApiCommand implements Command
             return Application::EXIT_FAILURE;
         } catch (ApiErrorException|MalformedResponseException $exception) {
             // エラーの中身こそ見たいので、ボディは通常どおり標準出力へ流す。
-            $this->writeBody($client, $input, $output);
+            $this->writeBody($exception->responseBody, $input, $output);
             $output->error($exception->getMessage());
 
             return Application::EXIT_FAILURE;
         } catch (ResponseValidationException $exception) {
-            $this->writeBody($client, $input, $output);
+            $this->writeBody($exception->responseBody ?? '', $input, $output);
             $this->reportValidationErrors($exception, $output);
 
             return Application::EXIT_FAILURE;
         }
 
-        $this->writeBody($client, $input, $output);
+        $this->writeBody($response->body(), $input, $output);
 
         return Application::EXIT_SUCCESS;
     }
@@ -201,9 +208,9 @@ abstract class ApiCommand implements Command
      * 成功しても失敗しても、返ってきたものは見せる。DTO ではなく生ボディを出すのは、
      * DTO が知らないキーを落とさずに、API が返したとおりを見せるため。
      */
-    private function writeBody(DmmApiClient $client, Input $input, Output $output): void
+    private function writeBody(string $body, Input $input, Output $output): void
     {
-        $output->write($this->format($client->lastResponseBody() ?? '', $input, $output));
+        $output->write($this->format($body, $input, $output));
     }
 
     /**
