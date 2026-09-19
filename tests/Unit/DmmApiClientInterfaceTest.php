@@ -10,6 +10,7 @@ use DmmApiClient\Api\Request\FloorListRequest;
 use DmmApiClient\Api\Request\GenreSearchRequest;
 use DmmApiClient\Api\Request\ItemListRequest;
 use DmmApiClient\Api\Request\MakerSearchRequest;
+use DmmApiClient\Api\Request\Request;
 use DmmApiClient\Api\Request\SeriesSearchRequest;
 use DmmApiClient\Api\Response\ActressSearch\ActressSearchResponse;
 use DmmApiClient\Api\Response\AuthorSearch\AuthorSearchResponse;
@@ -61,6 +62,16 @@ function fakeDmmApiClient(): DmmApiClientInterface
         {
             return responseMapper()->authorSearch(Fixture::decoded('author-search'));
         }
+
+        public function buildUri(Request $request): string
+        {
+            return 'https://example.com' . $request->endpoint();
+        }
+
+        public function fetchRaw(Request $request): string
+        {
+            return Fixture::json('item-list');
+        }
     };
 }
 
@@ -73,11 +84,6 @@ test('フェイクに差し替えられる', function (): void {
     $client = fakeDmmApiClient();
 
     expect($client->itemList(new ItemListRequest(site: 'FANZA')))->toBeInstanceOf(ItemListResponse::class)
-        ->and($client->floorList())->toBeInstanceOf(FloorListResponse::class);
-});
-
-test('ResponseMapper で作った DTO は生ボディを持たない', function (): void {
-    $response = fakeDmmApiClient()->itemList(new ItemListRequest(site: 'FANZA'));
-
-    expect(fn(): string => $response->body())->toThrow(LogicException::class);
+        ->and($client->floorList())->toBeInstanceOf(FloorListResponse::class)
+        ->and($client->fetchRaw(new ItemListRequest(site: 'FANZA')))->toBe(Fixture::json('item-list'));
 });

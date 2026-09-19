@@ -39,9 +39,6 @@ use Psr\Http\Message\RequestFactoryInterface;
  *
  * HTTP の送受信は PSR-18 のクライアントに委譲する。実装を渡さなかった場合は
  * インストール済みの PSR-18 / PSR-17 実装を自動検出する。
- *
- * 型付きメソッド（{@see DmmApiClientInterface}）が返す DTO は、受け取ったままの生ボディも持つ
- * （{@see \DmmApiClient\Api\Response\Common\RawBodyAware}）。
  */
 final readonly class DmmApiClient implements DmmApiClientInterface
 {
@@ -110,9 +107,6 @@ final readonly class DmmApiClient implements DmmApiClientInterface
         return $this->send($request, AuthorSearchResponse::class);
     }
 
-    /**
-     * 実際に送信される URI を組み立てる。デバッグや、送信前の確認に使う。
-     */
     public function buildUri(Request $request): string
     {
         $parameters = $this->credentials->toQueryParameters()
@@ -122,15 +116,6 @@ final readonly class DmmApiClient implements DmmApiClientInterface
         return $this->baseUri . $request->endpoint() . '?' . http_build_query($parameters);
     }
 
-    /**
-     * API を呼び出し、レスポンスボディを受け取ったままの文字列で返す。
-     *
-     * DTO への変換と検証は行わない。レスポンスをそのまま保存したい場合や、
-     * API が実際に返している JSON を確認したい場合に使う。
-     *
-     * @throws TransportException HTTP 通信に失敗した場合
-     * @throws ApiErrorException  API がエラーを返した場合
-     */
     public function fetchRaw(Request $request): string
     {
         $httpRequest = $this->requestFactory

@@ -14,6 +14,7 @@ use DmmApiClient\Api\Request\FloorListRequest;
 use DmmApiClient\Api\Request\GenreSearchRequest;
 use DmmApiClient\Api\Request\ItemListRequest;
 use DmmApiClient\Api\Request\MakerSearchRequest;
+use DmmApiClient\Api\Request\Request;
 use DmmApiClient\Api\Request\SeriesSearchRequest;
 use DmmApiClient\Api\Response\ActressSearch\ActressSearchResponse;
 use DmmApiClient\Api\Response\AuthorSearch\AuthorSearchResponse;
@@ -24,14 +25,7 @@ use DmmApiClient\Api\Response\MakerSearch\MakerSearchResponse;
 use DmmApiClient\Api\Response\SeriesSearch\SeriesSearchResponse;
 
 /**
- * DMM ウェブサービス API v3 の各エンドポイントを呼び出し、DTO で受け取る。
- *
- * 利用側のテストで {@see DmmApiClient} をフェイクに差し替えるためのもの。
- * フェイクが返す DTO は、保存済みの JSON を {@see \DmmApiClient\Api\Response\ResponseMapper}
- * でマッピングすれば作れる。ただしそうして作った DTO は生ボディを持たない
- * （{@see \DmmApiClient\Api\Response\Common\RawBodyAware}）。
- *
- * 型付きのメソッドだけを持つ。{@see DmmApiClient::buildUri()} / {@see DmmApiClient::fetchRaw()} は含めない。
+ * DMM ウェブサービス API v3 のクライアント。
  */
 interface DmmApiClientInterface
 {
@@ -86,4 +80,20 @@ interface DmmApiClientInterface
      * @throws TransportException|ApiErrorException|MalformedResponseException|ResponseValidationException
      */
     public function authorSearch(AuthorSearchRequest $request): AuthorSearchResponse;
+
+    /**
+     * 実際に送信される URI を組み立てる。デバッグや、送信前の確認に使う。
+     */
+    public function buildUri(Request $request): string;
+
+    /**
+     * API を呼び出し、レスポンスボディを受け取ったままの文字列で返す。
+     *
+     * DTO への変換と検証は行わない。レスポンスをそのまま保存したい場合や、
+     * API が実際に返している JSON を確認したい場合に使う。
+     *
+     * @throws TransportException HTTP 通信に失敗した場合
+     * @throws ApiErrorException  API がエラーを返した場合
+     */
+    public function fetchRaw(Request $request): string;
 }
