@@ -14,6 +14,8 @@ use DmmApiClient\Api\Exception\InvalidArgumentException;
  */
 abstract readonly class FloorScopedSearchRequest implements Request
 {
+    use ValidatesHitsAndOffset;
+
     /** 取得件数の最小値。 */
     public const int HITS_MIN = 1;
 
@@ -41,17 +43,8 @@ abstract readonly class FloorScopedSearchRequest implements Request
             throw new InvalidArgumentException('floor_id must not be empty.');
         }
 
-        if ($hits !== null && ($hits < static::HITS_MIN || $hits > static::HITS_MAX)) {
-            throw new InvalidArgumentException(
-                sprintf('hits must be between %d and %d, %d given.', static::HITS_MIN, static::HITS_MAX, $hits),
-            );
-        }
-
-        if ($offset !== null && $offset < static::OFFSET_MIN) {
-            throw new InvalidArgumentException(
-                sprintf('offset must be %d or greater, %d given.', static::OFFSET_MIN, $offset),
-            );
-        }
+        self::assertHitsInRange($hits, static::HITS_MIN, static::HITS_MAX);
+        self::assertOffsetInRange($offset, static::OFFSET_MIN);
     }
 
     /**

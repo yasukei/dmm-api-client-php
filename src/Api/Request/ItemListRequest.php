@@ -13,6 +13,8 @@ use DmmApiClient\Api\MonoStock;
  */
 final readonly class ItemListRequest implements Request
 {
+    use ValidatesHitsAndOffset;
+
     /** API のエンドポイントパス。 */
     public const string ENDPOINT = '/ItemList';
 
@@ -58,17 +60,8 @@ final readonly class ItemListRequest implements Request
         public ?int $hits = null,
         public ?int $offset = null,
     ) {
-        if ($hits !== null && ($hits < self::HITS_MIN || $hits > self::HITS_MAX)) {
-            throw new InvalidArgumentException(
-                sprintf('hits must be between %d and %d, %d given.', self::HITS_MIN, self::HITS_MAX, $hits),
-            );
-        }
-
-        if ($offset !== null && ($offset < self::OFFSET_MIN || $offset > self::OFFSET_MAX)) {
-            throw new InvalidArgumentException(
-                sprintf('offset must be between %d and %d, %d given.', self::OFFSET_MIN, self::OFFSET_MAX, $offset),
-            );
-        }
+        self::assertHitsInRange($hits, self::HITS_MIN, self::HITS_MAX);
+        self::assertOffsetInRange($offset, self::OFFSET_MIN, self::OFFSET_MAX);
     }
 
     public function endpoint(): string

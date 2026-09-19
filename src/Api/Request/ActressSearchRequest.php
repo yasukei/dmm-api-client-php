@@ -12,6 +12,8 @@ use DmmApiClient\Api\Exception\InvalidArgumentException;
  */
 final readonly class ActressSearchRequest implements Request
 {
+    use ValidatesHitsAndOffset;
+
     /** API のエンドポイントパス。 */
     public const string ENDPOINT = '/ActressSearch';
 
@@ -62,17 +64,8 @@ final readonly class ActressSearchRequest implements Request
         public ?int $hits = null,
         public ?int $offset = null,
     ) {
-        if ($hits !== null && ($hits < self::HITS_MIN || $hits > self::HITS_MAX)) {
-            throw new InvalidArgumentException(
-                sprintf('hits must be between %d and %d, %d given.', self::HITS_MIN, self::HITS_MAX, $hits),
-            );
-        }
-
-        if ($offset !== null && $offset < self::OFFSET_MIN) {
-            throw new InvalidArgumentException(
-                sprintf('offset must be %d or greater, %d given.', self::OFFSET_MIN, $offset),
-            );
-        }
+        self::assertHitsInRange($hits, self::HITS_MIN, self::HITS_MAX);
+        self::assertOffsetInRange($offset, self::OFFSET_MIN);
     }
 
     public function endpoint(): string
