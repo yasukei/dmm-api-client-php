@@ -578,11 +578,8 @@ test('数値として読めない total_count は、パス付きで検証エラ�
     try {
         responseMapper()->genreSearch($payload);
     } catch (ResponseValidationException $exception) {
-        expect($exception->errors)->toBe([[
-            'path' => 'result.total_count',
-            'message' => "Value 'N/A' is not a valid integer.",
-            'code' => 'invalid_integer',
-        ]]);
+        expect($exception->errors[0]['path'])->toBe('result.total_count')
+            ->and($exception->errors[0]['code'])->toBe('invalid_integer');
 
         return;
     }
@@ -747,12 +744,11 @@ test('型が仕様と違えば、パス付きで検証エラーにする', funct
     try {
         responseMapper()->itemList($payload);
     } catch (ResponseValidationException $exception) {
+        // 文言は Valinor が決めるので確認しない。パスとコードで判別できれば足りる。
         expect($exception->targetClass)->toBe(ItemListResponse::class)
-            ->and($exception->errors)->toBe([[
-                'path' => 'result.total_count',
-                'message' => "Value 'many' is not a valid integer.",
-                'code' => 'invalid_integer',
-            ]]);
+            ->and($exception->errors)->toHaveCount(1)
+            ->and($exception->errors[0]['path'])->toBe('result.total_count')
+            ->and($exception->errors[0]['code'])->toBe('invalid_integer');
     }
 });
 
