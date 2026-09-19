@@ -21,6 +21,15 @@ use DmmApiClient\Api\Response\SeriesSearch\SeriesSearchResponse;
  * DMM API のレスポンス（デコード済みの JSON）を検証し、DTO へマッピングする。
  *
  * 入力にはデコード済みの配列（`json_decode($json, true)` の結果）を渡す。
+ *
+ * `itemList()` などのエンドポイント別メソッドは、{@see \DmmApiClient\Api\DmmApiClient} が
+ * 内部で使うものではない（クライアントは {@see self::map()} を直接呼ぶ）。保存済みの JSON や
+ * キャッシュなど、手元にあるデコード済みのレスポンスを通信せずにマッピングしたい場合の
+ * 低レベルの窓口として用意している。通信からマッピングまでをまとめて行うなら
+ * {@see \DmmApiClient\Api\DmmApiClient} の同名メソッドを使う。
+ *
+ * 同じマッパー設定であれば、どちらを経由しても検証結果は変わらない。ただし、ここで
+ * マッピングした DTO は生ボディを持たない（{@see \DmmApiClient\Api\Response\Common\RawBodyAware}）。
  */
 final readonly class ResponseMapper
 {
@@ -80,6 +89,8 @@ final readonly class ResponseMapper
     }
 
     /**
+     * デコード済みの `/ItemList` レスポンスを {@see ItemListResponse} にマッピングする。通信は行わない。
+     *
      * @throws ResponseValidationException
      */
     public function itemList(mixed $payload): ItemListResponse
@@ -88,6 +99,8 @@ final readonly class ResponseMapper
     }
 
     /**
+     * デコード済みの `/FloorList` レスポンスを {@see FloorListResponse} にマッピングする。通信は行わない。
+     *
      * @throws ResponseValidationException
      */
     public function floorList(mixed $payload): FloorListResponse
@@ -96,6 +109,8 @@ final readonly class ResponseMapper
     }
 
     /**
+     * デコード済みの `/ActressSearch` レスポンスを {@see ActressSearchResponse} にマッピングする。通信は行わない。
+     *
      * @throws ResponseValidationException
      */
     public function actressSearch(mixed $payload): ActressSearchResponse
@@ -104,6 +119,8 @@ final readonly class ResponseMapper
     }
 
     /**
+     * デコード済みの `/GenreSearch` レスポンスを {@see GenreSearchResponse} にマッピングする。通信は行わない。
+     *
      * @throws ResponseValidationException
      */
     public function genreSearch(mixed $payload): GenreSearchResponse
@@ -112,6 +129,8 @@ final readonly class ResponseMapper
     }
 
     /**
+     * デコード済みの `/MakerSearch` レスポンスを {@see MakerSearchResponse} にマッピングする。通信は行わない。
+     *
      * @throws ResponseValidationException
      */
     public function makerSearch(mixed $payload): MakerSearchResponse
@@ -120,6 +139,8 @@ final readonly class ResponseMapper
     }
 
     /**
+     * デコード済みの `/SeriesSearch` レスポンスを {@see SeriesSearchResponse} にマッピングする。通信は行わない。
+     *
      * @throws ResponseValidationException
      */
     public function seriesSearch(mixed $payload): SeriesSearchResponse
@@ -128,6 +149,8 @@ final readonly class ResponseMapper
     }
 
     /**
+     * デコード済みの `/AuthorSearch` レスポンスを {@see AuthorSearchResponse} にマッピングする。通信は行わない。
+     *
      * @throws ResponseValidationException
      */
     public function authorSearch(mixed $payload): AuthorSearchResponse
@@ -136,6 +159,8 @@ final readonly class ResponseMapper
     }
 
     /**
+     * デコード済みのエラーレスポンスを {@see ErrorResponse} にマッピングする。通信は行わない。
+     *
      * @throws ResponseValidationException
      */
     public function error(mixed $payload): ErrorResponse
