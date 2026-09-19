@@ -36,8 +36,25 @@ parameters:
             # DmmApiClient\Api\Exception\InvalidArgumentException は
             # これを継承しているが、範囲外の値を弾く契約の一部なので外さない。
             - '#^InvalidArgumentException$#'
+            # DTO の body() が、DmmApiClient を経由せずに作られた場合に投げるもの。
+            # 使い方の誤りなので回復する種類ではない。完全一致にしてあるのは、
+            # 上の InvalidArgumentException のように LogicException を継承する
+            # 自前の例外まで外さないため。
+            - '#^LogicException$#'
 
     ignoreErrors:
+        # RawBodyAware は、マッピングが終わった DTO に生ボディをあとから 1 度だけ添える。
+        # DTO のコンストラクタは Valinor がレスポンスの形に合わせて呼ぶので、そこでは渡せない。
+        # readonly プロパティは同じクラス内ならコンストラクタの外からでも 1 度だけ
+        # 初期化でき、未初期化のまま読まれる場合は body() が isset() で見張っている。
+        -
+            identifier: property.readOnlyAssignNotInConstructor
+            path: src/Api/Response/Common/RawBodyAware.php
+        -
+            identifier: property.uninitializedReadonly
+            message: '#uninitialized readonly property \$body\.#'
+            path: src/Api/Response/*
+
         # 例外契約を検証したいのは、利用者に見せる API のほう。
         # テストの補助関数まで @throws で埋めても、読む人の役には立たない。
         # 想定外の例外が飛べばテストはそのまま落ちる。

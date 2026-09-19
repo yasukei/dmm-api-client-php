@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DmmApiClient\Api\Response\MakerSearch;
 
+use DmmApiClient\Api\Response\Common\RawBodyAware;
 use DmmApiClient\Api\Response\Common\RequestEcho;
 
 /**
@@ -11,6 +12,8 @@ use DmmApiClient\Api\Response\Common\RequestEcho;
  */
 final readonly class MakerSearchResponse
 {
+    use RawBodyAware;
+
     /**
      * @param MakerSearchResult $result  検索結果
      * @param RequestEcho|null  $request 送信したリクエストパラメータのエコーバック

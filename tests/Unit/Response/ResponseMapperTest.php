@@ -766,3 +766,25 @@ test('必須項目が欠けていれば検証エラーにする', function (): v
     expect(fn(): ItemListResponse => responseMapper()->itemList($payload))
         ->toThrow(ResponseValidationException::class);
 });
+
+test('DmmApiClient を経由せずにマッピングした DTO は、生ボディを持たないことを例外で伝える', function (): void {
+    $response = (new ResponseMapper())->floorList(Fixture::decoded('floor-list'));
+
+    expect(fn(): string => $response->body())
+        ->toThrow(LogicException::class, FloorListResponse::class . ' was constructed without a raw body attached')
+        ->and(fn(): mixed => $response->json())
+        ->toThrow(LogicException::class);
+});
+
+test('DmmApiClient を経由せずにマッピングした場合、検証エラーは生ボディを持たない', function (): void {
+    $exception = null;
+
+    try {
+        (new ResponseMapper())->floorList(['result' => ['site' => 'not-a-list']]);
+    } catch (ResponseValidationException $caught) {
+        $exception = $caught;
+    }
+
+    expect($exception)->toBeInstanceOf(ResponseValidationException::class)
+        ->and($exception?->responseBody)->toBeNull();
+});

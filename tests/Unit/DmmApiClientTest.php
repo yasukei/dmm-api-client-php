@@ -31,7 +31,6 @@ use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7\Response;
 use PHPUnit\Framework\Assert;
 use Psr\Http\Client\ClientInterface;
-use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Tests\Support\Fixture;
@@ -402,7 +401,6 @@ scenario('自動検出に任せた実装が見つからなければ NotFoundExce
         fn(): DmmApiClient => new DmmApiClient(
             credentials(),
             requestFactory: new Psr17Factory(),
-            streamFactory: new Psr17Factory(),
         ),
         'No PSR-18 clients found',
     ],
@@ -410,22 +408,8 @@ scenario('自動検出に任せた実装が見つからなければ NotFoundExce
         fn(): DmmApiClient => new DmmApiClient(
             credentials(),
             httpClient: StubHttpClient::respondingWith(200, '{}'),
-            streamFactory: new Psr17Factory(),
         ),
         'No PSR-17 request factory found',
-    ],
-    'PSR-17 ストリームファクトリ' => [
-        fn(): DmmApiClient => new DmmApiClient(
-            credentials(),
-            httpClient: StubHttpClient::respondingWith(200, '{}'),
-            requestFactory: new class implements RequestFactoryInterface {
-                public function createRequest(string $method, $uri): RequestInterface
-                {
-                    return (new Psr17Factory())->createRequest($method, $uri);
-                }
-            },
-        ),
-        'No PSR-17 stream factory found',
     ],
 ]);
 
@@ -434,8 +418,7 @@ test('PSR-18 の実装を渡さなくても自動検出する', function (): voi
         ->toStartWith('https://api.dmm.com/affiliate/v3/FloorList?');
 });
 
-test('リクエストファクトリがストリームファクトリを兼ねていれば、自動検出しない', function (): void {
-    // Psr17Factory はリクエストとストリームのファクトリを兼ねる。
+test('依存をすべて渡せば、自動検出しない', function (): void {
     $response = withoutDiscovery(fn(): FloorListResponse => (new DmmApiClient(
         credentials(),
         httpClient: StubHttpClient::respondingWithFixture('floor-list'),
@@ -445,84 +428,54 @@ test('リクエストファクトリがストリームファクトリを兼ね�
     expect($response)->toBeInstanceOf(FloorListResponse::class);
 });
 
-test('ストリームファクトリを渡せば、リクエストファクトリが兼ねていなくても自動検出しない', function (): void {
-    $requestFactory = new class implements RequestFactoryInterface {
-        public function createRequest(string $method, $uri): RequestInterface
-        {
-            return (new Psr17Factory())->createRequest($method, $uri);
-        }
-    };
-
-    $response = withoutDiscovery(fn(): FloorListResponse => (new DmmApiClient(
-        credentials(),
-        httpClient: StubHttpClient::respondingWithFixture('floor-list'),
-        requestFactory: $requestFactory,
-        streamFactory: new Psr17Factory(),
-    ))->floorList());
-
-    expect($response)->toBeInstanceOf(FloorListResponse::class);
-});
-
-test('型付きメソッドを呼んだあとでも生ボディを参照できる', function (): void {
+test('型付きメソッドが返す DTO は生ボディを持つ', function (): void {
     $body = Fixture::json('floor-list');
     $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::respondingWith(200, $body));
 
     $response = $client->floorList();
 
-    expect($response)->toBeInstanceOf(FloorListResponse::class)
-        ->and($client->lastResponseBody())->toBe($body);
+    expect($response->body())->toBe($body)
+        ->and($response->json())->toBe(json_decode($body, true));
 });
 
 test('DTO が知らないキーも生ボディには残る', function (): void {
-    // 既定のマッパーは知らないキーを捨てるため、DTO 経由では辿れない。
+    // 既定のマッパーは知らないキーを捨てるため、DTO のプロパティからは辿れない。
     $body = '{"result":{"site":[{"name":"DMM.com","code":"DMM.com","service":[],"new_field":"x"}]}}';
     $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::respondingWith(200, $body));
 
-    $client->floorList();
+    $response = $client->floorList();
 
-    expect($client->lastResponseBody())->toContain('new_field');
+    expect($response->body())->toBe($body)
+        ->and($response->json())->toBe(json_decode($body, true));
 });
 
-test('1 度も呼び出していなければ生ボディは null', function (): void {
-    $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::respondingWith(200, '{}'));
-
-    expect($client->lastResponseBody())->toBeNull();
-});
-
-test('buildUri は送信しないので生ボディを更新しない', function (): void {
-    $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::respondingWith(200, '{"result":{}}'));
-
-    $client->buildUri(new FloorListRequest());
-
-    expect($client->lastResponseBody())->toBeNull();
-});
-
-test('生ボディは最後の呼び出しで上書きされる', function (): void {
-    $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::respondingWith(400, '{"result":{"status":400}}'));
-
-    expect(fn(): mixed => $client->floorList())->toThrow(ApiErrorException::class);
-
-    // エラーで終わった場合も、そのレスポンスの生ボディが残る。
-    expect($client->lastResponseBody())->toBe('{"result":{"status":400}}');
-});
-
-test('通信に失敗したら、前の呼び出しの生ボディを返さない', function (): void {
+test('生ボディは呼び出しごとの DTO に閉じていて、後の呼び出しで上書きされない', function (): void {
     $inner = new class implements ClientInterface {
         private int $calls = 0;
 
         public function sendRequest(RequestInterface $request): ResponseInterface
         {
-            if (++$this->calls > 1) {
-                throw new NetworkFailure('connection refused');
-            }
+            $body = sprintf('{"result":{"site":[{"name":"call-%d","code":"DMM.com","service":[]}]}}', ++$this->calls);
 
-            return new Response(400, ['Content-Type' => 'application/json'], '{"result":{"status":400}}');
+            return new Response(200, ['Content-Type' => 'application/json'], $body);
         }
     };
     $client = new DmmApiClient(credentials(), httpClient: $inner);
 
-    expect(fn(): mixed => $client->floorList())->toThrow(ApiErrorException::class);
-    expect(fn(): mixed => $client->floorList())->toThrow(TransportException::class);
+    $first = $client->floorList();
+    $second = $client->floorList();
 
-    expect($client->lastResponseBody())->toBeNull();
+    expect($first->body())->toContain('call-1')
+        ->and($second->body())->toContain('call-2');
+});
+
+test('検証に失敗したら、例外が生ボディを持つ', function (): void {
+    $body = '{"result":{"site":"not-a-list"}}';
+    $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::respondingWith(200, $body));
+
+    $exception = catchThrown(ResponseValidationException::class, fn(): mixed => $client->floorList());
+
+    expect($exception->responseBody)->toBe($body)
+        ->and($exception->targetClass)->toBe(FloorListResponse::class)
+        ->and($exception->getPrevious())->not->toBeNull();
 });
