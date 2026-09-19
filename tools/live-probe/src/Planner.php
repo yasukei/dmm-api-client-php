@@ -99,6 +99,15 @@ final class Planner
     private const string INVALID_API_ID = 'INVALID_API_ID';
 
     /**
+     * 受け付けられないことが確実なアフィリエイト ID。
+     *
+     * {@see Credentials} は空のアフィリエイト ID を受け付けないので、空ではなく
+     * 形式に合わない値（末尾が `-990`〜`-999` でない）を送る。値の選び方は
+     * {@see self::INVALID_API_ID} と同じ。
+     */
+    private const string INVALID_AFFILIATE_ID = 'INVALID_AFFILIATE_ID';
+
+    /**
      * offset の上限。API が返す検索結果は 50000 件までなので、それ以上は指定しない。
      */
     private const int OFFSET_MAX = 50000;
@@ -191,11 +200,11 @@ final class Planner
                 new Credentials(self::INVALID_API_ID, $credentials->affiliateId),
             ),
 
-            // 空のアフィリエイト ID。API ID とは別の形でエラーが返るかを見る。
+            // 形式に合わないアフィリエイト ID。API ID とは別の形でエラーが返るかを見る。
             self::errorCase(
-                'empty-affiliate-id',
+                'invalid-affiliate-id',
                 new FloorListRequest(),
-                new Credentials($credentials->apiId, ''),
+                new Credentials($credentials->apiId, self::INVALID_AFFILIATE_ID),
             ),
 
             // 必須パラメータの欠落。認証情報は正しいまま、`site` の無い `/ItemList` を送る。

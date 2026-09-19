@@ -90,6 +90,11 @@ test('複数 article は http_build_query でインデックス付きの形に�
         ->toBe('site=FANZA&article[0]=genre&article[1]=actress&article_id[0]=6533&article_id[1]=1078970');
 });
 
+test('site が空なら拒否する', function (): void {
+    expect(fn(): ItemListRequest => new ItemListRequest(site: ''))
+        ->toThrow(InvalidArgumentException::class, 'site must not be empty.');
+});
+
 scenario('hits の境界値を受け付ける', function (int $hits): void {
     expect((new ItemListRequest(site: 'FANZA', hits: $hits))->hits)->toBe($hits);
 })->with([[ItemListRequest::HITS_MIN], [50], [ItemListRequest::HITS_MAX]]);

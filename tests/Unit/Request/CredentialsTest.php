@@ -14,7 +14,7 @@ test('クエリパラメータを返す', function (): void {
     ]);
 });
 
-scenario('アフィリエイト ID の形式は検証しない', function (string $affiliateId): void {
+scenario('空でなければアフィリエイト ID の形式は検証しない', function (string $affiliateId): void {
     // 受け付ける形式は API 側の都合で決まる。合わない値は API がエラーを返すので、そちらに任せる。
     $credentials = new Credentials('MY_API_ID', $affiliateId);
 
@@ -27,10 +27,14 @@ scenario('アフィリエイト ID の形式は検証しない', function (strin
     'myaffiliateid',
     'myaffiliateid-9990',
     'myaffiliateid-999x',
-    '',
 ]);
 
 test('api_id が空なら拒否する', function (): void {
     expect(fn(): Credentials => new Credentials('', 'myaffiliateid-999'))
         ->toThrow(InvalidArgumentException::class, 'api_id must not be empty.');
+});
+
+test('affiliate_id が空なら拒否する', function (): void {
+    expect(fn(): Credentials => new Credentials('MY_API_ID', ''))
+        ->toThrow(InvalidArgumentException::class, 'affiliate_id must not be empty.');
 });
