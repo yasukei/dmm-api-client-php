@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use DmmApiClient\Api\Exception\DmmApiClientException;
+use DmmApiClient\Api\Exception\MissingRawBodyException;
 use DmmApiClient\Api\Exception\ResponseValidationException;
 use DmmApiClient\Api\MonoStock;
 use DmmApiClient\Api\Response\ActressSearch\ActressSearchResponse;
@@ -771,9 +773,11 @@ test('DmmApiClient を経由せずにマッピングした DTO は、生ボデ�
     $response = (new ResponseMapper())->floorList(Fixture::decoded('floor-list'));
 
     expect(fn(): string => $response->body())
-        ->toThrow(LogicException::class, FloorListResponse::class . ' was constructed without a raw body attached')
+        ->toThrow(MissingRawBodyException::class, FloorListResponse::class . ' was constructed without a raw body attached')
         ->and(fn(): mixed => $response->json())
-        ->toThrow(LogicException::class);
+        ->toThrow(MissingRawBodyException::class)
+        ->and(MissingRawBodyException::for(FloorListResponse::class))
+        ->toBeInstanceOf(DmmApiClientException::class);
 });
 
 test('DmmApiClient を経由せずにマッピングした場合、検証エラーは生ボディを持たない', function (): void {
