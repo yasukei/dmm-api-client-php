@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-19
+
 ### Added
 
 - `DmmApiClientInterface` を追加し、`DmmApiClient` が実装するようにした (#40)
@@ -17,7 +19,7 @@
 - **破壊的変更:** 検索系 API の `*SearchResult::$totalCount` と `ActressSearchResult::$firstPosition` を `int` に揃えた (#34)
 - **破壊的変更:** `ItemInfoElement::$id` を `string` に揃えた (#41)
 - **破壊的変更:** `ItemPrices::$price` / `$listPrice` と `Delivery::$price` / `$listPrice` を `string` に揃えた (#42)
-- **破壊的変更:** `ItemListResult::$status` と `ErrorResult::$status` を `string` に揃えた。検索系 API の `*SearchResult::$status` も、数値で返っても文字列として受け付ける (#45)
+- **破壊的変更:** `ItemListResult::$status` と `ErrorResult::$status` を `string` に揃えた。検索系 API の `*SearchResult::$status` も、数値で返っても文字列として受け付ける (#46)
 - **破壊的変更:** `ItemListRequest::$site` と `Credentials::$affiliateId` の空文字を `InvalidArgumentException` で拒否するようにした (#37)
 
 ### Removed
@@ -29,5 +31,6 @@
 
 初回リリース。
 
-[Unreleased]: https://github.com/yasukei/dmm-api-client-php/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/yasukei/dmm-api-client-php/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/yasukei/dmm-api-client-php/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/yasukei/dmm-api-client-php/releases/tag/v0.1.0
