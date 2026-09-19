@@ -12,15 +12,10 @@ use DmmApiClient\Api\Exception\InvalidArgumentException;
 final readonly class Credentials
 {
     /**
-     * アフィリエイト ID は空でないことだけを確かめ、形式は検証しない。
-     *
-     * 受け付ける形式は API 側の都合で決まり、将来広がることも狭まることもある。
-     * 形式に合わない値は API がエラーを返すので、そちらに任せる。
-     *
      * @param string $apiId       DMM ウェブサービスで発行された API ID
      * @param string $affiliateId アフィリエイト ID
      *
-     * @throws InvalidArgumentException API ID またはアフィリエイト ID が空の場合
+     * @throws InvalidArgumentException $apiId または $affiliateId が空の場合
      */
     public function __construct(
         public string $apiId,
