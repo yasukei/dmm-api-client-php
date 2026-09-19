@@ -5,12 +5,11 @@ declare(strict_types=1);
 namespace DmmApiClient\Api\Response\ActressSearch;
 
 use CuyZ\Valinor\Mapper\Configurator\MapAsInt;
+use CuyZ\Valinor\Mapper\Configurator\MapAsString;
 use CuyZ\Valinor\Mapper\Configurator\MapFromKey;
 
 /**
  * 女優検索 API のレスポンスの `result` 部。
- *
- * `status` は文字列で返る。商品情報 API は数値で返すので、揃っていない。
  *
  * `first_position` は文字列で、`total_count` は 0 件のときだけ数値、それ以外は文字列で返る。
  * 他の検索 API と揃えるため、数値として読める文字列は int に変換する。
@@ -25,6 +24,7 @@ final readonly class ActressSearchResult
      * @param list<Actress> $actress       検索結果の女優一覧
      */
     public function __construct(
+        #[MapAsString]
         public string $status,
         #[MapFromKey('result_count')]
         public int $resultCount,

@@ -5,12 +5,11 @@ declare(strict_types=1);
 namespace DmmApiClient\Api\Response\GenreSearch;
 
 use CuyZ\Valinor\Mapper\Configurator\MapAsInt;
+use CuyZ\Valinor\Mapper\Configurator\MapAsString;
 use CuyZ\Valinor\Mapper\Configurator\MapFromKey;
 
 /**
  * ジャンル検索 API のレスポンスの `result` 部。
- *
- * `status` は文字列で返る。商品情報 API は数値で返すので、揃っていない。
  *
  * `total_count` は 0 件のときだけ数値で、それ以外は文字列で返る。値によって型が変わると
  * 扱いにくいので、数値として読める文字列は int に変換する。
@@ -32,6 +31,7 @@ final readonly class GenreSearchResult
      * @param list<Genre> $genre         検索結果のジャンル一覧
      */
     public function __construct(
+        #[MapAsString]
         public string $status,
         #[MapFromKey('result_count')]
         public int $resultCount,

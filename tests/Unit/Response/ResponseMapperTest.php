@@ -57,7 +57,7 @@ test('商品情報のレスポンスをマッピングする', function (): void
     $response = responseMapper()->itemList(Fixture::decoded('item-list'));
 
     expect($response)->toBeInstanceOf(ItemListResponse::class)
-        ->and($response->result->status)->toBe(200)
+        ->and($response->result->status)->toBe('200')
         ->and($response->result->resultCount)->toBe(2)
         ->and($response->result->totalCount)->toBe(12450)
         ->and($response->result->firstPosition)->toBe(1)
@@ -672,7 +672,7 @@ test('エラーレスポンスをマッピングする', function (): void {
     $response = responseMapper()->error(Fixture::decoded('error'));
 
     expect($response)->toBeInstanceOf(ErrorResponse::class)
-        ->and($response->result->status)->toBe(400)
+        ->and($response->result->status)->toBe('400')
         ->and($response->result->message)->toBe('BAD REQUEST')
         ->and($response->result->errors)->toBe(['affiliate_id' => 'Invalid Request Error']);
 });
@@ -691,11 +691,28 @@ test('エコーバックの無いエラーレスポンスも受け付ける', fu
     expect(responseMapper()->error($payload)->request)->toBeNull();
 });
 
+scenario('status は数値でも文字列でも文字列に揃える', function (string $fixture, Closure $status, int|string $value): void {
+    // 商品情報 API とエラーは数値、検索系 API は文字列で返る。数値でない値も通す。
+    $payload = Fixture::decodedWith($fixture, ['result', 'status'], $value);
+
+    expect($status($payload))->toBe((string) $value);
+})->with([
+    '商品情報・数値' => ['item-list', fn(array $payload): string => responseMapper()->itemList($payload)->result->status, 200],
+    '商品情報・文字列' => ['item-list', fn(array $payload): string => responseMapper()->itemList($payload)->result->status, '200'],
+    '商品情報・数値でない' => ['item-list', fn(array $payload): string => responseMapper()->itemList($payload)->result->status, 'OK'],
+    'ジャンル検索・数値' => ['genre-search', fn(array $payload): string => responseMapper()->genreSearch($payload)->result->status, 200],
+    'シリーズ検索・数値' => ['series-search', fn(array $payload): string => responseMapper()->seriesSearch($payload)->result->status, 200],
+    'メーカー検索・数値' => ['maker-search', fn(array $payload): string => responseMapper()->makerSearch($payload)->result->status, 200],
+    '作者検索・数値' => ['author-search', fn(array $payload): string => responseMapper()->authorSearch($payload)->result->status, 200],
+    '女優検索・数値' => ['actress-search', fn(array $payload): string => responseMapper()->actressSearch($payload)->result->status, 200],
+    'エラー・文字列' => ['error', fn(array $payload): string => responseMapper()->error($payload)->result->status, '400'],
+]);
+
 test('DMM 側で項目が増えてもマッピングは壊れない', function (): void {
     $payload = Fixture::decodedWith('item-list-empty', ['result', 'brand_new_field'], 'something');
     $payload['brand_new_top_level'] = ['nested' => true];
 
-    expect(responseMapper()->itemList($payload)->result->status)->toBe(200);
+    expect(responseMapper()->itemList($payload)->result->status)->toBe('200');
 });
 
 test('厳密なマッパーは知らない項目を検証エラーにする', function (): void {
