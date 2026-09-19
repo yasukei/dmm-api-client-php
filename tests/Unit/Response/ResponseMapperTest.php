@@ -260,6 +260,19 @@ test('CD 以外のフロアの商品では cdinfo が null になる', function 
     expect(responseMapper()->itemList($payload)->result->items[0]->cdinfo)->toBeNull();
 });
 
+test('立ち読みページへのリンクをマッピングする', function (): void {
+    // 電子書籍のフロアだけが返す。実データのフィクスチャには含まれていない。
+    $payload = Fixture::decodedWith('item-list', ['result', 'items', 0, 'tachiyomi'], [
+        'URL' => 'https://book.dmm.co.jp/tachiyomi/=/content_id=mizd00320/',
+        'affiliateURL' => 'https://al.dmm.co.jp/?lurl=tachiyomi&af_id=myaffiliateid-999',
+    ]);
+
+    $tachiyomi = responseMapper()->itemList($payload)->result->items[0]->tachiyomi;
+
+    expect($tachiyomi?->url)->toBe('https://book.dmm.co.jp/tachiyomi/=/content_id=mizd00320/')
+        ->and($tachiyomi?->affiliateUrl)->toBe('https://al.dmm.co.jp/?lurl=tachiyomi&af_id=myaffiliateid-999');
+});
+
 test('キャンペーンの日時を API が返す文字列のまま保持する', function (): void {
     // 動画のフロアの書式。日時に見えるが、DateTimeImmutable には変換しない。
     $payload = Fixture::decodedWith('item-list', ['result', 'items', 0, 'campaign'], [[
