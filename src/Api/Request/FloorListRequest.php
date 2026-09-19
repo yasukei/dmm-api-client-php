@@ -9,7 +9,7 @@ namespace DmmApiClient\Api\Request;
  *
  * 認証情報以外のパラメータを持たない。
  */
-final class FloorListRequest implements Request
+final readonly class FloorListRequest implements Request
 {
     /** API のエンドポイントパス。 */
     public const string ENDPOINT = '/FloorList';
