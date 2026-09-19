@@ -344,7 +344,7 @@ test('iteminfo をマッピングし、無いキーは空配列にする', funct
     $itemInfo = responseMapper()->itemList(Fixture::decoded('item-list'))->result->items[0]->iteminfo;
 
     expect($itemInfo?->genre)->toHaveCount(2)
-        ->and($itemInfo?->genre[0]->id)->toBe(6533)
+        ->and($itemInfo?->genre[0]->id)->toBe('6533')
         ->and($itemInfo?->genre[0]->name)->toBe('ハイビジョン')
         ->and($itemInfo?->actress[0]->name)->toBe('サンプル女優')
         ->and($itemInfo?->author)->toBe([])
@@ -361,7 +361,7 @@ test('ジャンルの大分類をマッピングする', function (): void {
     $itemInfo = responseMapper()->itemList($payload)->result->items[0]->iteminfo;
 
     expect($itemInfo?->genreCategory)->toHaveCount(1)
-        ->and($itemInfo?->genreCategory[0]->id)->toBe(6014)
+        ->and($itemInfo?->genreCategory[0]->id)->toBe('6014')
         ->and($itemInfo?->genreCategory[0]->name)->toBe('イメージビデオ');
 });
 
@@ -390,7 +390,7 @@ test('電子書籍の出版社をマッピングする', function (): void {
     $itemInfo = responseMapper()->itemList($payload)->result->items[0]->iteminfo;
 
     expect($itemInfo?->manufacture)->toHaveCount(1)
-        ->and($itemInfo?->manufacture[0]->id)->toBe(93514)
+        ->and($itemInfo?->manufacture[0]->id)->toBe('93514')
         ->and($itemInfo?->manufacture[0]->name)->toBe('集英社');
 });
 
@@ -424,7 +424,7 @@ test('メーカーの「その他」枠は文字列の ID で返る', function (
     $itemInfo = responseMapper()->itemList($payload)->result->items[0]->iteminfo;
 
     expect($itemInfo?->maker)->toHaveCount(2)
-        ->and($itemInfo?->maker[0]->id)->toBe(10016)
+        ->and($itemInfo?->maker[0]->id)->toBe('10016')
         ->and($itemInfo?->maker[1]->id)->toBe('other');
 });
 
