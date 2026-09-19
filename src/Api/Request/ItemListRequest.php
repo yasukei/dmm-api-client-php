@@ -44,7 +44,7 @@ final readonly class ItemListRequest implements Request
      * @param int|null               $hits      取得件数（1〜100。未指定時は API 既定の 20）
      * @param int|null               $offset    検索開始位置（1〜50000、1 始まり。未指定時は API 既定の 1）
      *
-     * @throws InvalidArgumentException $hits / $offset が範囲外の場合
+     * @throws InvalidArgumentException $site が空、または $hits / $offset が範囲外の場合
      */
     public function __construct(
         public string $site,
@@ -60,6 +60,10 @@ final readonly class ItemListRequest implements Request
         public ?int $hits = null,
         public ?int $offset = null,
     ) {
+        if ($site === '') {
+            throw new InvalidArgumentException('site must not be empty.');
+        }
+
         self::assertHitsInRange($hits, self::HITS_MIN, self::HITS_MAX);
         self::assertOffsetInRange($offset, self::OFFSET_MIN, self::OFFSET_MAX);
     }
