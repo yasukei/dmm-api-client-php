@@ -9,7 +9,9 @@ test('エンドポイントとパラメータをそのまま返す', function ()
     $request = new RawRequest(ItemListRequest::ENDPOINT, ['site' => 'FANZA', 'hits' => '20']);
 
     expect($request->endpoint())->toBe('/ItemList')
-        ->and($request->toQueryParameters())->toBe(['site' => 'FANZA', 'hits' => '20']);
+        ->and($request->toQueryParameters())->toBe(['site' => 'FANZA', 'hits' => '20'])
+        ->and($request->endpoint)->toBe('/ItemList')
+        ->and($request->parameters)->toBe(['site' => 'FANZA', 'hits' => '20']);
 });
 
 test('パラメータを省略できる', function (): void {

@@ -20,8 +20,8 @@ final readonly class RawRequest implements Request
      * @param array<string, string|list<string>> $parameters クエリに載せるパラメータ
      */
     public function __construct(
-        private string $endpoint,
-        private array $parameters = [],
+        public string $endpoint,
+        public array $parameters = [],
     ) {}
 
     public function endpoint(): string
