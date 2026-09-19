@@ -104,6 +104,8 @@ vendor/bin/dmm-api-client item-list --site=DMM.com --keyword=PHP | jq .
 
 ## 開発
 
+変更履歴は [CHANGELOG.md](CHANGELOG.md) にまとめている。
+
 | コマンド | 用途 |
 | --- | --- |
 | `composer test` | 単体テスト（[Pest](https://pestphp.com/)） |
