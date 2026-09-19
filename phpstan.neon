@@ -53,7 +53,14 @@ parameters:
         -
             identifier: property.uninitializedReadonly
             message: '#uninitialized readonly property \$body\.#'
-            path: src/Api/Response/*
+            paths:
+                - src/Api/Response/ActressSearch/ActressSearchResponse.php
+                - src/Api/Response/AuthorSearch/AuthorSearchResponse.php
+                - src/Api/Response/FloorList/FloorListResponse.php
+                - src/Api/Response/GenreSearch/GenreSearchResponse.php
+                - src/Api/Response/ItemList/ItemListResponse.php
+                - src/Api/Response/MakerSearch/MakerSearchResponse.php
+                - src/Api/Response/SeriesSearch/SeriesSearchResponse.php
 
         # 例外契約を検証したいのは、利用者に見せる API のほう。
         # テストの補助関数まで @throws で埋めても、読む人の役には立たない。
