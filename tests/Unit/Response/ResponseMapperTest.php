@@ -511,9 +511,9 @@ test('女優検索のレスポンスをマッピングする', function (): void
     $response = responseMapper()->actressSearch(Fixture::decoded('actress-search'));
 
     expect($response)->toBeInstanceOf(ActressSearchResponse::class)
-        // 女優検索は first_position も文字列で返す。他の検索 API は数値。
-        ->and($response->result->totalCount)->toBe('3421')
-        ->and($response->result->firstPosition)->toBe('1')
+        // 女優検索は first_position も文字列で返すが、他の検索 API と揃えて int にする。
+        ->and($response->result->totalCount)->toBe(3421)
+        ->and($response->result->firstPosition)->toBe(1)
         ->and($response->result->resultCount)->toBe(2)
         ->and($response->result->actress)->toHaveCount(2);
 
@@ -549,7 +549,8 @@ test('ジャンル検索のレスポンスをマッピングする', function ()
     expect($response)->toBeInstanceOf(GenreSearchResponse::class)
         // 商品情報 API は数値で返すが、検索系は文字列で返す。
         ->and($response->result->status)->toBe('200')
-        ->and($response->result->totalCount)->toBe('87')
+        // total_count も文字列で返るが、int に揃える。
+        ->and($response->result->totalCount)->toBe(87)
         ->and($response->result->firstPosition)->toBe(1)
         ->and($response->result->siteCode)->toBe('FANZA')
         ->and($response->result->siteName)->toBe('FANZA（アダルト）')
@@ -564,10 +565,44 @@ test('ジャンル検索のレスポンスをマッピングする', function ()
 });
 
 test('検索結果が 0 件のときの total_count は数値で返る', function (): void {
-    // 0 件のときだけ数値、それ以外は文字列。値によって型が変わるので、両方受け付ける。
+    // 0 件のときだけ数値、それ以外は文字列。値によって型が変わるので、両方受け付けて int に揃える。
     $payload = Fixture::decodedWith('genre-search', ['result', 'total_count'], 0);
 
     expect(responseMapper()->genreSearch($payload)->result->totalCount)->toBe(0);
+});
+
+test('数値として読めない total_count は、パス付きで検証エラーにする', function (): void {
+    // int に揃えるのは数値として読める文字列だけ。それ以外は仕様との差異として検出する。
+    $payload = Fixture::decodedWith('genre-search', ['result', 'total_count'], 'N/A');
+
+    try {
+        responseMapper()->genreSearch($payload);
+    } catch (ResponseValidationException $exception) {
+        expect($exception->errors)->toBe([[
+            'path' => 'result.total_count',
+            'message' => "Value 'N/A' is not a valid integer.",
+            'code' => 'invalid_integer',
+        ]]);
+
+        return;
+    }
+
+    throw new RuntimeException('Expected the mapper to reject the non-numeric total_count.');
+});
+
+test('数値として読めない女優検索の first_position は検証エラーにする', function (): void {
+    $payload = Fixture::decodedWith('actress-search', ['result', 'first_position'], 'N/A');
+
+    try {
+        responseMapper()->actressSearch($payload);
+    } catch (ResponseValidationException $exception) {
+        expect($exception->errors[0]['path'])->toBe('result.first_position')
+            ->and($exception->errors[0]['code'])->toBe('invalid_integer');
+
+        return;
+    }
+
+    throw new RuntimeException('Expected the mapper to reject the non-numeric first_position.');
 });
 
 test('list_url が返らないフロアの結果もマッピングできる', function (): void {
@@ -582,6 +617,7 @@ test('メーカー検索のレスポンスをマッピングする', function ()
     $response = responseMapper()->makerSearch(Fixture::decoded('maker-search'));
 
     expect($response)->toBeInstanceOf(MakerSearchResponse::class)
+        ->and($response->result->totalCount)->toBe(87)
         ->and($response->result->maker)->toHaveCount(2)
         ->and($response->result->maker[0]->makerId)->toBe('45276')
         ->and($response->result->maker[0]->name)->toBe('サンプルメーカー');
@@ -607,6 +643,7 @@ test('シリーズ検索のレスポンスをマッピングする', function ()
     $response = responseMapper()->seriesSearch(Fixture::decoded('series-search'));
 
     expect($response)->toBeInstanceOf(SeriesSearchResponse::class)
+        ->and($response->result->totalCount)->toBe(87)
         ->and($response->result->series)->toHaveCount(2)
         ->and($response->result->series[0]->seriesId)->toBe('216861')
         ->and($response->result->series[0]->name)->toBe('サンプルシリーズ');
@@ -616,6 +653,7 @@ test('作者検索のレスポンスをマッピングする', function (): void
     $response = responseMapper()->authorSearch(Fixture::decoded('author-search'));
 
     expect($response)->toBeInstanceOf(AuthorSearchResponse::class)
+        ->and($response->result->totalCount)->toBe(412)
         ->and($response->result->floorCode)->toBe('digital_doujin')
         ->and($response->result->author)->toHaveCount(2)
         ->and($response->result->author[0]->authorId)->toBe('21414')

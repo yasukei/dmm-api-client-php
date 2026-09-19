@@ -59,6 +59,8 @@ final readonly class ResponseMapper
      *   先頭の `!` は、書式に含まれない要素（`Y-m-d` における時刻など）を
      *   現在時刻ではなくゼロで埋めるための指定。
      * - 型の暗黙変換（"1" -> 1 など）は許可しない（仕様との差異を検出するため）。
+     *   ただし検索系 API の `total_count` のように、DMM が数値と文字列を揺らして返す項目は、
+     *   DTO 側で項目ごとに `#[MapAsInt]` を付けて int に揃えている。
      */
     public static function strictMapperBuilder(): MapperBuilder
     {
