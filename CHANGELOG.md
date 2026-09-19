@@ -9,6 +9,8 @@
 - `DmmApiClientInterface` を追加し、`DmmApiClient` が実装するようにした (#40)
 - 型付きメソッドが返す `*Response` に、生ボディを返す `body()` と、デコードした配列を返す `json()` を追加した (#35)
 - `ResponseValidationException` に `$responseBody` を追加した (#35)
+- `DmmApiClient` を経由せずに作った `*Response` で `body()` / `json()` を呼んだときに投げる `MissingRawBodyException` を追加した (#44)
+- `RawRequest::$endpoint` / `$parameters` を public にした (#39)
 
 ### Changed
 

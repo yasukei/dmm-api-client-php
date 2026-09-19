@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace DmmApiClient\Api\Response\Common;
 
+use DmmApiClient\Api\Exception\MissingRawBodyException;
 use JsonException;
-use LogicException;
 
 /**
  * レスポンス DTO に、受け取ったままの生ボディを持たせる。
@@ -40,15 +40,13 @@ trait RawBodyAware
     /**
      * 受け取ったままの生ボディ。
      *
-     * @throws LogicException {@see \DmmApiClient\Api\DmmApiClient} を経由せずに作った DTO の場合
+     * @throws MissingRawBodyException {@see \DmmApiClient\Api\DmmApiClient} を経由せずに作った DTO の場合
      */
     public function body(): string
     {
         // 未初期化の readonly プロパティに isset() を使っても例外にはならず、false が返る。
         if (! isset($this->body)) {
-            throw new LogicException(
-                static::class . ' was constructed without a raw body attached (bypassed DmmApiClient).',
-            );
+            throw MissingRawBodyException::for(static::class);
         }
 
         return $this->body;
@@ -57,8 +55,8 @@ trait RawBodyAware
     /**
      * 生ボディをデコードしたもの。DTO が知らないキーも残る。
      *
-     * @throws LogicException {@see \DmmApiClient\Api\DmmApiClient} を経由せずに作った DTO の場合
-     * @throws JsonException  生ボディが JSON として読めなかった場合
+     * @throws MissingRawBodyException {@see \DmmApiClient\Api\DmmApiClient} を経由せずに作った DTO の場合
+     * @throws JsonException           生ボディが JSON として読めなかった場合
      */
     public function json(): mixed
     {

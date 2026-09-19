@@ -37,10 +37,8 @@ parameters:
             # これを継承しているが、範囲外の値を弾く契約の一部なので外さない。
             - '#^InvalidArgumentException$#'
             # DTO の body() が、DmmApiClient を経由せずに作られた場合に投げるもの。
-            # 使い方の誤りなので回復する種類ではない。完全一致にしてあるのは、
-            # 上の InvalidArgumentException のように LogicException を継承する
-            # 自前の例外まで外さないため。
-            - '#^LogicException$#'
+            # 使い方の誤りなので回復する種類ではない。
+            - '#^DmmApiClient\\Api\\Exception\\MissingRawBodyException$#'
 
     ignoreErrors:
         # RawBodyAware は、マッピングが終わった DTO に生ボディをあとから 1 度だけ添える。
