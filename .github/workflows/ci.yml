@@ -88,8 +88,11 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --no-progress
 
-      # 既定の bash は pipefail 付きなので、テストが落ちればここで落ちる。
+      # shell を指定しない run は pipefail なしの bash -e で動き、パイプの終了コードが
+      # tee のものになる。shell: bash を明示して pipefail を付け、テストが落ちたら
+      # このステップも落ちるようにする。
       - name: Run tests with coverage
+        shell: bash
         run: composer coverage -- --colors=never | tee coverage.txt
 
       - name: Write coverage to job summary
