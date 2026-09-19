@@ -55,6 +55,8 @@ echo $response->result->totalCount, " 件\n";
 foreach ($response->result->items as $item) {
     echo $item->contentId, ' ', $item->title, ' ', $item->prices?->price, "\n";
 }
+
+var_dump($response->json()); // API が返した JSON をそのまま（DTO が知らない項目も含む）
 ```
 
 リクエストの型は `src/Api/Request`、レスポンスの型は `src/Api/Response` 配下にある。

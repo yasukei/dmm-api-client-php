@@ -40,7 +40,7 @@ use Psr\Http\Message\RequestFactoryInterface;
  * HTTP の送受信は PSR-18 のクライアントに委譲する。実装を渡さなかった場合は
  * インストール済みの PSR-18 / PSR-17 実装を自動検出する。
  */
-final readonly class DmmApiClient
+final readonly class DmmApiClient implements DmmApiClientInterface
 {
     /** API のベース URI。 */
     public const string DEFAULT_BASE_URI = 'https://api.dmm.com/affiliate/v3';
@@ -72,85 +72,41 @@ final readonly class DmmApiClient
         $this->responseMapper = $responseMapper ?? new ResponseMapper();
     }
 
-    /**
-     * 商品情報 API (`/ItemList`)。
-     *
-     * 型付きメソッドが返す DTO は、受け取ったままの生ボディも持つ
-     * （{@see \DmmApiClient\Api\Response\Common\RawBodyAware}）。
-     *
-     * @throws TransportException          HTTP 通信に失敗した場合
-     * @throws ApiErrorException           API がエラーを返した場合
-     * @throws MalformedResponseException  レスポンスが JSON として読めなかった場合
-     * @throws ResponseValidationException レスポンスが期待する構造と一致しなかった場合
-     */
     public function itemList(ItemListRequest $request): ItemListResponse
     {
         return $this->send($request, ItemListResponse::class);
     }
 
-    /**
-     * フロア検索 API (`/FloorList`)。
-     *
-     * @throws TransportException|ApiErrorException|MalformedResponseException|ResponseValidationException
-     */
     public function floorList(FloorListRequest $request = new FloorListRequest()): FloorListResponse
     {
         return $this->send($request, FloorListResponse::class);
     }
 
-    /**
-     * 女優検索 API (`/ActressSearch`)。
-     *
-     * @throws TransportException|ApiErrorException|MalformedResponseException|ResponseValidationException
-     */
     public function actressSearch(ActressSearchRequest $request): ActressSearchResponse
     {
         return $this->send($request, ActressSearchResponse::class);
     }
 
-    /**
-     * ジャンル検索 API (`/GenreSearch`)。
-     *
-     * @throws TransportException|ApiErrorException|MalformedResponseException|ResponseValidationException
-     */
     public function genreSearch(GenreSearchRequest $request): GenreSearchResponse
     {
         return $this->send($request, GenreSearchResponse::class);
     }
 
-    /**
-     * メーカー検索 API (`/MakerSearch`)。
-     *
-     * @throws TransportException|ApiErrorException|MalformedResponseException|ResponseValidationException
-     */
     public function makerSearch(MakerSearchRequest $request): MakerSearchResponse
     {
         return $this->send($request, MakerSearchResponse::class);
     }
 
-    /**
-     * シリーズ検索 API (`/SeriesSearch`)。
-     *
-     * @throws TransportException|ApiErrorException|MalformedResponseException|ResponseValidationException
-     */
     public function seriesSearch(SeriesSearchRequest $request): SeriesSearchResponse
     {
         return $this->send($request, SeriesSearchResponse::class);
     }
 
-    /**
-     * 作者検索 API (`/AuthorSearch`)。
-     *
-     * @throws TransportException|ApiErrorException|MalformedResponseException|ResponseValidationException
-     */
     public function authorSearch(AuthorSearchRequest $request): AuthorSearchResponse
     {
         return $this->send($request, AuthorSearchResponse::class);
     }
 
-    /**
-     * 実際に送信される URI を組み立てる。デバッグや、送信前の確認に使う。
-     */
     public function buildUri(Request $request): string
     {
         $parameters = $this->credentials->toQueryParameters()
@@ -160,15 +116,6 @@ final readonly class DmmApiClient
         return $this->baseUri . $request->endpoint() . '?' . http_build_query($parameters);
     }
 
-    /**
-     * API を呼び出し、レスポンスボディを受け取ったままの文字列で返す。
-     *
-     * DTO への変換と検証は行わない。レスポンスをそのまま保存したい場合や、
-     * API が実際に返している JSON を確認したい場合に使う。
-     *
-     * @throws TransportException HTTP 通信に失敗した場合
-     * @throws ApiErrorException  API がエラーを返した場合
-     */
     public function fetchRaw(Request $request): string
     {
         $httpRequest = $this->requestFactory
