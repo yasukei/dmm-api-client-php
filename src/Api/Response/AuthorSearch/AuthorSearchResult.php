@@ -4,20 +4,23 @@ declare(strict_types=1);
 
 namespace DmmApiClient\Api\Response\AuthorSearch;
 
+use CuyZ\Valinor\Mapper\Configurator\MapAsInt;
 use CuyZ\Valinor\Mapper\Configurator\MapFromKey;
 
 /**
  * 作者検索 API のレスポンスの `result` 部。
  *
- * `status` は文字列で返る。`total_count` は 0 件のときだけ数値で、それ以外は文字列。
- * 商品情報 API はいずれも数値で返すので、揃っていない。
+ * `status` は文字列で返る。商品情報 API は数値で返すので、揃っていない。
+ *
+ * `total_count` は 0 件のときだけ数値で、それ以外は文字列で返る。値によって型が変わると
+ * 扱いにくいので、数値として読める文字列は int に変換する。
  */
 final readonly class AuthorSearchResult
 {
     /**
      * @param string       $status        ステータスコード
      * @param int          $resultCount   このレスポンスに含まれる件数
-     * @param int|string   $totalCount    検索結果の総件数（0 件のときだけ数値）
+     * @param int          $totalCount    検索結果の総件数
      * @param int          $firstPosition 検索開始位置（1 始まり）
      * @param string       $siteName      サイト名（例: DMM.com（一般））
      * @param string       $siteCode      サイトコード（例: DMM.com、FANZA）
@@ -33,7 +36,8 @@ final readonly class AuthorSearchResult
         #[MapFromKey('result_count')]
         public int $resultCount,
         #[MapFromKey('total_count')]
-        public int|string $totalCount,
+        #[MapAsInt]
+        public int $totalCount,
         #[MapFromKey('first_position')]
         public int $firstPosition,
         #[MapFromKey('site_name')]
