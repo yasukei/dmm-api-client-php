@@ -78,7 +78,7 @@ test('商品のレビュー・画像・サンプルをマッピングする', fu
     $item = responseMapper()->itemList(Fixture::decoded('item-list'))->result->items[0];
 
     expect($item->review?->count)->toBe(12)
-        ->and($item->review?->average)->toBe('4.20')
+        ->and($item->review?->average)->toBe(4.2)
         ->and($item->imageUrl?->list)->toContain('mizd00320pt.jpg')
         ->and($item->imageUrl?->large)->toContain('mizd00320pl.jpg')
         ->and($item->sampleImageUrl?->sampleS?->image)->toHaveCount(2)
@@ -87,6 +87,38 @@ test('商品のレビュー・画像・サンプルをマッピングする', fu
         ->and($item->sampleMovieUrl?->spFlag)->toBe(1)
         ->and($item->sampleMovieUrl?->size476x306)->toContain('size=476_306')
         ->and($item->sampleMovieUrl?->size644x414)->toContain('size=644_414');
+});
+
+test('レビュー平均点が 0 件で 0.00 になる商品もマッピングできる', function (): void {
+    // レビューが 1 件も無くても review は返り、average は "0.00" になる。0 点の評価ではない。
+    $payload = Fixture::decodedWith('item-list', ['result', 'items', 0, 'review'], [
+        'count' => 0,
+        'average' => '0.00',
+    ]);
+
+    $review = responseMapper()->itemList($payload)->result->items[0]->review;
+
+    expect($review?->count)->toBe(0)
+        ->and($review?->average)->toBe(0.0);
+});
+
+test('数値として読めないレビュー平均点は、パス付きで検証エラーにする', function (): void {
+    // float に揃えるのは数値として読める文字列だけ。それ以外は仕様との差異として検出する。
+    $payload = Fixture::decodedWith('item-list', ['result', 'items', 0, 'review'], [
+        'count' => 12,
+        'average' => 'N/A',
+    ]);
+
+    try {
+        responseMapper()->itemList($payload);
+    } catch (ResponseValidationException $exception) {
+        expect($exception->errors[0]['path'])->toBe('result.items.0.review.average')
+            ->and($exception->errors[0]['code'])->toBe('invalid_float');
+
+        return;
+    }
+
+    throw new RuntimeException('Expected the mapper to reject the non-numeric review average.');
 });
 
 test('返らなかったサイズのサンプル動画 URL は null になる', function (): void {

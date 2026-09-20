@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **破壊的変更:** `Review::$average` を `float` に揃えた (#48)
+
 ## [0.2.0] - 2026-09-19
 
 ### Added
