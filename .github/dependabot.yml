@@ -1,0 +1,48 @@
+version: 2
+
+# Security updates はリポジトリ設定で有効にするもので、ここの schedule / groups /
+# cooldown には従わず、脆弱性が公開され次第パッケージごとに PR が作られる。
+# 以下はすべて Version updates の設定。
+#
+# composer.lock は利用者に配布されないため、require の依存で範囲内の Security update
+# （lock だけの更新）を受けたときは、composer.json の下限を修正版まで手で上げる。
+
+updates:
+  - package-ecosystem: composer
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: Asia/Tokyo
+    # ライブラリなので、範囲内の minor / patch では composer.lock だけを更新し、
+    # composer.json の下限は上げない。範囲外の major では ^2.6 || ^3.0 のように
+    # 範囲を広げ、旧 major の利用者を切り捨てない。
+    versioning-strategy: widen
+    cooldown:
+      default-days: 3
+      semver-major-days: 7
+    commit-message:
+      prefix: chore
+      include: scope
+    # どのグループにも入らない major は、パッケージごとに個別の PR になる。
+    groups:
+      composer:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: Asia/Tokyo
+    # github-actions では semver-*-days が使えない。
+    cooldown:
+      default-days: 3
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      github-actions:
+        update-types: [minor, patch]
