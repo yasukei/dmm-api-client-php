@@ -17,7 +17,7 @@ use Tests\TestCase;
 |--------------------------------------------------------------------------
 */
 
-pest()->extend(TestCase::class)->in('Unit');
+pest()->extend(TestCase::class)->in('Unit', 'Integration');
 
 /*
  * コンソールのテストは、認証情報が環境変数から読める状態で走らせる。
