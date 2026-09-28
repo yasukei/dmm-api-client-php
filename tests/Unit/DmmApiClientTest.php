@@ -29,7 +29,6 @@ use DmmApiClient\Api\Response\SeriesSearch\SeriesSearchResponse;
 use GuzzleHttp\Psr7\HttpFactory;
 use GuzzleHttp\Psr7\Response;
 use Http\Discovery\Exception\NotFoundException;
-use PHPUnit\Framework\Assert;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -193,30 +192,6 @@ function transportFailureMessage(string $endpoint): string
     return 'cURL error 6: Could not resolve host (see https://curl.se/libcurl/c/libcurl-errors.html)'
         . ' for https://api.dmm.com/affiliate/v3' . $endpoint
         . '?api_id=MY_API_ID&affiliate_id=myaffiliateid-999&output=json';
-}
-
-/**
- * $call が $class の例外を投げることを確かめ、その例外を返す。
- *
- * @template E of Throwable
- *
- * @param class-string<E>  $class
- * @param Closure(): mixed $call
- *
- * @return E
- */
-function catchThrown(string $class, Closure $call): Throwable
-{
-    try {
-        $call();
-    } catch (Throwable $exception) {
-        expect($exception)->toBeInstanceOf($class);
-
-        /** @var E */
-        return $exception;
-    }
-
-    Assert::fail(sprintf('%s が送出されませんでした。', $class));
 }
 
 scenario('API がエラーを返したら ApiErrorException にする', function (string $endpoint, string $responseClass, Closure $call): void {
