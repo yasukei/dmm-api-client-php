@@ -33,6 +33,7 @@ use JsonException;
 use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * DMM ウェブサービス API v3 のクライアント。
@@ -118,19 +119,7 @@ final readonly class DmmApiClient implements DmmApiClientInterface
 
     public function fetchRaw(Request $request): string
     {
-        $httpRequest = $this->requestFactory
-            ->createRequest('GET', $this->buildUri($request))
-            ->withHeader('Accept', 'application/json');
-
-        try {
-            $httpResponse = $this->httpClient->sendRequest($httpRequest);
-        } catch (ClientExceptionInterface $exception) {
-            throw TransportException::fromClientException(
-                $request->endpoint(),
-                $exception,
-                CredentialMasker::forCredentials($this->credentials),
-            );
-        }
+        $httpResponse = $this->sendHttpRequest($request);
 
         $body = (string) $httpResponse->getBody();
         $statusCode = $httpResponse->getStatusCode();
@@ -140,6 +129,26 @@ final readonly class DmmApiClient implements DmmApiClientInterface
         }
 
         return $body;
+    }
+
+    /**
+     * @throws TransportException HTTP 通信に失敗した場合
+     */
+    private function sendHttpRequest(Request $request): ResponseInterface
+    {
+        $httpRequest = $this->requestFactory
+            ->createRequest('GET', $this->buildUri($request))
+            ->withHeader('Accept', 'application/json');
+
+        try {
+            return $this->httpClient->sendRequest($httpRequest);
+        } catch (ClientExceptionInterface $exception) {
+            throw TransportException::fromClientException(
+                $request->endpoint(),
+                $exception,
+                CredentialMasker::forCredentials($this->credentials),
+            );
+        }
     }
 
     /**
