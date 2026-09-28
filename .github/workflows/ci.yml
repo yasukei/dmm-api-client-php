@@ -166,6 +166,27 @@ jobs:
           advanced-security: false
           annotations: true
 
+  dist:
+    name: Dist
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Packagist の dist は GitHub が git archive で作る。.gitattributes での戻し忘れや
+      # 紛れ込みに気づけるよう、dist のファイル一覧を、含めるべきエントリの追跡ファイルと比べる。
+      # ls-files に渡すエントリは .gitattributes で -export-ignore にしたものと揃える。
+      - name: Check dist contents
+        shell: bash
+        run: |
+          diff -u --label expected --label dist \
+            <(git ls-files -- bin src CHANGELOG.md composer.json LICENSE README.md | LC_ALL=C sort) \
+            <(git archive HEAD | tar -t | grep -v '/$' | LC_ALL=C sort)
+
   # ブランチの ruleset で必須チェックにするのはこのジョブだけにし、
   # ジョブを増やしたときは needs に足す。
   ci-ok:
@@ -173,7 +194,7 @@ jobs:
     # 必須チェックはスキップされると成功扱いになるので、needs が失敗しても
     # スキップされないよう always() で必ず動かし、結果はステップで判定する。
     if: always()
-    needs: [test, lint, coverage, actionlint, zizmor]
+    needs: [test, lint, coverage, actionlint, zizmor, dist]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions: {}
