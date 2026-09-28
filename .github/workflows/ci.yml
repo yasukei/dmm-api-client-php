@@ -133,9 +133,11 @@ jobs:
         shell: bash
         run: composer coverage -- --colors=never | tee coverage.txt
 
+      # 失敗の原因はテストのステップに出るので、ここは結果がないときに落とさない。
       - name: Write coverage to job summary
-        if: always()
+        if: ${{ !cancelled() }}
         run: |
+          [[ -f coverage.txt ]] || exit 0
           {
             echo '```text'
             cat coverage.txt
