@@ -103,6 +103,9 @@ jobs:
       - name: Rector
         run: composer rector-dry
 
+      - name: Composer dependency analyser
+        run: composer deps
+
   coverage:
     name: Coverage
     runs-on: ubuntu-latest
