@@ -15,9 +15,9 @@ updates:
       day: monday
       time: '09:00'
       timezone: Asia/Tokyo
-    # ライブラリなので、範囲内の minor / patch では composer.lock だけを更新し、
-    # composer.json の下限は上げない。範囲外の major では ^2.6 || ^3.0 のように
-    # 範囲を広げ、旧 major の利用者を切り捨てない。
+    # ライブラリなので widen を使う。範囲内の minor / patch では composer.lock だけを更新し、
+    # 範囲外の major では ^2.6 || ^3.0 のように範囲を広げて、旧 major の利用者を切り捨てない。
+    # require-dev は利用者に伝わらないため、major の PR を手で編集して旧 major の範囲を消す。
     versioning-strategy: widen
     cooldown:
       default-days: 3
