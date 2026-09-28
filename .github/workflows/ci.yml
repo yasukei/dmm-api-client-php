@@ -135,10 +135,11 @@ jobs:
         shell: bash
         run: composer coverage -- --colors=never 2>&1 | tee coverage.txt
 
-      # テストのステップがスキップされたときは、このステップもスキップにする。
+      # タイムアウトやキャンセルで止まったときも途中までの出力を残すよう always() にし、
+      # テストのステップがスキップされたときだけ、このステップもスキップにする。
       # 失敗の原因はテストのステップに出るので、ここは出力が空でも落とさない。
       - name: Write coverage to job summary
-        if: ${{ !cancelled() && steps.coverage.outcome != 'skipped' }}
+        if: ${{ always() && steps.coverage.outcome != 'skipped' }}
         run: |
           {
             echo '```text'
@@ -174,10 +175,11 @@ jobs:
         shell: bash
         run: composer mutate -- --colors=never | tee mutation.txt
 
-      # ミューテーションのステップがスキップされたときは、このステップもスキップにする。
+      # coverage ジョブと同じく always() で動かし、ミューテーションのステップが
+      # スキップされたときだけ、このステップもスキップにする。
       # 失敗の原因はミューテーションのステップに出るので、ここはスコアがなくても落とさない。
       - name: Write mutation score to job summary
-        if: ${{ !cancelled() && steps.mutation.outcome != 'skipped' }}
+        if: ${{ always() && steps.mutation.outcome != 'skipped' }}
         run: |
           {
             echo '```text'
