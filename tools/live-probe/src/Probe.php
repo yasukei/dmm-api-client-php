@@ -798,6 +798,9 @@ final readonly class Probe
 
     /**
      * 長時間止まらないよう、タイムアウトを設定した HTTP クライアントを使う。
+     *
+     * 全体を 30 秒で打ち切る。接続は、cURL では connect_timeout、stream handler では
+     * 接続中も含めた無通信を見る read_timeout で、それぞれ 10 秒で打ち切る。
      */
     private static function httpClient(): ?ClientInterface
     {
@@ -805,7 +808,7 @@ final readonly class Probe
             return null;
         }
 
-        return new GuzzleClient(['timeout' => 30, 'connect_timeout' => 10]);
+        return new GuzzleClient(['timeout' => 30, 'connect_timeout' => 10, 'read_timeout' => 10]);
     }
 
     private static function floorListTarget(): Target
