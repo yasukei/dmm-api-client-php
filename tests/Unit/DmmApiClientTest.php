@@ -26,9 +26,9 @@ use DmmApiClient\Api\Response\GenreSearch\GenreSearchResponse;
 use DmmApiClient\Api\Response\ItemList\ItemListResponse;
 use DmmApiClient\Api\Response\MakerSearch\MakerSearchResponse;
 use DmmApiClient\Api\Response\SeriesSearch\SeriesSearchResponse;
+use GuzzleHttp\Psr7\HttpFactory;
+use GuzzleHttp\Psr7\Response;
 use Http\Discovery\Exception\NotFoundException;
-use Nyholm\Psr7\Factory\Psr17Factory;
-use Nyholm\Psr7\Response;
 use PHPUnit\Framework\Assert;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestInterface;
@@ -400,7 +400,7 @@ scenario('自動検出に任せた実装が見つからなければ NotFoundExce
     'PSR-18 クライアント' => [
         fn(): DmmApiClient => new DmmApiClient(
             credentials(),
-            requestFactory: new Psr17Factory(),
+            requestFactory: new HttpFactory(),
         ),
         'No PSR-18 clients found',
     ],
@@ -422,7 +422,7 @@ test('依存をすべて渡せば、自動検出しない', function (): void {
     $response = withoutDiscovery(fn(): FloorListResponse => (new DmmApiClient(
         credentials(),
         httpClient: StubHttpClient::respondingWithFixture('floor-list'),
-        requestFactory: new Psr17Factory(),
+        requestFactory: new HttpFactory(),
     ))->floorList());
 
     expect($response)->toBeInstanceOf(FloorListResponse::class);
