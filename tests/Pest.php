@@ -7,6 +7,7 @@ use DmmApiClient\Api\Response\ResponseMapper;
 use DmmApiClient\Console\Application;
 use Http\Discovery\ClassDiscovery;
 use Pest\PendingCalls\TestCall;
+use PHPUnit\Framework\Assert;
 use Tests\Support\CapturingOutput;
 use Tests\Support\StubHttpClient;
 use Tests\TestCase;
@@ -17,7 +18,7 @@ use Tests\TestCase;
 |--------------------------------------------------------------------------
 */
 
-pest()->extend(TestCase::class)->in('Unit');
+pest()->extend(TestCase::class)->in('Unit', 'Integration');
 
 /*
  * コンソールのテストは、認証情報が環境変数から読める状態で走らせる。
@@ -143,4 +144,28 @@ function withoutDiscovery(callable $callback): mixed
     } finally {
         ClassDiscovery::setStrategies(iterator_to_array($strategies));
     }
+}
+
+/**
+ * $call が $class の例外を投げることを確かめ、その例外を返す。
+ *
+ * @template E of Throwable
+ *
+ * @param class-string<E>  $class
+ * @param Closure(): mixed $call
+ *
+ * @return E
+ */
+function catchThrown(string $class, Closure $call): Throwable
+{
+    try {
+        $call();
+    } catch (Throwable $exception) {
+        expect($exception)->toBeInstanceOf($class);
+
+        /** @var E */
+        return $exception;
+    }
+
+    Assert::fail(sprintf('%s が送出されませんでした。', $class));
 }
