@@ -1,5 +1,6 @@
 # Packagist の dist（git archive）には、ここで戻したものだけを含める。
 # Composer の archive は * を . で始まる名前に一致させないので、/.* も書く。
+# 戻すものを変えたら、ci.yml の lint ジョブの Check dist contents も揃える。
 /* export-ignore
 /.* export-ignore
 /bin -export-ignore
