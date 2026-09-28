@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Changed
+
+- `php-http/discovery` は 1.20.0 以上、`psr/http-client` は 1.0.3 以上を必須にした (#57)
+- `psr/http-message` を直接の依存に加え、2.0 以上を必須にした (#57)
+
 ## [0.2.0] - 2026-09-19
 
 ### Added
