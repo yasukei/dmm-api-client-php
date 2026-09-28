@@ -68,6 +68,29 @@ jobs:
       - name: Validate composer.json and composer.lock
         run: composer validate --strict
 
+      # Packagist の dist は GitHub が git archive で作り、Satis などは Composer の archive で作る。
+      # .gitattributes での戻し忘れや紛れ込みに気づけるよう、両方のファイル一覧を、
+      # 含めるべきエントリの追跡ファイルと比べる。エントリは .gitattributes で戻したものと揃える。
+      # Composer の archive は追跡していないファイルも拾うので、依存を入れる前に実行する。
+      - name: Check dist contents
+        shell: bash
+        run: |
+          dir="$RUNNER_TEMP/dist"
+          mkdir -p "$dir"
+          git ls-files -z -- bin src CHANGELOG.md composer.json LICENSE README.md | tr '\0' '\n' | LC_ALL=C sort > "$dir/expected"
+          if [[ ! -s "$dir/expected" ]]; then
+            echo "::error::dist に含めるファイルの一覧が空です"
+            exit 1
+          fi
+          git archive -o "$dir/git.tar" HEAD
+          composer archive --format=tar --dir="$dir" --file=composer --no-interaction
+          status=0
+          for archive in git composer; do
+            tar -tf "$dir/$archive.tar" --quoting-style=literal | grep -v '/$' | LC_ALL=C sort > "$dir/$archive"
+            diff -u --label expected --label "$archive archive" "$dir/expected" "$dir/$archive" || status=1
+          done
+          exit "$status"
+
       - name: Install dependencies
         run: composer install --no-interaction --no-progress
 
