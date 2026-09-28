@@ -8,8 +8,7 @@ updates:
   - package-ecosystem: composer
     directory: /
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
       time: '09:00'
       timezone: Asia/Tokyo
     # ライブラリなので widen を使う。範囲内の minor / patch では composer.lock だけを更新し、
@@ -30,8 +29,7 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
       time: '09:00'
       timezone: Asia/Tokyo
     # github-actions では semver-*-days が使えない。
