@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   test:
     name: "Test (PHP ${{ matrix.php-version }}, ${{ matrix.dependency-version }})"
@@ -106,3 +109,37 @@ jobs:
             cat coverage.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+
+  actionlint:
+    name: actionlint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      # 外部から取得したバイナリを動かすので、トークンを .git/config に残さない。
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # download スクリプトはチェックサムも署名も確かめないので、公式の install.md に
+      # 沿って gh でリリースから取得し、attestation を検証してから展開する。
+      - name: Download actionlint
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # Dependabot の対象外なので、新しいリリースが出たら手で更新する。
+          ACTIONLINT_VERSION: 1.7.12
+        run: |
+          archive="actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          gh release download "v${ACTIONLINT_VERSION}" --repo rhysd/actionlint --pattern "$archive" --dir "$RUNNER_TEMP"
+          gh attestation verify "$RUNNER_TEMP/$archive" --repo rhysd/actionlint \
+            --signer-workflow rhysd/actionlint/.github/workflows/release.yaml \
+            --source-ref "refs/tags/v${ACTIONLINT_VERSION}"
+          tar xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP" actionlint
+
+      - name: Check workflow files
+        shell: bash
+        run: |
+          echo "::add-matcher::.github/actionlint-matcher.json"
+          "$RUNNER_TEMP/actionlint" -color
