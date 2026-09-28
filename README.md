@@ -109,7 +109,7 @@ vendor/bin/dmm-api-client item-list --site=DMM.com --keyword=PHP | jq .
 | コマンド | 用途 |
 | --- | --- |
 | `composer test` | 単体テスト（[Pest](https://pestphp.com/)） |
-| `composer coverage` | コードカバレッジ付きの単体テスト（PCOV か Xdebug が必要） |
+| `composer coverage` | コードカバレッジ付きの単体テスト。全体のカバレッジが composer.json の `coverage` に定めた下限を下回ると失敗する（PCOV か Xdebug が必要） |
 | `composer lint` | stan + cs-check + rector-dry + deps |
 | `composer fix` | rector + cs-fix |
 | `composer stan` | 静的解析（[PHPStan](https://phpstan.org/)） |
