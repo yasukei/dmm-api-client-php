@@ -142,6 +142,44 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
+  mutation:
+    name: Mutation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.3'
+          coverage: pcov
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress
+
+      # テストが変異を検出できるかを見る。--everything で covers() を書かずに全クラスを対象にし、
+      # 出力の文言が大半を占める CLI（src/Console）は除く。下限は composer.json の mutate にある。
+      # coverage ジョブと同じく、shell: bash で pipefail を付ける。
+      - name: Run mutation testing
+        shell: bash
+        run: composer mutate -- --colors=never | tee mutation.txt
+
+      # 失敗の原因はミューテーションのステップに出るので、ここは結果がないときに落とさない。
+      - name: Write mutation score to job summary
+        if: ${{ !cancelled() }}
+        run: |
+          [[ -f mutation.txt ]] || exit 0
+          {
+            echo '```text'
+            grep -E '^ +(Mutations|Score):' mutation.txt || echo 'スコアが出力されませんでした'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
   actionlint:
     name: actionlint
     runs-on: ubuntu-latest
@@ -199,7 +237,7 @@ jobs:
     # 必須チェックはスキップされると成功扱いになるので、needs が失敗しても
     # スキップされないよう always() で必ず動かし、結果はステップで判定する。
     if: always()
-    needs: [test, lint, coverage, actionlint, zizmor]
+    needs: [test, lint, coverage, mutation, actionlint, zizmor]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions: {}
