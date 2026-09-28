@@ -126,14 +126,15 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --no-progress
 
+      # カバレッジの下限は手元の composer coverage には持たせず、ここで --min として渡す。
       # shell を指定しない run は pipefail なしの bash -e で動き、パイプの終了コードが
-      # tee のものになる。shell: bash を明示して pipefail を付け、テストが落ちたら
-      # このステップも落ちるようにする。
+      # tee のものになる。shell: bash を明示して pipefail を付け、テストが落ちたり
+      # カバレッジが下限を下回ったりしたら、このステップも落ちるようにする。
       # Composer や PHP のエラーもサマリに残るよう、stderr も tee に渡す。
       - name: Run tests with coverage
         id: coverage
         shell: bash
-        run: composer coverage -- --colors=never 2>&1 | tee coverage.txt
+        run: composer coverage -- --min=95 --colors=never 2>&1 | tee coverage.txt
 
       # タイムアウトやキャンセルで止まったときも途中までの出力を残すよう always() にし、
       # テストのステップがスキップされたときだけ、このステップもスキップにする。
@@ -168,12 +169,13 @@ jobs:
         run: composer install --no-interaction --no-progress
 
       # テストが変異を検出できるかを見る。--everything で covers() を書かずに全クラスを対象にし、
-      # 出力の文言が大半を占める CLI（src/Console）は除く。下限は composer.json の mutate にある。
+      # 出力の文言が大半を占める CLI（src/Console）は除く。スコアが --min の下限を下回ると落ちる。
+      # 下限は手元の composer mutate には持たせず、ここでだけ渡す。
       # coverage ジョブと同じく、shell: bash で pipefail を付ける。
       - name: Run mutation testing
         id: mutation
         shell: bash
-        run: composer mutate -- --colors=never | tee mutation.txt
+        run: composer mutate -- --min=95 --colors=never | tee mutation.txt
 
       # coverage ジョブと同じく always() で動かし、ミューテーションのステップが
       # スキップされたときだけ、このステップもスキップにする。
