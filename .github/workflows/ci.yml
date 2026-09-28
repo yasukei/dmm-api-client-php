@@ -129,18 +129,20 @@ jobs:
       # shell を指定しない run は pipefail なしの bash -e で動き、パイプの終了コードが
       # tee のものになる。shell: bash を明示して pipefail を付け、テストが落ちたら
       # このステップも落ちるようにする。
+      # Composer や PHP のエラーもサマリに残るよう、stderr も tee に渡す。
       - name: Run tests with coverage
+        id: coverage
         shell: bash
-        run: composer coverage -- --colors=never | tee coverage.txt
+        run: composer coverage -- --colors=never 2>&1 | tee coverage.txt
 
-      # 失敗の原因はテストのステップに出るので、ここは結果がないときに落とさない。
+      # テストのステップがスキップされたときは、このステップもスキップにする。
+      # 失敗の原因はテストのステップに出るので、ここは出力が空でも落とさない。
       - name: Write coverage to job summary
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.coverage.outcome != 'skipped' }}
         run: |
-          [[ -f coverage.txt ]] || exit 0
           {
             echo '```text'
-            cat coverage.txt
+            if [[ -s coverage.txt ]]; then cat coverage.txt; else echo 'カバレッジが出力されませんでした'; fi
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -168,14 +170,15 @@ jobs:
       # 出力の文言が大半を占める CLI（src/Console）は除く。下限は composer.json の mutate にある。
       # coverage ジョブと同じく、shell: bash で pipefail を付ける。
       - name: Run mutation testing
+        id: mutation
         shell: bash
         run: composer mutate -- --colors=never | tee mutation.txt
 
-      # 失敗の原因はミューテーションのステップに出るので、ここは結果がないときに落とさない。
+      # ミューテーションのステップがスキップされたときは、このステップもスキップにする。
+      # 失敗の原因はミューテーションのステップに出るので、ここはスコアがなくても落とさない。
       - name: Write mutation score to job summary
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.mutation.outcome != 'skipped' }}
         run: |
-          [[ -f mutation.txt ]] || exit 0
           {
             echo '```text'
             grep -E '^ +(Mutations|Score):' mutation.txt || echo 'スコアが出力されませんでした'
