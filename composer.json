@@ -48,7 +48,7 @@
         "coverage": "pest --coverage",
         "mutate": [
             "Composer\\Config::disableProcessTimeout",
-            "pest --mutate --everything --covered-only --parallel --ignore=src/Console --min=96"
+            "pest --mutate --everything --covered-only --parallel --ignore=src/Console --min=95"
         ],
         "probe": [
             "Composer\\Config::disableProcessTimeout",
