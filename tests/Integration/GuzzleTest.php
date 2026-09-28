@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use DmmApiClient\Api\CredentialMasker;
 use DmmApiClient\Api\DmmApiClient;
 use DmmApiClient\Api\Exception\ApiErrorException;
 use DmmApiClient\Api\Exception\TransportException;
@@ -17,6 +18,9 @@ use Tests\Support\LocalServer;
 /*
  * `composer require guzzlehttp/guzzle` だけを入れた利用者と同じく、PSR-18 クライアントと
  * PSR-17 ファクトリを自動検出に任せ、localhost のサーバーと実際に送受信する。
+ *
+ * Guzzle は HTTP_PROXY などの環境変数を読むため、プロキシを設定した環境では NO_PROXY に
+ * 127.0.0.1 を含めないと、localhost への通信もプロキシに送られて失敗する。
  */
 
 function discoveredClient(string $baseUri): DmmApiClient
@@ -67,6 +71,12 @@ test('Guzzle の通信失敗を、認証情報を伏せた TransportException �
         fn(): mixed => discoveredClient($server->baseUri)->itemList(new ItemListRequest(site: 'FANZA')),
     );
 
-    expect($exception->getMessage())->not->toContain('MY_API_ID')
-        ->and($exception->getMessage())->not->toContain('myaffiliateid-999');
+    // Guzzle 7 は例外メッセージに認証情報入りの URI を載せ、Guzzle 8.1 以降はクエリを落とす。
+    // どちらでも、Guzzle のメッセージの認証情報だけを伏せたものになることを確かめる。
+    $guzzleMessage = $exception->getPrevious()?->getMessage() ?? '';
+
+    expect($exception->getMessage())->toBe(
+        'HTTP request to /ItemList failed: '
+        . str_replace(['MY_API_ID', 'myaffiliateid-999'], CredentialMasker::MASK, $guzzleMessage),
+    );
 });
