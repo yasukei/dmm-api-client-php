@@ -1,0 +1,10 @@
+# Packagist の dist（git archive）には、ここで戻したものだけを含める。
+# Composer の archive は * を . で始まる名前に一致させないので、/.* も書く。
+/* export-ignore
+/.* export-ignore
+/bin -export-ignore
+/src -export-ignore
+/CHANGELOG.md -export-ignore
+/composer.json -export-ignore
+/LICENSE -export-ignore
+/README.md -export-ignore
