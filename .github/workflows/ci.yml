@@ -165,3 +165,22 @@ jobs:
         with:
           advanced-security: false
           annotations: true
+
+  # ブランチの ruleset で必須チェックにするのはこのジョブだけにし、
+  # ジョブを増やしたときは needs に足す。
+  ci-ok:
+    name: CI OK
+    # 必須チェックはスキップされると成功扱いになるので、needs が失敗しても
+    # スキップされないよう always() で必ず動かし、結果はステップで判定する。
+    if: always()
+    needs: [test, lint, coverage, actionlint, zizmor]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions: {}
+
+    steps:
+      # 失敗の結果を列挙すると未知の結果を通してしまうので、すべて success かを確かめる。
+      - name: Check all jobs succeeded
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: jq -e 'all(.[]; .result == "success")' <<< "$NEEDS" || { echo "$NEEDS"; exit 1; }
