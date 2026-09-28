@@ -185,7 +185,7 @@ dataset('unreadable error bodies', [
 ]);
 
 /**
- * 通信エラーのメッセージ。Guzzle などと同じく、送信先 URI をそのまま載せる。
+ * 通信エラーのメッセージ。送信先 URI をそのまま載せる PSR-18 クライアントを模す。
  */
 function transportFailureMessage(string $endpoint): string
 {
@@ -284,7 +284,7 @@ scenario('通信に失敗したら TransportException にする', function (stri
 })->with('typed methods');
 
 scenario('通信エラーのメッセージから認証情報を伏せ字にする', function (string $endpoint, string $responseClass, Closure $call): void {
-    // Guzzle などは PSR-18 の例外メッセージに送信先 URI をそのまま載せるため、
+    // PSR-18 クライアントによっては例外メッセージに送信先 URI をそのまま載せるため、
     // 何もしないと api_id と affiliate_id が例外のログに残ってしまう。
     $client = new DmmApiClient(credentials(), httpClient: StubHttpClient::failingWith(transportFailureMessage($endpoint)));
 

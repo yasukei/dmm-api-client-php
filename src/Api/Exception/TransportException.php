@@ -14,7 +14,7 @@ use RuntimeException;
  * 名前解決の失敗、接続タイムアウトなど、レスポンスを受け取れなかった場合に送出される。
  *
  * PSR-18 実装の例外メッセージには、送信先の URI がそのまま含まれることが多い
- * （例: Guzzle の `cURL error 6: ... for https://api.dmm.com/...?api_id=...`）。
+ * （例: Guzzle 7 の `cURL error 6: ... for https://api.dmm.com/...?api_id=...`）。
  * この例外のメッセージをログに残しても認証情報が漏れないよう、取り込む際に伏せ字にする。
  *
  * ただし伏せ字にできるのはこの例外自身のメッセージだけで、`getPrevious()` が返す
