@@ -185,7 +185,7 @@ dataset('unreadable error bodies', [
 ]);
 
 /**
- * 通信エラーのメッセージ。送信先 URI をそのまま載せる PSR-18 クライアントを模す。
+ * 通信エラーのメッセージ。送信先 URI をそのまま載せる、Guzzle 8.1 より前の形式を模す。
  */
 function transportFailureMessage(string $endpoint): string
 {

@@ -71,7 +71,7 @@ test('Guzzle の通信失敗を、認証情報を伏せた TransportException �
         fn(): mixed => discoveredClient($server->baseUri)->itemList(new ItemListRequest(site: 'FANZA')),
     );
 
-    // Guzzle 7 は例外メッセージに認証情報入りの URI を載せ、Guzzle 8.1 以降はクエリを落とす。
+    // Guzzle 8.1 より前は例外メッセージに認証情報入りの URI を載せ、8.1 以降はクエリを落とす。
     // どちらでも、Guzzle のメッセージの認証情報だけを伏せたものになることを確かめる。
     $guzzleMessage = $exception->getPrevious()?->getMessage() ?? '';
 
