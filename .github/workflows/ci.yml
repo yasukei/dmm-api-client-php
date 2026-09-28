@@ -116,8 +116,11 @@ jobs:
     timeout-minutes: 10
 
     steps:
+      # 外部から取得したバイナリを動かすので、トークンを .git/config に残さない。
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       # download スクリプトはチェックサムも署名も確かめないので、公式の install.md に
       # 沿って gh でリリースから取得し、attestation を検証してから展開する。
