@@ -130,7 +130,9 @@ jobs:
         run: |
           archive="actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
           gh release download "v${ACTIONLINT_VERSION}" --repo rhysd/actionlint --pattern "$archive" --dir "$RUNNER_TEMP"
-          gh attestation verify "$RUNNER_TEMP/$archive" --repo rhysd/actionlint
+          gh attestation verify "$RUNNER_TEMP/$archive" --repo rhysd/actionlint \
+            --signer-workflow rhysd/actionlint/.github/workflows/release.yaml \
+            --source-ref "refs/tags/v${ACTIONLINT_VERSION}"
           tar xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP" actionlint
 
       - name: Check workflow files
