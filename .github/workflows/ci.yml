@@ -139,6 +139,21 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
+      # テストが変異を検出できるかを見る。--everything で covers() を書かずに全クラスを対象にし、
+      # --covered-only でテストが通らない行は除く。下限は composer.json の mutate にある。
+      - name: Run mutation testing
+        shell: bash
+        run: composer mutate -- --colors=never | tee mutation.txt
+
+      - name: Write mutation score to job summary
+        if: always()
+        run: |
+          {
+            echo '```text'
+            grep -E '^ +(Mutations|Score):' mutation.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
   actionlint:
     name: actionlint
     runs-on: ubuntu-latest

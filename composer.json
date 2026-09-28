@@ -43,6 +43,7 @@
     "scripts": {
         "test": "pest",
         "coverage": "pest --coverage",
+        "mutate": "pest --mutate --everything --covered-only --parallel --min=80",
         "probe": [
             "Composer\\Config::disableProcessTimeout",
             "@php tools/live-probe/probe.php"
@@ -64,6 +65,7 @@
     },
     "scripts-descriptions": {
         "coverage": "単体テストをコードカバレッジ付きで実行する。PCOV か Xdebug が必要",
+        "mutate": "ミューテーションテストを実行し、スコアが 80% を下回ったら失敗する。PCOV か Xdebug が必要",
         "fix": "自動修正をかける。Rector が書き換えた結果を PHP-CS-Fixer が整形するため、この順序で実行する",
         "lint": "静的解析・コードスタイル・リファクタリングの検査をまとめて実行する"
     },
