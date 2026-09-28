@@ -17,14 +17,17 @@
         "psr/http-message": "^2.0"
     },
     "require-dev": {
+        "ext-mbstring": "*",
         "friendsofphp/php-cs-fixer": "^3.90",
         "guzzlehttp/guzzle": "^8.0",
+        "guzzlehttp/psr7": "^3.0",
         "pestphp/pest": "^3.0",
         "phpstan/extension-installer": "^1.4",
         "phpstan/phpstan": "^2.2",
         "phpstan/phpstan-deprecation-rules": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
-        "rector/rector": "^2.0"
+        "rector/rector": "^2.0",
+        "shipmonk/composer-dependency-analyser": "^1.8"
     },
     "bin": [
         "bin/dmm-api-client"
@@ -53,6 +56,7 @@
         "cs-check": "php-cs-fixer fix --dry-run --diff",
         "rector": "rector process",
         "rector-dry": "rector process --dry-run",
+        "deps": "composer-dependency-analyser",
         "fix": [
             "@rector",
             "@cs-fix"
@@ -60,14 +64,16 @@
         "lint": [
             "@stan",
             "@cs-check",
-            "@rector-dry"
+            "@rector-dry",
+            "@deps"
         ]
     },
     "scripts-descriptions": {
         "coverage": "単体テストをコードカバレッジ付きで実行する。PCOV か Xdebug が必要",
         "mutate": "ミューテーションテストを実行し、スコアが 80% を下回ったら失敗する。PCOV か Xdebug が必要",
         "fix": "自動修正をかける。Rector が書き換えた結果を PHP-CS-Fixer が整形するため、この順序で実行する",
-        "lint": "静的解析・コードスタイル・リファクタリングの検査をまとめて実行する"
+        "deps": "composer.json の依存の過不足（未宣言・未使用・require と require-dev の取り違え）を検査する",
+        "lint": "静的解析・コードスタイル・リファクタリング・依存の検査をまとめて実行する"
     },
     "config": {
         "platform": {

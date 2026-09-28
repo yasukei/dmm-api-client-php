@@ -15,7 +15,7 @@ return RectorConfig::configure()
         // 拡張子のない実行ファイルは、パスに直接書けば対象になる。
         __DIR__ . '/bin/dmm-api-client',
     ])
-    // ルート直下の rector.php と .php-cs-fixer.dist.php 自身も対象にする。
+    // ルート直下の設定ファイル（rector.php 自身を含む）も対象にする。
     // PHPStan と PHP-CS-Fixer が見ている範囲に揃える。
     ->withRootFiles()
 

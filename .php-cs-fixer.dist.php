@@ -12,6 +12,7 @@ $finder = (new Finder())
     ->append([
         __DIR__ . '/bin/dmm-api-client',
         __FILE__,
+        __DIR__ . '/composer-dependency-analyser.php',
         __DIR__ . '/rector.php',
     ]);
 

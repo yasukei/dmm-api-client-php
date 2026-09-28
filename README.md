@@ -111,11 +111,12 @@ vendor/bin/dmm-api-client item-list --site=DMM.com --keyword=PHP | jq .
 | `composer test` | 単体テスト（[Pest](https://pestphp.com/)） |
 | `composer coverage` | コードカバレッジ付きの単体テスト（PCOV か Xdebug が必要） |
 | `composer mutate` | ミューテーションテスト。スコアが 80% を下回ると失敗する（PCOV か Xdebug が必要） |
-| `composer lint` | stan + cs-check + rector-dry |
+| `composer lint` | stan + cs-check + rector-dry + deps |
 | `composer fix` | rector + cs-fix |
 | `composer stan` | 静的解析（[PHPStan](https://phpstan.org/)） |
 | `composer cs-check` / `composer cs-fix` | コードスタイル（[PHP-CS-Fixer](https://cs.symfony.com/)） |
 | `composer rector-dry` / `composer rector` | 自動リファクタリング（[Rector](https://getrector.com/)） |
+| `composer deps` | 依存の過不足の検査（[composer-dependency-analyser](https://github.com/shipmonk-rnd/composer-dependency-analyser)） |
 | `composer probe` | 実際の API から取得したデータで DTO を検証する。詳細は [tools/live-probe](tools/live-probe/README.md) |
 
 ## ライセンス
