@@ -46,6 +46,10 @@
     "scripts": {
         "test": "pest",
         "coverage": "pest --coverage",
+        "mutate": [
+            "Composer\\Config::disableProcessTimeout",
+            "pest --mutate --everything --covered-only --parallel --ignore=src/Console --min=95"
+        ],
         "probe": [
             "Composer\\Config::disableProcessTimeout",
             "@php tools/live-probe/probe.php"
@@ -69,6 +73,7 @@
     },
     "scripts-descriptions": {
         "coverage": "単体テストをコードカバレッジ付きで実行する。PCOV か Xdebug が必要",
+        "mutate": "CLI（src/Console）を除いてミューテーションテストを実行し、スコアが --min の下限を下回ったら失敗する。PCOV か Xdebug が必要",
         "fix": "自動修正をかける。Rector が書き換えた結果を PHP-CS-Fixer が整形するため、この順序で実行する",
         "deps": "composer.json の依存の過不足（未宣言・未使用・require と require-dev の取り違え）を検査する",
         "lint": "静的解析・コードスタイル・リファクタリング・依存の検査をまとめて実行する"
