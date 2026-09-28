@@ -2,10 +2,7 @@ version: 2
 
 # Security updates はリポジトリ設定で有効にするもので、ここの schedule / groups /
 # cooldown には従わず、脆弱性が公開され次第パッケージごとに PR が作られる。
-# 以下はすべて Version updates の設定。
-#
-# composer.lock は利用者に配布されないため、require の依存で範囲内の Security update
-# （lock だけの更新）を受けたときは、composer.json の下限を修正版まで手で上げる。
+# versioning-strategy と commit-message は Security updates にも効く。
 
 updates:
   - package-ecosystem: composer
