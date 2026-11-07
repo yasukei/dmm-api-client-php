@@ -47,6 +47,8 @@ return RectorConfig::configure()
 
         // `=== null` を `! instanceof` に置き換える。null かどうかを見ている箇所で、
         // 型の判定に読み替えさせる理由がない。
+        // オブジェクトを真偽値や empty() で判定するコードの書き換えも止まるが、
+        // while / do-while の条件以外は PHPStan の strict-rules がはじく。
         ExplicitNullableObjectInstanceRector::class,
 
         // 意図して static にしてある private ヘルパを書き換える。
