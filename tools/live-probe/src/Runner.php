@@ -205,7 +205,7 @@ final class Runner
     {
         $previous = $this->previous[$relative] ?? null;
         $body = $this->run->read($relative) ?? '';
-        $responseClass = $previous === null ? $target->responseClass : $previous->responseClass;
+        $responseClass = $previous->responseClass ?? $target->responseClass;
         $errors = $this->validator->validate($responseClass, $body);
         $unknownKeys = $this->validator->unknownKeys($responseClass, $body);
         $decoded = Json::decode($body);
@@ -221,7 +221,7 @@ final class Runner
             offset: $target->isSingle() ? null : $offset,
             page: $page,
             uri: $uri,
-            outcome: $previous === null ? Record::OUTCOME_UNKNOWN : $previous->outcome,
+            outcome: $previous->outcome ?? Record::OUTCOME_UNKNOWN,
             httpStatus: $previous?->httpStatus,
             totalCount: $decoded === null ? null : Json::resultInt($decoded, 'total_count'),
             resultCount: $decoded === null ? null : Json::resultInt($decoded, 'result_count'),

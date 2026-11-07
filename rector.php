@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Rector\CodeQuality\Rector\ClassMethod\LocallyCalledStaticMethodToNonStaticRector;
-use Rector\CodeQuality\Rector\Identical\FlipTypeControlToUseExclusiveTypeRector;
+use Rector\CodeQuality\Rector\If_\ExplicitNullableObjectInstanceRector;
 use Rector\Config\RectorConfig;
 use Rector\DeadCode\Rector\Node\RemoveNonExistingVarAnnotationRector;
 
@@ -47,7 +47,9 @@ return RectorConfig::configure()
 
         // `=== null` を `! instanceof` に置き換える。null かどうかを見ている箇所で、
         // 型の判定に読み替えさせる理由がない。
-        FlipTypeControlToUseExclusiveTypeRector::class,
+        // オブジェクトを真偽値や empty() で判定するコードの書き換えも止まるが、
+        // while / do-while の条件以外は PHPStan の strict-rules がはじく。
+        ExplicitNullableObjectInstanceRector::class,
 
         // 意図して static にしてある private ヘルパを書き換える。
         // 加えて 1 度の実行で収束せず、rector を 2 回通さないと rector-dry が落ちる。
