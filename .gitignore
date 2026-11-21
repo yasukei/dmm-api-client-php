@@ -4,3 +4,4 @@
 /.rector-cache/
 /.env
 /.env.local
+/.claude/worktrees/
