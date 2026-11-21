@@ -127,26 +127,36 @@ jobs:
         run: composer install --no-interaction --no-progress
 
       # カバレッジの下限は手元の composer coverage には持たせず、ここで --min として渡す。
-      # shell を指定しない run は pipefail なしの bash -e で動き、パイプの終了コードが
-      # tee のものになる。shell: bash を明示して pipefail を付け、テストが落ちたり
-      # カバレッジが下限を下回ったりしたら、このステップも落ちるようにする。
-      # Composer や PHP のエラーもサマリに残るよう、stderr も tee に渡す。
+      # ジョブサマリには合計だけを表で出すので、Clover 形式でも書き出しておく。
       - name: Run tests with coverage
         id: coverage
-        shell: bash
-        run: composer coverage -- --min=95 --colors=never 2>&1 | tee coverage.txt
+        run: composer coverage -- --min=95 --colors=never --coverage-clover="$RUNNER_TEMP/clover.xml"
 
-      # タイムアウトやキャンセルで止まったときも途中までの出力を残すよう always() にし、
+      # タイムアウトやキャンセルで止まったときも書き込むよう always() にし、
       # テストのステップがスキップされたときだけ、このステップもスキップにする。
-      # 失敗の原因はテストのステップに出るので、ここは出力が空でも落とさない。
+      # 失敗の原因はテストのステップに出るので、ここは Clover の出力がなくても落とさない。
+      # 途中までしか書き出されていないなど、読み込めないか合計が取れないときも、出力がないものとして扱う。
       - name: Write coverage to job summary
         if: ${{ always() && steps.coverage.outcome != 'skipped' }}
         run: |
-          {
-            echo '```text'
-            if [[ -s coverage.txt ]]; then cat coverage.txt; else echo 'カバレッジが出力されませんでした'; fi
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+          php -- "$RUNNER_TEMP/clover.xml" <<'PHP' >> "$GITHUB_STEP_SUMMARY"
+          <?php
+          libxml_use_internal_errors(true);
+          $xml = is_file($argv[1]) ? simplexml_load_file($argv[1]) : false;
+          if ($xml === false || !isset($xml->project->metrics['statements'], $xml->project->metrics['methods'])) {
+              echo "カバレッジが出力されませんでした\n";
+              exit;
+          }
+          $metrics = $xml->project->metrics;
+          echo "| 対象 | カバー済み | 全体 | カバー率 |\n";
+          echo "| --- | ---: | ---: | ---: |\n";
+          foreach (['行' => 'statements', 'メソッド' => 'methods'] as $label => $name) {
+              $covered = (int) $metrics["covered{$name}"];
+              $total = (int) $metrics[$name];
+              $rate = $total > 0 ? sprintf('%.2f%%', 100 * $covered / $total) : '-';
+              echo "| {$label} | {$covered} | {$total} | {$rate} |\n";
+          }
+          PHP
 
   mutation:
     name: Mutation
@@ -169,16 +179,17 @@ jobs:
         run: composer install --no-interaction --no-progress
 
       # テストが変異を検出できるかを見る。--everything で covers() を書かずに全クラスを対象にし、
-      # 出力の文言が大半を占める CLI（src/Console）は除く。スコアが --min の下限を下回ると落ちる。
-      # 下限は手元の composer mutate には持たせず、ここでだけ渡す。
-      # coverage ジョブと同じく、shell: bash で pipefail を付ける。
+      # 出力の文言が大半を占める CLI（src/Console）は除く。
+      # スコアの下限は設けず、テストが落ちたときだけ失敗にする。結果はジョブサマリで見る。
+      # shell を指定しない run は pipefail なしの bash -e で動き、パイプの終了コードが
+      # tee のものになるので、shell: bash を明示して pipefail を付ける。
       - name: Run mutation testing
         id: mutation
         shell: bash
-        run: composer mutate -- --min=95 --colors=never | tee mutation.txt
+        run: composer mutate -- --colors=never | tee mutation.txt
 
-      # coverage ジョブと同じく always() で動かし、ミューテーションのステップが
-      # スキップされたときだけ、このステップもスキップにする。
+      # タイムアウトやキャンセルで止まったときも途中までの出力を残すよう always() にし、
+      # ミューテーションのステップがスキップされたときだけ、このステップもスキップにする。
       # 失敗の原因はミューテーションのステップに出るので、ここはスコアがなくても落とさない。
       - name: Write mutation score to job summary
         if: ${{ always() && steps.mutation.outcome != 'skipped' }}
