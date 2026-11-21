@@ -135,14 +135,19 @@ jobs:
       # タイムアウトやキャンセルで止まったときも書き込むよう always() にし、
       # テストのステップがスキップされたときだけ、このステップもスキップにする。
       # 失敗の原因はテストのステップに出るので、ここは Clover の出力がなくても落とさない。
+      # 途中までしか書き出されていないなど、読み込めないか合計が取れないときも、出力がないものとして扱う。
       - name: Write coverage to job summary
         if: ${{ always() && steps.coverage.outcome != 'skipped' }}
         run: |
-          clover="$RUNNER_TEMP/clover.xml"
-          if [[ -s "$clover" ]]; then
-            php -- "$clover" <<'PHP' >> "$GITHUB_STEP_SUMMARY"
+          php -- "$RUNNER_TEMP/clover.xml" <<'PHP' >> "$GITHUB_STEP_SUMMARY"
           <?php
-          $metrics = simplexml_load_file($argv[1])->project->metrics;
+          libxml_use_internal_errors(true);
+          $xml = is_file($argv[1]) ? simplexml_load_file($argv[1]) : false;
+          if ($xml === false || !isset($xml->project->metrics['statements'], $xml->project->metrics['methods'])) {
+              echo "カバレッジが出力されませんでした\n";
+              exit;
+          }
+          $metrics = $xml->project->metrics;
           echo "| 対象 | カバー済み | 全体 | カバー率 |\n";
           echo "| --- | ---: | ---: | ---: |\n";
           foreach (['行' => 'statements', 'メソッド' => 'methods'] as $label => $name) {
@@ -152,9 +157,6 @@ jobs:
               echo "| {$label} | {$covered} | {$total} | {$rate} |\n";
           }
           PHP
-          else
-            echo 'カバレッジが出力されませんでした' >> "$GITHUB_STEP_SUMMARY"
-          fi
 
   mutation:
     name: Mutation
